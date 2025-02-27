@@ -127,7 +127,14 @@ const messagingSettings = new mongoose_1.Schema({
             default: 'This setting stores users that you decided cannot message you but which you havent blocked',
             immutable: true
         }
-    }
+    },
+    // Will be readded when communities and chats models are created
+    // blockedCommunitiesChats: {
+    //   communities: [
+    //     {
+    //     }
+    //   ]
+    // }
 }, {
     timestamps: true
 });
