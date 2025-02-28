@@ -1,7 +1,13 @@
 import { Schema, models, model } from 'mongoose';
 
 const blockedUserSettingsSchema = new Schema({
-  list: [
+  blockedByMe: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
+  blockedMe: [
     {
       type: Schema.Types.ObjectId,
       ref: 'User'
