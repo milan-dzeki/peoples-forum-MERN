@@ -6,68 +6,22 @@ const messagingSettingsSchema = new Schema({
     ref: 'User'
   },
   whoCanMessageMe: {
-    checked: {
-      everyone: {
-        type: Boolean,
-        default: true
-      },
-      followers: {
-        type: Boolean,
-        default: true
-      },
-      people_I_follow: {
-        type: Boolean,
-        default: true 
-      },
-      friends: {
-        type: Boolean,
-        default: true
-      },
-      friends_of_friends: {
-        type: Boolean,
-        default: true
-      },
-      no_one: {
-        type: Boolean,
-        default: false
-      }
-    }
+    type: [String],
+    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    default: ['everyone']
   },
   requestMessaging: {
-    checked: {
-      type: Boolean,
-      default: false
-    }
+    type: Boolean,
+    default: false
   },
   whatMessageDataCanPeopleSendMe: {
-    checked: {
-      all_data_types: {
-        type: Boolean,
-        default: true
-      },
-      text_messages: {
-        type: Boolean,
-        default: true
-      },
-      audio_messages: {
-        type: Boolean,
-        default: true
-      },
-      video_messages: {
-        type: Boolean,
-        default: true
-      },
-      link_messages: {
-        type: Boolean,
-        default: true
-      }
-    }
+    type: [String],
+    enum: ['all_data_types', 'text_messages', 'audio_messages', 'video_messages', 'link_messages'],
+    default: ['all_data_types']
   },
   addMeToJoinedCommunitiesChats: {
-    checked: {
-      type: Boolean,
-      default: true
-    }
+    type: Boolean,
+    default: false
   },
   usersThatCannotMessageMe: {
     users: [
