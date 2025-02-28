@@ -1,6 +1,10 @@
 import { Schema, models, model } from 'mongoose';
 
 const friendsSchema = new Schema({
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   receivedPendingRequests: [
     {
       type: Schema.Types.ObjectId,

@@ -221,5 +221,5 @@ receivedNotificationsSettingsSchema.virtual('communitiesNotifications.notificati
     };
 });
 // Communities Notifications virtuals --END
-const ReceivedNotificationSettingsModel = mongoose_1.models.NotificationSettingsModel || (0, mongoose_1.model)('ReceivedNotificationSettingsModel', receivedNotificationsSettingsSchema);
-exports.default = ReceivedNotificationSettingsModel;
+const ReceivedNotificationSettings = mongoose_1.models.NotificationSettings || (0, mongoose_1.model)('ReceivedNotificationSettings', receivedNotificationsSettingsSchema);
+exports.default = ReceivedNotificationSettings;

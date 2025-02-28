@@ -2,6 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const blockedUserSettingsSchema = new mongoose_1.Schema({
+    user: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     blockedByMe: [
         {
             type: mongoose_1.Schema.Types.ObjectId,

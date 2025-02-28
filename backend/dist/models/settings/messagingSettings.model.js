@@ -76,5 +76,5 @@ messagingSettingsSchema.virtual('usersThatCannotMessageMe.metadata').get(functio
         description: 'This setting stores users that you decided cannot message you but which you havent blocked'
     };
 });
-const MessagingSettings = mongoose_1.models.MessagingSettings || (0, mongoose_1.model)('InteractionSettings', messagingSettingsSchema);
+const MessagingSettings = mongoose_1.models.MessagingSettings || (0, mongoose_1.model)('MessagingSettings', messagingSettingsSchema);
 exports.default = MessagingSettings;

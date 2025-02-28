@@ -1,6 +1,10 @@
 import { Schema, models, model } from 'mongoose';
 
 const blockedUserSettingsSchema = new Schema({
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
   blockedByMe: [
     {
       type: Schema.Types.ObjectId,

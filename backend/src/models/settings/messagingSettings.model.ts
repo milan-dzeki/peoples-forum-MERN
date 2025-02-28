@@ -82,7 +82,7 @@ messagingSettingsSchema.virtual('usersThatCannotMessageMe.metadata').get(functio
   };
 });
 
-const MessagingSettings = models.MessagingSettings || model('InteractionSettings', messagingSettingsSchema);
+const MessagingSettings = models.MessagingSettings || model('MessagingSettings', messagingSettingsSchema);
 
 export default MessagingSettings;
 

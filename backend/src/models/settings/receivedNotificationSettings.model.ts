@@ -241,6 +241,6 @@ receivedNotificationsSettingsSchema.virtual('communitiesNotifications.notificati
 });
 // Communities Notifications virtuals --END
 
-const ReceivedNotificationSettingsModel = models.NotificationSettingsModel || model('ReceivedNotificationSettingsModel', receivedNotificationsSettingsSchema);
+const ReceivedNotificationSettings = models.NotificationSettings || model('ReceivedNotificationSettings', receivedNotificationsSettingsSchema);
 
-export default ReceivedNotificationSettingsModel;
+export default ReceivedNotificationSettings;
