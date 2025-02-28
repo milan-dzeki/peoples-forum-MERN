@@ -1,9 +1,9 @@
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-export interface RequestWithBodyType {
+export interface RequestWithBodyType extends Request {
   body: {
     [name: string]: string | unknown;
   };
 }
 
-export type ControllerType = (req: RequestWithBodyType, res: Response, next: NextFunction) => Promise<void>;
+export type ControllerType = (req: RequestWithBodyType, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
