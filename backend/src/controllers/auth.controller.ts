@@ -13,7 +13,7 @@ import {
 } from 'services/auth/auth.service';
 import User from 'models/user.model';
 
-export const signup = catchAsync(async (
+export const signup = catchAsync (async (
   req: RequestWithBodyType, 
   res: Response, 
   next: NextFunction
@@ -124,6 +124,52 @@ export const signup = catchAsync(async (
   return res.status(201).json({
     status: 'success',
     message: 'You have successfully signed up to peoples forum',
+    user
+  });
+});
+
+export const login = catchAsync (async (
+  req: RequestWithBodyType, 
+  res: Response, 
+  next: NextFunction
+) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    next(new AppError(422, 'Email and password are required'));
+    return;
+  }
+
+  const userDB = await User.findOne({ email }).select('+password');
+
+  if (!userDB) {
+    next(new AppError(400, 'Invalid email or password'));
+    return;
+  }
+
+  const isPasswordValid = await bcrypt.compare(password as string, userDB.password);
+  if (!isPasswordValid) {
+    next(new AppError(400, 'Invalid email or password'));
+    return;
+  }
+
+  const signedUser = createTokenCookieAndResponseUser(userDB);
+  if (!signedUser) {
+    next(new AppError(500, 'User login. Maybe servers are down. Refresh the page and try again'));
+    return;
+  }
+
+  const { user, token } = signedUser;
+
+  res.cookie('_pplFrmCKK', token, {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'strict'
+  });
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Login successfull',
     user
   });
 });

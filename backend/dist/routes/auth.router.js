@@ -8,4 +8,5 @@ const express_formidable_1 = __importDefault(require("express-formidable"));
 const auth_controller_1 = require("controllers/auth.controller");
 const router = (0, express_1.Router)();
 router.post('/signup', (0, express_formidable_1.default)(), auth_controller_1.signup);
+router.post('/login', auth_controller_1.login);
 exports.default = router;

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signup = void 0;
+exports.login = exports.signup = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
@@ -99,6 +99,39 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
     return res.status(201).json({
         status: 'success',
         message: 'You have successfully signed up to peoples forum',
+        user
+    });
+}));
+exports.login = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        next(new appError_1.default(422, 'Email and password are required'));
+        return;
+    }
+    const userDB = yield user_model_1.default.findOne({ email }).select('+password');
+    if (!userDB) {
+        next(new appError_1.default(400, 'Invalid email or password'));
+        return;
+    }
+    const isPasswordValid = yield bcryptjs_1.default.compare(password, userDB.password);
+    if (!isPasswordValid) {
+        next(new appError_1.default(400, 'Invalid email or password'));
+        return;
+    }
+    const signedUser = (0, auth_service_1.createTokenCookieAndResponseUser)(userDB);
+    if (!signedUser) {
+        next(new appError_1.default(500, 'User login. Maybe servers are down. Refresh the page and try again'));
+        return;
+    }
+    const { user, token } = signedUser;
+    res.cookie('_pplFrmCKK', token, {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'strict'
+    });
+    return res.status(200).json({
+        status: 'success',
+        message: 'Login successfull',
         user
     });
 }));

@@ -174,7 +174,9 @@ class UserValidator {
     return { error: null };
   }
 
-  static validateUserInputs (userInputs: UserInputs) {
+  static validateUserInputs (userInputs: UserInputs): {
+    errors: Errors | null
+  } {
     const {
       firstName,
       lastName,
