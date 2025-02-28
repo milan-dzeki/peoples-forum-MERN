@@ -1,4 +1,4 @@
-import { Schema, models, model } from 'mongoose';
+import { Schema, models, model, InferSchemaType, HydratedDocument } from 'mongoose';
 import { isEmail } from 'validator';
 import UserValidator from 'configs/validators/user.validator';
 
@@ -33,6 +33,7 @@ const userSchema = new Schema({
       UserValidator.lastName.maxLength.errorMessage
     ]
   },
+  fullName: String,
   email: {
     type: String,
     required: [true, UserValidator.email.requiredErrorMessage],
@@ -69,6 +70,8 @@ const userSchema = new Schema({
 }, {
   timestamps: true
 });
+
+export type UserSchemaType = HydratedDocument<InferSchemaType<typeof userSchema>>;
 
 const User = models.User || model('User', userSchema);
 

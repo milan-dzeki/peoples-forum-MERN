@@ -37,6 +37,7 @@ const userSchema = new mongoose_1.Schema({
             user_validator_1.default.lastName.maxLength.errorMessage
         ]
     },
+    fullName: String,
     email: {
         type: String,
         required: [true, user_validator_1.default.email.requiredErrorMessage],
