@@ -30,30 +30,19 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
       need to type cast req.fields because it is wrongly typed in d.ts file => it says that each property is string[] | undefined
       which is not true - it is string | undefined
     */
-    // validate fields
-    const errors = {};
-    const firstNameError = user_validator_1.default.validateNames(firstName, 'firstName');
-    if (firstNameError) {
-        errors.firstName = firstNameError;
-    }
-    const lastNameError = user_validator_1.default.validateNames(lastName, 'lastName');
-    if (lastNameError) {
-        errors.lastName = lastNameError;
-    }
-    const emailError = user_validator_1.default.isValidEmail(email);
-    if (emailError) {
-        errors.email = emailError;
-    }
-    const passwordsError = user_validator_1.default.validatePassword(password, passwordConfirm);
-    if (passwordsError) {
-        errors.password = passwordsError;
-    }
+    const { errors } = user_validator_1.default.validateUserInputs({
+        firstName,
+        lastName,
+        email,
+        password,
+        passwordConfirm
+    });
     const userWithEmailExists = yield user_model_1.default.find({ email });
     if (userWithEmailExists.length) {
         next(new appError_1.default(400, 'Provided email is already taken'));
         return;
     }
-    if (Object.keys(errors).length > 0) {
+    if (errors) {
         next(new appError_1.default(422, 'Invalid inputs', errors));
         return;
     }

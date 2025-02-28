@@ -37,28 +37,13 @@ export const signup = catchAsync(async (
     which is not true - it is string | undefined
   */
 
-  // validate fields
-  const errors: {[error: string]: string} = {};
-
-  const firstNameError = UserValidator.validateNames(firstName, 'firstName');
-  if (firstNameError) {
-    errors.firstName = firstNameError;
-  }
-
-  const lastNameError = UserValidator.validateNames(lastName, 'lastName');
-  if (lastNameError) {
-    errors.lastName = lastNameError;
-  }
-
-  const emailError = UserValidator.isValidEmail(email);
-  if (emailError) {
-    errors.email = emailError;
-  }
-
-  const passwordsError = UserValidator.validatePassword(password, passwordConfirm);
-  if (passwordsError) {
-    errors.password = passwordsError;
-  }
+  const { errors } = UserValidator.validateUserInputs({
+    firstName,
+    lastName,
+    email,
+    password,
+    passwordConfirm
+  });
 
   const userWithEmailExists = await User.find({ email });
   if (userWithEmailExists.length) {
@@ -66,7 +51,7 @@ export const signup = catchAsync(async (
     return;
   }
 
-  if (Object.keys(errors).length > 0) {
+  if (errors) {
     next(new AppError(422, 'Invalid inputs', errors));
     return;
   }

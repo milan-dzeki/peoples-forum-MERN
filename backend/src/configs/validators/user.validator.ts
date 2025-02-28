@@ -1,5 +1,25 @@
 import { isEmail } from 'validator';
 
+interface UserInputs {
+  firstName: string | undefined;
+  lastName: string | undefined;
+  email: string | undefined;
+  password: string | undefined;
+  passwordConfirm: string | undefined;
+}
+
+interface ValidationErrors {
+  [name: string]: string | null;
+}
+
+interface Errors {
+  [name: string]: string;
+}
+
+interface ReturnError {
+  error: string | null;
+}
+
 class UserValidator {
   static firstName = {
     requiredErrorMessage: 'First Name is required',
@@ -77,16 +97,16 @@ class UserValidator {
       : null;
   }
 
-  static validateNames = (value: string | undefined, key: 'firstName' | 'lastName'): string | null => {
+  private static validateNames = (value: string | undefined, key: 'firstName' | 'lastName'): ReturnError => {
     const invalidName = this.doesExistAsString(value, this[key].requiredErrorMessage);
     if (invalidName) {
-      return invalidName;
+      return { error: invalidName };
     }
     
     // add exclamation marks for value because it will exist if first check (above) doesn't return error msg
     const multiWord = this.isSingleString(value!, this[key].mustBeOneWordErrorMessage);
     if (multiWord) {
-      return multiWord;
+      return { error: multiWord };
     }
     
     const smallerLengthThanRequired = this.isSmallerThanMinLength(
@@ -95,7 +115,7 @@ class UserValidator {
       this[key].minLength.errorMessage
     );
     if (smallerLengthThanRequired) {
-      return smallerLengthThanRequired;
+      return { error: smallerLengthThanRequired };
     }
 
     const higherLengthThanRequired = this.isHigherThanMaxLength(
@@ -104,16 +124,16 @@ class UserValidator {
       this[key].maxLength.errorMessage
     );
     if (higherLengthThanRequired) {
-      return higherLengthThanRequired;
+      return { error: higherLengthThanRequired };
     }
 
-    return null;
+    return { error: null };
   }
 
-  static isValidEmail (value: string | undefined): string | null {
+  private static isValidEmail (value: string | undefined): ReturnError {
     return !value || !isEmail(value)
-      ? this.email.invalidEmailMesssage
-      : null;
+      ? { error: this.email.invalidEmailMesssage }
+      : { error: null };
   }
 
   private static arePasswordsTheSame (password: string, passwordConfim: string | undefined): string | null {
@@ -122,10 +142,10 @@ class UserValidator {
       : null;
   }
 
-  static validatePassword (password: string | undefined, passwordConfim: string | undefined): string | null {
+  private static validatePassword (password: string | undefined, passwordConfim: string | undefined): ReturnError {
     const invalidPassword = this.doesExistAsString(password, this.password.requiredErrorMessage);
     if (invalidPassword) {
-      return invalidPassword;
+      return { error: invalidPassword };
     }
 
     const smallerLengthThanRequired = this.isSmallerThanMinLength(
@@ -134,7 +154,7 @@ class UserValidator {
       this.password.minLength.errorMessage
     );
     if (smallerLengthThanRequired) {
-      return smallerLengthThanRequired;
+      return { error: smallerLengthThanRequired };
     }
 
     const higherLengthThanRequired = this.isHigherThanMaxLength(
@@ -143,15 +163,44 @@ class UserValidator {
       this.password.maxLength.errorMessage
     );
     if (higherLengthThanRequired) {
-      return higherLengthThanRequired;
+      return { error: higherLengthThanRequired };
     }
 
     const notSame = this.arePasswordsTheSame(password!, passwordConfim);
     if (notSame) {
-      return notSame;
+      return { error: notSame };
     }
 
-    return null;
+    return { error: null };
+  }
+
+  static validateUserInputs (userInputs: UserInputs) {
+    const {
+      firstName,
+      lastName,
+      email,
+      password,
+      passwordConfirm
+    } = userInputs;
+
+    const errors: Errors = {};
+
+    const validationErrors: ValidationErrors = {
+      firstNameError: this.validateNames(firstName, 'firstName').error,
+      lastNameError: this.validateNames(lastName, 'lastName').error,
+      emailError: this.isValidEmail(email).error,
+      passwordError: this.validatePassword(password, passwordConfirm).error
+    };
+
+    Object.keys(validationErrors).forEach((key) => {
+      if (validationErrors[key]) {
+        errors[key] = validationErrors[key];
+      }
+    });
+
+    return Object.keys(errors).length
+      ? { errors }
+      : { errors: null };
   }
 }
 

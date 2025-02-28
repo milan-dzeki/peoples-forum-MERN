@@ -25,8 +25,8 @@ class UserValidator {
     }
     static isValidEmail(value) {
         return !value || !(0, validator_1.isEmail)(value)
-            ? this.email.invalidEmailMesssage
-            : null;
+            ? { error: this.email.invalidEmailMesssage }
+            : { error: null };
     }
     static arePasswordsTheSame(password, passwordConfim) {
         return !passwordConfim || password !== passwordConfim
@@ -36,21 +36,39 @@ class UserValidator {
     static validatePassword(password, passwordConfim) {
         const invalidPassword = this.doesExistAsString(password, this.password.requiredErrorMessage);
         if (invalidPassword) {
-            return invalidPassword;
+            return { error: invalidPassword };
         }
         const smallerLengthThanRequired = this.isSmallerThanMinLength(password, this.password.minLength.value, this.password.minLength.errorMessage);
         if (smallerLengthThanRequired) {
-            return smallerLengthThanRequired;
+            return { error: smallerLengthThanRequired };
         }
         const higherLengthThanRequired = this.isHigherThanMaxLength(password, this.password.maxLength.value, this.password.maxLength.errorMessage);
         if (higherLengthThanRequired) {
-            return higherLengthThanRequired;
+            return { error: higherLengthThanRequired };
         }
         const notSame = this.arePasswordsTheSame(password, passwordConfim);
         if (notSame) {
-            return notSame;
+            return { error: notSame };
         }
-        return null;
+        return { error: null };
+    }
+    static validateUserInputs(userInputs) {
+        const { firstName, lastName, email, password, passwordConfirm } = userInputs;
+        const errors = {};
+        const validationErrors = {
+            firstNameError: this.validateNames(firstName, 'firstName').error,
+            lastNameError: this.validateNames(lastName, 'lastName').error,
+            emailError: this.isValidEmail(email).error,
+            passwordError: this.validatePassword(password, passwordConfirm).error
+        };
+        Object.keys(validationErrors).forEach((key) => {
+            if (validationErrors[key]) {
+                errors[key] = validationErrors[key];
+            }
+        });
+        return Object.keys(errors).length
+            ? { errors }
+            : { errors: null };
     }
 }
 _a = UserValidator;
@@ -97,21 +115,21 @@ UserValidator.password = {
 UserValidator.validateNames = (value, key) => {
     const invalidName = _a.doesExistAsString(value, _a[key].requiredErrorMessage);
     if (invalidName) {
-        return invalidName;
+        return { error: invalidName };
     }
     // add exclamation marks for value because it will exist if first check (above) doesn't return error msg
     const multiWord = _a.isSingleString(value, _a[key].mustBeOneWordErrorMessage);
     if (multiWord) {
-        return multiWord;
+        return { error: multiWord };
     }
     const smallerLengthThanRequired = _a.isSmallerThanMinLength(value, _a[key].minLength.value, _a[key].minLength.errorMessage);
     if (smallerLengthThanRequired) {
-        return smallerLengthThanRequired;
+        return { error: smallerLengthThanRequired };
     }
     const higherLengthThanRequired = _a.isHigherThanMaxLength(value, _a[key].maxLength.value, _a[key].maxLength.errorMessage);
     if (higherLengthThanRequired) {
-        return higherLengthThanRequired;
+        return { error: higherLengthThanRequired };
     }
-    return null;
+    return { error: null };
 };
 exports.default = UserValidator;
