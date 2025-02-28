@@ -6,159 +6,55 @@ const postSettingsSchema = new Schema({
     ref: 'User'
   },
   whoCanSeeMyPostsInFeed: {
-    checked: {
-      everyone: {
-        type: Boolean,
-        default: true
-      },
-      followers: {
-        type: Boolean,
-        default: true
-      },
-      people_I_follow: {
-        type: Boolean,
-        default: true
-      },
-      friends: {
-        type: Boolean,
-        default: true
-      },
-      friends_of_friends: {
-        type: Boolean,
-        default: true
-      },
-      no_one: {
-        type: Boolean,
-        default: false
-      }
-    },
-    displayName: {
-      type: String,
-      default: 'Who can see my posts in Feed',
-      immutable: true
-    },
-    description: {
-      type: String,
-      default: 'This setting decides who can see your posts. This DOESNT apply to community posts - that is decided by community admins. Note that there is additional settings about your posts visibility in profile settings - that applies for posts visibility on your profile page. This applies to posts visibility in Feed',
-      immutable: true
-    }
+    type: [String],
+    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    default: ['everyone']
   },
   whoCanVoteMyPosts: {
-    checked: {
-      everyone: {
-        type: Boolean,
-        default: true
-      },
-      followers: {
-        type: Boolean,
-        default: true
-      },
-      people_I_follow: {
-        type: Boolean,
-        default: true
-      },
-      friends: {
-        type: Boolean,
-        default: true
-      },
-      friends_of_friends: {
-        type: Boolean,
-        default: true
-      },
-      no_one: {
-        type: Boolean,
-        default: false
-      }
-    },
-    displayName: {
-      type: String,
-      default: 'Who can vote my posts',
-      immutable: true
-    },
-    description: {
-      type: String,
-      default: 'This setting decides who can vote your posts. This DOESNT apply to community posts - that is decided by community admins',
-      immutable: true
-    }
+    type: [String],
+    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    default: ['everyone']
   },
   whoCanCommentMyPosts: {
-    checked: {
-      everyone: {
-        type: Boolean,
-        default: true
-      },
-      followers: {
-        type: Boolean,
-        default: true
-      },
-      people_I_follow: {
-        type: Boolean,
-        default: true
-      },
-      friends: {
-        type: Boolean,
-        default: true
-      },
-      friends_of_friends: {
-        type: Boolean,
-        default: true
-      },
-      no_one: {
-        type: Boolean,
-        default: false
-      }
-    },
-    displayName: {
-      type: String,
-      default: 'Who can comment my posts',
-      immutable: true
-    },
-    description: {
-      type: String,
-      default: 'This setting decides who can comment your posts. This DOESNT apply to community posts - that is decided by community admins',
-      immutable: true
-    }
+    type: [String],
+    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    default: ['everyone']
   },
   whoCanShareMyPosts: {
-    checked: {
-      everyone: {
-        type: Boolean,
-        default: true
-      },
-      followers: {
-        type: Boolean,
-        default: true
-      },
-      people_I_follow: {
-        type: Boolean,
-        default: true
-      },
-      friends: {
-        type: Boolean,
-        default: true
-      },
-      friends_of_friends: {
-        type: Boolean,
-        default: true
-      },
-      no_one: {
-        type: Boolean,
-        default: false
-      }
-    },
-    displayName: {
-      type: String,
-      default: 'Who can share my posts',
-      immutable: true
-    },
-    description: {
-      type: String,
-      default: 'This setting decides who can share your posts. This DOESNT apply to community posts - that is decided by community admins',
-      immutable: true
-    }
+    type: [String],
+    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    default: ['everyone']
   }
 }, {
   timestamps: true
+});
+
+postSettingsSchema.virtual('whoCanSeeMyPostsInFeed.metadata').get(function() {
+  return {
+    displayName: 'Who can see my posts in Feed',
+    description: 'This setting decides who can see your posts. This DOESNT apply to community posts - that is decided by community admins. Note that there is additional settings about your posts visibility in profile settings - that applies for posts visibility on your profile page. This applies to posts visibility in Feed'
+  };
+});
+
+postSettingsSchema.virtual('whoCanVoteMyPosts.metadata').get(function() {
+  return {
+    displayName: 'Who can vote my posts',
+    description: 'This setting decides who can vote your posts. This DOESNT apply to community posts - that is decided by community admins'
+  };
+});
+
+postSettingsSchema.virtual('whoCanCommentMyPosts.metadata').get(function() {
+  return {
+    displayName: 'Who can comment my posts',
+    description: 'This setting decides who can comment your posts. This DOESNT apply to community posts - that is decided by community admins'
+  };
+});
+
+postSettingsSchema.virtual('whoCanShareMyPosts.metadata').get(function() {
+  return {
+    displayName: 'Who can share my posts',
+    description:'This setting decides who can share your posts. This DOESNT apply to community posts - that is decided by community admins'
+  };
 });
 
 const PostsSettings = models.PostsSettings || model('PostsSettings', postSettingsSchema);

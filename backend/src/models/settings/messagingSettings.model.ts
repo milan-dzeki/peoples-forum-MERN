@@ -76,7 +76,7 @@ messagingSettingsSchema.virtual('usersThatCannotMessageMe.metadata').get(functio
     displayName: 'Users you disabled from messaging you',
     description: 'This setting stores users that you decided cannot message you but which you havent blocked'
   };
-})
+});
 
 const MessagingSettings = models.MessagingSettings || model('InteractionSettings', messagingSettingsSchema);
 
