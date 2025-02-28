@@ -6,23 +6,31 @@ const postSettingsSchema = new Schema({
     ref: 'User'
   },
   whoCanSeeMyPostsInFeed: {
-    type: [String],
-    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    type: [{
+      type: String,
+      enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+    }],
     default: ['everyone']
   },
   whoCanVoteMyPosts: {
-    type: [String],
-    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    type: [{
+      type: String,
+      enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+    }],
     default: ['everyone']
   },
   whoCanCommentMyPosts: {
-    type: [String],
-    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    type: [{
+      type: String,
+      enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+    }],
     default: ['everyone']
   },
   whoCanShareMyPosts: {
-    type: [String],
-    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    type: [{
+      type: String,
+      enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+    }],
     default: ['everyone']
   }
 }, {

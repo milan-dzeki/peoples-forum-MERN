@@ -6,8 +6,10 @@ const messagingSettingsSchema = new Schema({
     ref: 'User'
   },
   whoCanMessageMe: {
-    type: [String],
-    enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
+    type: [{
+      type: String,
+      enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+    }],
     default: ['everyone']
   },
   requestMessaging: {
@@ -15,8 +17,10 @@ const messagingSettingsSchema = new Schema({
     default: false
   },
   whatMessageDataCanPeopleSendMe: {
-    type: [String],
-    enum: ['all_data_types', 'text_messages', 'audio_messages', 'video_messages', 'link_messages'],
+    type: [{
+      type: String,
+      enum: ['all_data_types', 'text_messages', 'audio_messages', 'video_messages', 'link_messages']
+    }],
     default: ['all_data_types']
   },
   addMeToJoinedCommunitiesChats: {

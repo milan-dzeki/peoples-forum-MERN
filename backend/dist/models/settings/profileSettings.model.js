@@ -9,93 +9,93 @@ const profileSettingsSchema = new mongoose_1.Schema({
     whoCanSeeMyProfileInfo: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMyPosts: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMyComments: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMyUpvotes: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMyDownvotes: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMySavedPosts: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMySavedComments: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMyFriends: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMyFollowers: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeePeopleIFollow: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMyCommunities: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeCommunitiesIJoined: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     },
     whoCanSeeMyActivityStats: {
         type: [{
                 type: String,
-                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one'],
-                default: ['everyone']
-            }]
+                enum: ['everyone', 'followers', 'people_I_follow', 'friends', 'friends_of_friends', 'no_one']
+            }],
+        default: ['everyone']
     }
 }, {
     timestamps: true
