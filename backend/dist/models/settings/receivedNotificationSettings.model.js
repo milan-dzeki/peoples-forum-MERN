@@ -8,294 +8,82 @@ const receivedNotificationsSettingsSchema = new mongoose_1.Schema({
     },
     postsNotifications: {
         myPostsVoted: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me for my post votes',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when your posts are voted',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         myPostsCommented: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when my post gets comments',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when your posts get comments',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         myPostsShared: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when people share my posts',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when people share your posts',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
+        },
+        myCommentsVoted: {
+            type: Boolean,
+            default: true
         },
         myCommentsShared: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when people share my comments',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when people share your comments',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         peopleIFollowCreatePost: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when people I follow post',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when people you follow create posts',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         peopleIFollowVotePost: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when people I follow vote post',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when people you follow vote posts',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         peopleIFollowComment: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when people I follow post comments',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when people you follow post comment',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
-        peopleIFollowVoteComments: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when people I follow vote comments',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when people you follow vote comments',
-                immutable: true
-            }
+        peopleIFollowVoteComment: {
+            type: Boolean,
+            default: true
         },
         postTags: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when I am taged in posts',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when you are taged in posts',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         commentTags: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when I am taged in comments',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when you are taged in comments',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         commentReplies: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when my comments get replies',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when your comments get replies',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         }
     },
     communitiesNotifications: {
         newCommunityPost: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when new community post get created',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when new community post is created',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         communityRulesUpdated: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when new community rules get updated',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when community rules get updated',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         communityDeleted: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when new communities get deleted',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when comunities get deleted',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         newCommunityChatCreated: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when new community chats get created',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when community chats get created',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         communityChatDeleted: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when community chats get deleted',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when community chats get deleted',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         yourCommunityPostsDeleted: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when my community posts get deleted',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when your community posts are deleted by admins',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         yourCommunityCommentsDeleted: {
-            checked: {
-                type: Boolean,
-                default: true
-            },
-            displayName: {
-                type: String,
-                default: 'Notify me when my community comments get deleted',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'This setting decides whether you will be notified when your community comments are deleted by admins',
-                immutable: true
-            }
+            type: Boolean,
+            default: true
         },
         notificationsTurnedOffForCommunities: {
             communities: [
@@ -303,21 +91,135 @@ const receivedNotificationsSettingsSchema = new mongoose_1.Schema({
                     type: mongoose_1.Schema.Types.ObjectId,
                     ref: 'Community'
                 }
-            ],
-            displayName: {
-                type: String,
-                default: 'Dont get notifications from these communities',
-                immutable: true
-            },
-            description: {
-                type: String,
-                default: 'You will not get any notifications from activities in these communities',
-                immutable: true
-            }
+            ]
         },
     }
 }, {
     timestamps: true
 });
+// Post Notifications virtuals --START
+receivedNotificationsSettingsSchema.virtual('postsNotifications.myPostsVoted.metadata').get(function () {
+    return {
+        displayName: 'Notify me for my post votes',
+        description: 'This setting decides whether you will be notified when your posts are voted'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.myPostsCommented.metadata').get(function () {
+    return {
+        displayName: 'Notify me when my posts get comments',
+        description: 'This setting decides whether you will be notified when your posts get comments'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.myPostsShared.metadata').get(function () {
+    return {
+        displayName: 'Notify me when people share my posts',
+        description: 'This setting decides whether you will be notified when people share your posts'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.myCommentsVoted.metadata').get(function () {
+    return {
+        displayName: 'Notify me when people vote my comments',
+        description: 'This setting decides whether you will be notified when people vote your comments'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.myCommentsShared.metadata').get(function () {
+    return {
+        displayName: 'Notify me when people share my comments',
+        description: 'This setting decides whether you will be notified when people share your comments'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.peopleIFollowCreatePost.metadata').get(function () {
+    return {
+        displayName: 'Notify me when people I follow post',
+        description: 'This setting decides whether you will be notified when people you follow create posts',
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.peopleIFollowVotePost.metadata').get(function () {
+    return {
+        displayName: 'Notify me when people I follow vote post',
+        description: 'This setting decides whether you will be notified when people you follow vote posts'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.peopleIFollowComment.metadata').get(function () {
+    return {
+        displayName: 'Notify me when people I follow post comments',
+        description: 'This setting decides whether you will be notified when people you follow post comment'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.peopleIFollowVoteComment.metadata').get(function () {
+    return {
+        displayName: 'Notify me when people I follow vote comments',
+        description: 'This setting decides whether you will be notified when people you follow vote comments'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.postTags.metadata').get(function () {
+    return {
+        displayName: 'Notify me when I am taged in posts',
+        description: 'This setting decides whether you will be notified when you are taged in posts'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.commentTags.metadata').get(function () {
+    return {
+        displayName: 'Notify me when I am taged in comments',
+        description: 'This setting decides whether you will be notified when you are taged in comments'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('postsNotifications.commentReplies.metadata').get(function () {
+    return {
+        displayName: 'Notify me when my comments get replies',
+        description: 'This setting decides whether you will be notified when your comments get replies'
+    };
+});
+// Post Notifications virtuals --END
+// Communities Notifications virtuals --START
+receivedNotificationsSettingsSchema.virtual('communitiesNotifications.newCommunityPost.metadata').get(function () {
+    return {
+        displayName: 'Notify me when new community post get created',
+        description: 'This setting decides whether you will be notified when new community post is created'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('communitiesNotifications.communityRulesUpdated.metadata').get(function () {
+    return {
+        displayName: 'Notify me when new community rules get updated',
+        description: 'This setting decides whether you will be notified when community rules get updated'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('communitiesNotifications.communityDeleted.metadata').get(function () {
+    return {
+        displayName: 'Notify me when new communities get deleted',
+        description: 'This setting decides whether you will be notified when comunities get deleted'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('communitiesNotifications.newCommunityChatCreated.metadata').get(function () {
+    return {
+        displayName: 'Notify me when new community chats get created',
+        description: 'This setting decides whether you will be notified when community chats get created'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('communitiesNotifications.communityChatDeleted.metadata').get(function () {
+    return {
+        displayName: 'Notify me when community chats get deleted',
+        description: 'This setting decides whether you will be notified when community chats get deleted'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('communitiesNotifications.yourCommunityPostsDeleted.metadata').get(function () {
+    return {
+        displayName: 'Notify me when my community posts get deleted',
+        description: 'This setting decides whether you will be notified when your community posts are deleted by admins'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('communitiesNotifications.yourCommunityCommentsDeleted.metadata').get(function () {
+    return {
+        displayName: 'Notify me when my community comments get deleted',
+        description: 'This setting decides whether you will be notified when your community comments are deleted by admins'
+    };
+});
+receivedNotificationsSettingsSchema.virtual('communitiesNotifications.notificationsTurnedOffForCommunities.metadata').get(function () {
+    return {
+        displayName: 'Dont get notifications from these communities',
+        description: 'You will not get any notifications from activities in these communities'
+    };
+});
+// Communities Notifications virtuals --END
 const ReceivedNotificationSettingsModel = mongoose_1.models.NotificationSettingsModel || (0, mongoose_1.model)('ReceivedNotificationSettingsModel', receivedNotificationsSettingsSchema);
 exports.default = ReceivedNotificationSettingsModel;
