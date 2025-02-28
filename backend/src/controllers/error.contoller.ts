@@ -30,7 +30,7 @@ const globalErrorHandler: ErrorRequestHandler = (
       responseData.message = message;
     }
 
-    if (errors && errors.length > 0) {
+    if (errors && Object.keys(errors).length > 0) {
       responseData.errors = errors;
     }
 

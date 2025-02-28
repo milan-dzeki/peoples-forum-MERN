@@ -5,7 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const error_contoller_1 = __importDefault(require("controllers/error.contoller"));
+const auth_router_1 = __importDefault(require("routes/auth.router"));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
+app.use('/api/v0/auth', auth_router_1.default);
 app.use(error_contoller_1.default);
 exports.default = app;

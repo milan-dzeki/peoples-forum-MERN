@@ -1,32 +1,51 @@
 import { Schema, models, model } from 'mongoose';
 import { isEmail } from 'validator';
+import UserValidator from 'configs/validators/user.validator';
 
 const userSchema = new Schema({
   firstName: {
     type: String,
-    required: [true, 'First Name is required'],
-    minLength: [2, 'First Name must be at least 2 characters long'],
-    maxLength: [10, 'First Name must not exceed 10 characters']
+    required: [
+      true,
+      UserValidator.firstName.requiredErrorMessage
+    ],
+    minLength: [
+      UserValidator.firstName.minLength.value, 
+      UserValidator.firstName.minLength.errorMessage
+    ],
+    maxLength: [
+      UserValidator.firstName.maxLength.value, 
+      UserValidator.firstName.maxLength.errorMessage
+    ]
   },
   lastName: {
     type: String,
-    required: [true, 'Last Name is required'],
-    minLength: [2, 'Last Name must be at least 2 characters long'],
-    maxLength: [10, 'Last Name must not exceed 10 characters']
+    required: [
+      true,
+      UserValidator.lastName.requiredErrorMessage
+    ],
+    minLength: [
+      UserValidator.lastName.minLength.value, 
+      UserValidator.lastName.minLength.errorMessage
+    ],
+    maxLength: [
+      UserValidator.lastName.maxLength.value, 
+      UserValidator.lastName.maxLength.errorMessage
+    ]
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: [true, UserValidator.email.requiredErrorMessage],
     lowercase: true,
     unique: true,
     validate: [
       isEmail,
-      'Email format is not valid'
+      UserValidator.email.invalidEmailMesssage
     ]
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: [true, UserValidator.password.requiredErrorMessage],
     select: false
   },
   role: {

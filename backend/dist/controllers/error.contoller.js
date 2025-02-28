@@ -11,7 +11,7 @@ const globalErrorHandler = (error, _, res, _1) => {
         if (message.trim().length > 1) {
             responseData.message = message;
         }
-        if (errors && errors.length > 0) {
+        if (errors && Object.keys(errors).length > 0) {
             responseData.errors = errors;
         }
         res.status(statusCode).json(responseData);
