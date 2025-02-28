@@ -30,7 +30,7 @@ const receivedNotificationsSettingsSchema = new mongoose_1.Schema({
             },
             displayName: {
                 type: String,
-                default: 'Notify me for my post gets comments',
+                default: 'Notify me when my post gets comments',
                 immutable: true
             },
             description: {
@@ -256,7 +256,7 @@ const receivedNotificationsSettingsSchema = new mongoose_1.Schema({
             },
             displayName: {
                 type: String,
-                default: 'Notify me when new community chats get deleted',
+                default: 'Notify me when community chats get deleted',
                 immutable: true
             },
             description: {

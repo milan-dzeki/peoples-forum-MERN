@@ -116,7 +116,7 @@ const profileSettingsSchema = new mongoose_1.Schema({
         },
         description: {
             type: String,
-            default: 'This setting decides who can see your created comments upon your profile visi',
+            default: 'This setting decides who can see your created comments upon your profile visit',
             immutable: true
         }
     },
@@ -263,12 +263,12 @@ const profileSettingsSchema = new mongoose_1.Schema({
         },
         displayName: {
             type: String,
-            default: 'Who can see my saved posts',
+            default: 'Who can see my saved comments',
             immutable: true
         },
         description: {
             type: String,
-            default: 'This setting decides who can see your saved posts upon your profile visit',
+            default: 'This setting decides who can see your saved comments upon your profile visit',
             immutable: true
         }
     },
