@@ -7,6 +7,6 @@ const config = {
   secure: true
 };
 
-const cloudinaryConfigured = cloudinary.config(config);
+cloudinary.config(config);
 
-export default cloudinaryConfigured;
+export default cloudinary;

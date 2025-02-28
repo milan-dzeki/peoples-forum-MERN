@@ -7,5 +7,5 @@ const config = {
     api_secret: process.env.CLOUDINARY_API_SECRET,
     secure: true
 };
-const cloudinaryConfigured = cloudinary_1.v2.config(config);
-exports.default = cloudinaryConfigured;
+cloudinary_1.v2.config(config);
+exports.default = cloudinary_1.v2;
