@@ -17,6 +17,7 @@ const globalErrorHandler = (error, _, res, _1) => {
         res.status(statusCode).json(responseData);
         return;
     }
+    console.log(error);
     res.status(500).json({
         status: 'error',
         message: 'Something went wrong'

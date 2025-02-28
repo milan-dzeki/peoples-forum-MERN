@@ -37,7 +37,7 @@ const globalErrorHandler: ErrorRequestHandler = (
     res.status(statusCode).json(responseData);
     return;
   }
-
+  console.log(error);
   res.status(500).json({
     status: 'error',
     message: 'Something went wrong'
