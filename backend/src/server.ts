@@ -1,3 +1,4 @@
+import 'module-alias/register'
 import http from 'http';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
