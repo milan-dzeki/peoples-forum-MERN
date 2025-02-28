@@ -7,8 +7,8 @@ require("module-alias/register");
 const http_1 = __importDefault(require("http"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const app_1 = __importDefault(require("./app"));
 dotenv_1.default.config();
+const app_1 = __importDefault(require("./app"));
 const server = http_1.default.createServer(app_1.default);
 mongoose_1.default.connect(process.env.MONGO_DATABASE_CONNECT_STRING)
     .then(() => {
