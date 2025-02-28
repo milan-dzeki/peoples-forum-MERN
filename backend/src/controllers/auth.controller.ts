@@ -6,16 +6,12 @@ import catchAsync from 'utils/catchAsync';
 import cloudinary from 'configs/cloudinary';
 import AppError from 'utils/appError';
 import UserValidator from 'configs/validators/user.validator';
-import createTokenCookieAndResponseUser from 'services/auth/auth.service';
+import {
+  createTokenCookieAndResponseUser, 
+  createRequiredCollectionsAfterUserCreation ,
+  deleteUserAndPhotoOnSignupFail
+} from 'services/auth/auth.service';
 import User from 'models/user.model';
-import Profile from 'models/profile.model';
-import Friends from 'models/friendsAndFollowers/friends.model';
-import Followers from 'models/friendsAndFollowers/followers.model';
-import BlockedUsersSettings from 'models/settings/blockedUsersSettings.model';
-import ProfileSettings from 'models/settings/profileSettings.model';
-import MessagingSettings from 'models/settings/messagingSettings.model';
-import PostsSettings from 'models/settings/postsSettings.model';
-import ReceivedNotificationSettings from 'models/settings/receivedNotificationSettings.model';
 
 export const signup = catchAsync(async (
   req: RequestWithBodyType, 
@@ -120,37 +116,19 @@ export const signup = catchAsync(async (
   const signedUser = createTokenCookieAndResponseUser(newUser);
 
   if (!signedUser) {
-    if (newUser.profilePhotoPublicId) {
-      await cloudinary.uploader.destroy(newUser.profilePhotoPublicId);
-    }
-    await User.deleteOne({ _id: newUser._id });
+    await deleteUserAndPhotoOnSignupFail(newUser);
     next(new AppError(500, 'User creation failed. Maybe servers are down. Refresh the page and try again'));
     return;
   }
 
   const { user, token } = signedUser;
 
-  await Profile.create({ user: user._id });
-  await Friends.create({
-    user: user._id,
-    receivedPendingRequests: [],
-    sentPendingRequests: [],
-    friends: []
-  });
-  await Followers.create({
-    user: user._id,
-    myFollowers: [],
-    peopleIFollow: []
-  });
-  await BlockedUsersSettings.create({
-    user: user._id,
-    blockedByMe: [],
-    blockedMe: []
-  });
-  await ProfileSettings.create({ user: user._id });
-  await MessagingSettings.create({ user: user._id });
-  await PostsSettings.create({ user: user._id });
-  await ReceivedNotificationSettings.create({ user: user._id });
+  const { createModelsError } = await createRequiredCollectionsAfterUserCreation(user._id.toString());
+  if (createModelsError) {
+    await deleteUserAndPhotoOnSignupFail(newUser);
+    next(new AppError(500, createModelsError));
+    return;
+  }
 
   res.cookie('_pplFrmCKK', token, {
     httpOnly: true,

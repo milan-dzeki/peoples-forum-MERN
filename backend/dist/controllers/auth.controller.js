@@ -18,16 +18,8 @@ const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const appError_1 = __importDefault(require("utils/appError"));
 const user_validator_1 = __importDefault(require("configs/validators/user.validator"));
-const auth_service_1 = __importDefault(require("services/auth/auth.service"));
+const auth_service_1 = require("services/auth/auth.service");
 const user_model_1 = __importDefault(require("models/user.model"));
-const profile_model_1 = __importDefault(require("models/profile.model"));
-const friends_model_1 = __importDefault(require("models/friendsAndFollowers/friends.model"));
-const followers_model_1 = __importDefault(require("models/friendsAndFollowers/followers.model"));
-const blockedUsersSettings_model_1 = __importDefault(require("models/settings/blockedUsersSettings.model"));
-const profileSettings_model_1 = __importDefault(require("models/settings/profileSettings.model"));
-const messagingSettings_model_1 = __importDefault(require("models/settings/messagingSettings.model"));
-const postsSettings_model_1 = __importDefault(require("models/settings/postsSettings.model"));
-const receivedNotificationSettings_model_1 = __importDefault(require("models/settings/receivedNotificationSettings.model"));
 exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.fields) {
         next(new appError_1.default(500, 'Request fields are missing. try refreshing the page and try again'));
@@ -97,37 +89,19 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
         }
     }
     const newUser = yield user_model_1.default.create(prepareUserForCreation);
-    const signedUser = (0, auth_service_1.default)(newUser);
+    const signedUser = (0, auth_service_1.createTokenCookieAndResponseUser)(newUser);
     if (!signedUser) {
-        if (newUser.profilePhotoPublicId) {
-            yield cloudinary_1.default.uploader.destroy(newUser.profilePhotoPublicId);
-        }
-        yield user_model_1.default.deleteOne({ _id: newUser._id });
+        yield (0, auth_service_1.deleteUserAndPhotoOnSignupFail)(newUser);
         next(new appError_1.default(500, 'User creation failed. Maybe servers are down. Refresh the page and try again'));
         return;
     }
     const { user, token } = signedUser;
-    yield profile_model_1.default.create({ user: user._id });
-    yield friends_model_1.default.create({
-        user: user._id,
-        receivedPendingRequests: [],
-        sentPendingRequests: [],
-        friends: []
-    });
-    yield followers_model_1.default.create({
-        user: user._id,
-        myFollowers: [],
-        peopleIFollow: []
-    });
-    yield blockedUsersSettings_model_1.default.create({
-        user: user._id,
-        blockedByMe: [],
-        blockedMe: []
-    });
-    yield profileSettings_model_1.default.create({ user: user._id });
-    yield messagingSettings_model_1.default.create({ user: user._id });
-    yield postsSettings_model_1.default.create({ user: user._id });
-    yield receivedNotificationSettings_model_1.default.create({ user: user._id });
+    const { createModelsError } = yield (0, auth_service_1.createRequiredCollectionsAfterUserCreation)(user._id.toString());
+    if (createModelsError) {
+        yield (0, auth_service_1.deleteUserAndPhotoOnSignupFail)(newUser);
+        next(new appError_1.default(500, createModelsError));
+        return;
+    }
     res.cookie('_pplFrmCKK', token, {
         httpOnly: true,
         secure: false,
