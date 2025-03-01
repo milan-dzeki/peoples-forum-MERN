@@ -1,11 +1,10 @@
 import { Router } from 'express';
 import formidable from 'express-formidable';
-import { signup, login } from 'controllers/auth.controller';
-import isAuth from 'middleware/isAuth.middleware';
+import { signup, login } from 'controllers/authController';
 
 const router = Router();
 
 router.post('/signup', formidable(), signup);
-router.post('/login', isAuth, login);
+router.post('/login', login);
 
 export default router;

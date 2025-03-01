@@ -1,16 +1,16 @@
 import jwt from 'jsonwebtoken';
 import cloudinary from 'configs/cloudinary';
-import type { UserSchemaType } from 'models/user.model';
+import type { UserSchemaType } from 'models/userModel';
 import type { ResponseAuthUserType } from 'types/controllers/auth';
-import User from 'models/user.model';
-import Profile from 'models/profile.model';
-import Friends from 'models/friendsAndFollowers/friends.model';
-import Followers from 'models/friendsAndFollowers/followers.model';
-import BlockedUsersSettings from 'models/settings/blockedUsersSettings.model';
-import ProfileSettings from 'models/settings/profileSettings.model';
-import MessagingSettings from 'models/settings/messagingSettings.model';
-import PostsSettings from 'models/settings/postsSettings.model';
-import ReceivedNotificationSettings from 'models/settings/receivedNotificationSettings.model';
+import User from 'models/userModel';
+import Profile from 'models/profileModel';
+import Friends from 'models/friendsAndFollowers/friendsModel';
+import Followers from 'models/friendsAndFollowers/followersModel';
+import BlockedUsersSettings from 'models/settings/blockedUsersSettingsModel';
+import ProfileSettings from 'models/settings/profileSettingsModel';
+import MessagingSettings from 'models/settings/messagingSettingsModel';
+import PostsSettings from 'models/settings/postsSettingsModel';
+import ReceivedNotificationSettings from 'models/settings/receivedNotificationSettingsModel';
 
 export const createTokenCookieAndResponseUser = (user: UserSchemaType): {
   user: ResponseAuthUserType;

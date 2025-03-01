@@ -4,8 +4,14 @@ const communitySchema = new Schema({
   creator: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Community cretaor ID is required']
+    required: [true, 'Community creator ID is required']
   },
+  pendingInvitedModerators: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  ],
   moderators: [
     {
       type: Schema.Types.ObjectId,
@@ -14,7 +20,10 @@ const communitySchema = new Schema({
   ],
   access: {
     type: String,
-    enum: ['public', 'private'],
+    enum: {
+      values: ['public', 'private'],
+      message: 'Communitys access value can only be "public" or "private"'
+    },
     default: 'public'
   }, 
   name: {
@@ -41,8 +50,24 @@ const communitySchema = new Schema({
   },
   rules: [
     {
-      title: String,
-      description: String
+      title: {
+        type: String,
+        required: false,
+        minLength: 5,
+        maxLength: 20
+      },
+      description: {
+        type: String,
+        required: false,
+        minLength: 5,
+        maxLength: 100
+      }
+    }
+  ],
+  pendingInvitedUsers: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'User'
     }
   ],
   joinedUsers: [

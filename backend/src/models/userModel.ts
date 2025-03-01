@@ -1,52 +1,52 @@
 import { Schema, models, model, InferSchemaType, HydratedDocument } from 'mongoose';
 import { isEmail } from 'validator';
-import UserValidator from 'configs/validators/user.validator';
+import signupInputRules from 'configs/validators/auth/signupInputsRules';
 
 const userSchema = new Schema({
   firstName: {
     type: String,
     required: [
       true,
-      UserValidator.firstName.requiredErrorMessage
+      signupInputRules.firstName.requiredErrorMessage
     ],
     minLength: [
-      UserValidator.firstName.minLength.value, 
-      UserValidator.firstName.minLength.errorMessage
+      signupInputRules.firstName.minLength.value, 
+      signupInputRules.firstName.minLength.errorMessage
     ],
     maxLength: [
-      UserValidator.firstName.maxLength.value, 
-      UserValidator.firstName.maxLength.errorMessage
+      signupInputRules.firstName.maxLength.value, 
+      signupInputRules.firstName.maxLength.errorMessage
     ]
   },
   lastName: {
     type: String,
     required: [
       true,
-      UserValidator.lastName.requiredErrorMessage
+      signupInputRules.lastName.requiredErrorMessage
     ],
     minLength: [
-      UserValidator.lastName.minLength.value, 
-      UserValidator.lastName.minLength.errorMessage
+      signupInputRules.lastName.minLength.value, 
+      signupInputRules.lastName.minLength.errorMessage
     ],
     maxLength: [
-      UserValidator.lastName.maxLength.value, 
-      UserValidator.lastName.maxLength.errorMessage
+      signupInputRules.lastName.maxLength.value, 
+      signupInputRules.lastName.maxLength.errorMessage
     ]
   },
   fullName: String,
   email: {
     type: String,
-    required: [true, UserValidator.email.requiredErrorMessage],
+    required: [true, signupInputRules.email.requiredErrorMessage],
     lowercase: true,
     unique: true,
     validate: [
       isEmail,
-      UserValidator.email.invalidEmailMesssage
+      signupInputRules.email.invalidEmailMesssage
     ]
   },
   password: {
     type: String,
-    required: [true, UserValidator.password.requiredErrorMessage],
+    required: [true, signupInputRules.password.requiredErrorMessage],
     select: false
   },
   role: {

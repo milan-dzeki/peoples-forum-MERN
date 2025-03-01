@@ -5,13 +5,13 @@ import { PrepareUserForCreateType } from 'types/controllers/auth';
 import catchAsync from 'utils/catchAsync';
 import cloudinary from 'configs/cloudinary';
 import AppError from 'utils/appError';
-import UserValidator from 'configs/validators/user.validator';
+import UserValidator from 'configs/validators/auth/signupValidator';
 import {
   createTokenCookieAndResponseUser, 
   createRequiredCollectionsAfterUserCreation ,
   deleteUserAndPhotoOnSignupFail
-} from 'services/auth/auth.service';
-import User from 'models/user.model';
+} from 'services/auth/authService';
+import User from 'models/userModel';
 
 export const signup = catchAsync (async (
   req: RequestWithBodyType, 
@@ -30,14 +30,14 @@ export const signup = catchAsync (async (
     password,
     passwordConfirm
   } = req.fields as {
-    [key: string]: string | undefined;
+    [key: string]: string | undefined
   };
   /*
     need to type cast req.fields because it is wrongly typed in d.ts file => it says that each property is string[] | undefined
     which is not true - it is string | undefined
   */
 
-  const { errors } = UserValidator.validateUserInputs({
+  const { errors } = await UserValidator.validateUserInputs({
     firstName,
     lastName,
     email,

@@ -5,8 +5,14 @@ const communitySchema = new mongoose_1.Schema({
     creator: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
-        required: [true, 'Community cretaor ID is required']
+        required: [true, 'Community creator ID is required']
     },
+    pendingInvitedModerators: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
     moderators: [
         {
             type: mongoose_1.Schema.Types.ObjectId,
@@ -15,7 +21,10 @@ const communitySchema = new mongoose_1.Schema({
     ],
     access: {
         type: String,
-        enum: ['public', 'private'],
+        enum: {
+            values: ['public', 'private'],
+            message: 'Communitys access value can only be "public" or "private"'
+        },
         default: 'public'
     },
     name: {
@@ -42,8 +51,24 @@ const communitySchema = new mongoose_1.Schema({
     },
     rules: [
         {
-            title: String,
-            description: String
+            title: {
+                type: String,
+                required: false,
+                minLength: 5,
+                maxLength: 20
+            },
+            description: {
+                type: String,
+                required: false,
+                minLength: 5,
+                maxLength: 100
+            }
+        }
+    ],
+    pendingInvitedUsers: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'User'
         }
     ],
     joinedUsers: [

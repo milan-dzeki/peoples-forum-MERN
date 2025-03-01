@@ -17,9 +17,9 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const appError_1 = __importDefault(require("utils/appError"));
-const user_validator_1 = __importDefault(require("configs/validators/user.validator"));
-const auth_service_1 = require("services/auth/auth.service");
-const user_model_1 = __importDefault(require("models/user.model"));
+const signupValidator_1 = __importDefault(require("configs/validators/auth/signupValidator"));
+const authService_1 = require("services/auth/authService");
+const userModel_1 = __importDefault(require("models/userModel"));
 exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.fields) {
         next(new appError_1.default(500, 'Request fields are missing. try refreshing the page and try again'));
@@ -30,14 +30,14 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
       need to type cast req.fields because it is wrongly typed in d.ts file => it says that each property is string[] | undefined
       which is not true - it is string | undefined
     */
-    const { errors } = user_validator_1.default.validateUserInputs({
+    const { errors } = yield signupValidator_1.default.validateUserInputs({
         firstName,
         lastName,
         email,
         password,
         passwordConfirm
     });
-    const userWithEmailExists = yield user_model_1.default.find({ email });
+    const userWithEmailExists = yield userModel_1.default.find({ email });
     if (userWithEmailExists.length) {
         next(new appError_1.default(400, 'Provided email is already taken'));
         return;
@@ -77,17 +77,17 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
             prepareUserForCreation.profilePhotoPublicId = uploadedPhoto.secure_url;
         }
     }
-    const newUser = yield user_model_1.default.create(prepareUserForCreation);
-    const signedUser = (0, auth_service_1.createTokenCookieAndResponseUser)(newUser);
+    const newUser = yield userModel_1.default.create(prepareUserForCreation);
+    const signedUser = (0, authService_1.createTokenCookieAndResponseUser)(newUser);
     if (!signedUser) {
-        yield (0, auth_service_1.deleteUserAndPhotoOnSignupFail)(newUser);
+        yield (0, authService_1.deleteUserAndPhotoOnSignupFail)(newUser);
         next(new appError_1.default(500, 'User creation failed. Maybe servers are down. Refresh the page and try again'));
         return;
     }
     const { user, token } = signedUser;
-    const { createModelsError } = yield (0, auth_service_1.createRequiredCollectionsAfterUserCreation)(user._id.toString());
+    const { createModelsError } = yield (0, authService_1.createRequiredCollectionsAfterUserCreation)(user._id.toString());
     if (createModelsError) {
-        yield (0, auth_service_1.deleteUserAndPhotoOnSignupFail)(newUser);
+        yield (0, authService_1.deleteUserAndPhotoOnSignupFail)(newUser);
         next(new appError_1.default(500, createModelsError));
         return;
     }
@@ -108,7 +108,7 @@ exports.login = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, 
         next(new appError_1.default(422, 'Email and password are required'));
         return;
     }
-    const userDB = yield user_model_1.default.findOne({ email }).select('+password');
+    const userDB = yield userModel_1.default.findOne({ email }).select('+password');
     if (!userDB) {
         next(new appError_1.default(400, 'Invalid email or password'));
         return;
@@ -118,7 +118,7 @@ exports.login = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, 
         next(new appError_1.default(400, 'Invalid email or password'));
         return;
     }
-    const signedUser = (0, auth_service_1.createTokenCookieAndResponseUser)(userDB);
+    const signedUser = (0, authService_1.createTokenCookieAndResponseUser)(userDB);
     if (!signedUser) {
         next(new appError_1.default(500, 'User login. Maybe servers are down. Refresh the page and try again'));
         return;

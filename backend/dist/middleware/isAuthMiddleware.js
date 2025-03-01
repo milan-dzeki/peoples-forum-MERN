@@ -14,30 +14,35 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const appError_1 = __importDefault(require("utils/appError"));
-const user_model_1 = __importDefault(require("models/user.model"));
+const userModel_1 = __importDefault(require("models/userModel"));
 const notLoggedInError = new appError_1.default(401, 'You are not logged in or your session has expired.');
 const isAuth = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const cookies = req.cookies;
-    if (!cookies) {
-        next(notLoggedInError);
-        return;
+    try {
+        const cookies = req.cookies;
+        if (!cookies) {
+            next(notLoggedInError);
+            return;
+        }
+        const token = cookies['_pplFrmCKK'];
+        if (!token) {
+            next(notLoggedInError);
+            return;
+        }
+        const decodedToken = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+        if (!decodedToken || (decodedToken && !decodedToken.userId)) {
+            next(notLoggedInError);
+            return;
+        }
+        const user = yield userModel_1.default.findById(decodedToken.userId);
+        if (!user) {
+            next(notLoggedInError);
+            return;
+        }
+        req.userId = user._id;
+        next();
     }
-    const token = cookies['_pplFrmCKK'];
-    if (!token) {
-        next(notLoggedInError);
-        return;
+    catch (error) {
+        next(new appError_1.default(500, 'Token expired'));
     }
-    const decodedToken = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
-    if (!decodedToken || (decodedToken && !decodedToken.userId)) {
-        next(notLoggedInError);
-        return;
-    }
-    const user = yield user_model_1.default.findById(decodedToken.userId);
-    if (!user) {
-        next(notLoggedInError);
-        return;
-    }
-    req.userId = user._id;
-    next();
 });
 exports.default = isAuth;
