@@ -6,4 +6,8 @@ export interface RequestWithBodyType extends Request {
   };
 }
 
+export interface RequestWithUserIdType extends Request {
+  userId?: string;
+}
+
 export type ControllerType = (req: RequestWithBodyType, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;

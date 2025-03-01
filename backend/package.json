@@ -13,7 +13,8 @@
     "routes": "./dist/routes",
     "models": "./dist/models",
     "controllers": "./dist/controllers",
-    "services": "./dist/services"
+    "services": "./dist/services",
+    "middleware": "./dist/middleware"
   },
   "scripts": {
     "start:build": "tsc -w",
