@@ -19,4 +19,5 @@ router.patch('/:communityId/updateBannerImage', communityMiddlewares_1.doesCommu
 router.patch('/:communityId/removeBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityController_1.removeCommunityBannerImage);
 router.patch('/:communityId/banUserFromCommunity', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityController_1.banUserFromCommunity);
 router.patch('/:communityId/undoUserCommunityBan', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityController_1.undoBanUserFromCommunity);
+router.patch('/:communityId/invite', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityController_1.inviteUserToJoinCommunity);
 exports.default = router;

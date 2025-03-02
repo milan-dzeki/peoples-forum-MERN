@@ -10,7 +10,8 @@ import {
   updateCommunityBannerImage,
   removeCommunityBannerImage, 
   banUserFromCommunity,
-  undoBanUserFromCommunity
+  undoBanUserFromCommunity,
+  inviteUserToJoinCommunity
 } from 'controllers/communityController';
 import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator } from 'middleware/communityMiddlewares';
 
@@ -77,6 +78,13 @@ router.patch(
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
   undoBanUserFromCommunity
+);
+
+router.patch(
+  '/:communityId/invite',
+  doesCommunityExist, 
+  isLoggedUserCommunityCreatorOrModerator,
+  inviteUserToJoinCommunity
 );
 
 export default router;

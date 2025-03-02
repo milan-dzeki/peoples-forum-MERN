@@ -407,7 +407,7 @@ export const undoBanUserFromCommunity = catchAsync (async (
     inviteUserToJoinOrModerate &&
     (inviteUserToJoinOrModerate === 'member' || inviteUserToJoinOrModerate === 'moderator')
   ) {
-    let notificationData = {
+    const notificationData = {
       receiver: userToRemoveBanId,
       notificationType: inviteUserToJoinOrModerate === 'member' ? 'becomeCommunityMemberRequest' : 'becomeCommunityModeratorRequest',
       text: `You have been invited to become ${inviteUserToJoinOrModerate} in "${community.name}" community.`,
@@ -434,4 +434,92 @@ export const undoBanUserFromCommunity = catchAsync (async (
   await community.save();
 
   return res.status(200).json(responseData);
+});
+
+export const inviteUserToJoinCommunity = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userToInviteId, inviteType } = req.body;
+
+  if (!userToInviteId) {
+    next(new AppError(400, 'User ID for invitation is not provided'));
+    return;
+  }
+
+  if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
+    next(new AppError(400, 'User invitation type must be either "member" or "moderator"'));
+    return;
+  }
+
+  const userExist = await User.exists({ _id: userToInviteId });
+  if (!userExist) {
+    next(new AppError(404, `User you are trying to invite as ${inviteType} doesnt exist. Maybe its account was deleted.`));
+    return;
+  }
+
+  const community = req.community!;
+
+  const userBanned = community.bannedUsers.find((user: any) => user.toString() === userToInviteId.toString());
+  if (userBanned) {
+    next(new AppError(400, `You are trying to invite BANNED user to join as ${inviteType}. Remove ban first and then proceed.`));
+    return;
+  }
+
+  const userAlreadyInvitedAsMember = community.pendingInvitedUsers.find((user: any) => user.toString() === userToInviteId.toString());
+  const userAlreadyInvitedAsModerator = community.pendingInvitedModerators.find((user: any) => user.toString() === userToInviteId.toString());
+
+  if (userAlreadyInvitedAsMember) {
+    next(new AppError(400, 'You have already invitied this user to join as member. Only 1 invitation is allowed per user.'));
+    return;
+  }
+  if (userAlreadyInvitedAsModerator) {
+    next(new AppError(400, 'You have already invitied this user to join as moderator. Only 1 invitation is allowed per user.'));
+    return;
+  }
+
+  const userAlreadyMember = community.joinedUsers.find((user: any) => user.toString() === userToInviteId.toString());
+  const userAlreadyModerator = community.moderators.find((user: any) => user.toString() === userToInviteId.toString());
+
+  if (inviteType === 'member' && userAlreadyMember) {
+    next(new AppError(400, 'This user is already a member of this community.'));
+    return;
+  }
+  if (userAlreadyModerator) {
+    next(new AppError(400, 'This user is already a moderator of this community.'));
+    return;
+  }
+
+  let responseDataMessage = '';
+
+  // if user is member he can be invited as moderator
+  if (inviteType === 'moderator') {
+    community.pendingInvitedModerators.push(userToInviteId);
+
+    if (userAlreadyMember) {
+      responseDataMessage = 'You have invited joined member to become moderator of this community successfully';
+    } else {
+      responseDataMessage = 'You have invited user to become moderator of this community successfully';
+    }
+  } else if(inviteType === 'member') {
+    responseDataMessage = 'You have invited user join this community successfully';
+    community.pendingInvitedUsers.push(userToInviteId);
+  }
+
+  await community.save();
+
+  const inviteUserNotification = await Notification.create({
+    receiver: userToInviteId,
+    notificationType: inviteType === 'moderator' ? 'becomeCommunityModeratorRequest' : 'becomeCommunityMemberRequest',
+    text: `You have been invited to become ${inviteType} of "${community.name}"${userAlreadyMember ? ' community where you are already a member.' : '.'}`,
+    community: community._id
+  });
+
+  return res.status(200).json({
+    status: 'success',
+    message: responseDataMessage,
+    userToInviteId,
+    inviteUserNotification
+  });
 });
