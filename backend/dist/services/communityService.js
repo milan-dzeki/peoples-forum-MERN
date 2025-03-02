@@ -45,5 +45,21 @@ class CommunityService {
             }
         });
     }
+    static removeUserFromAllCommunityChats(communityId, communityChatsLength, userId, actionFailMsg) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (communityChatsLength === 0) {
+                return;
+            }
+            try {
+                yield chatModel_1.default.updateMany({
+                    communityId,
+                    members: { $in: [userId] }
+                }, { $pull: { members: userId } });
+            }
+            catch (error) {
+                throw new appError_1.default(500, actionFailMsg);
+            }
+        });
+    }
 }
 exports.default = CommunityService;

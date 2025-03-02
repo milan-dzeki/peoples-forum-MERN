@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import type { RequestWithCommunityType } from 'types/lib';
 import type { BannedUserResDataType, RemoveUserBanResDataType } from 'types/controllers/community';
+import CommunityService from 'services/communityService';
 import catchAsync from 'utils/catchAsync';
 import AppError from 'utils/appError';
 import User from 'models/userModel';
@@ -75,15 +76,7 @@ export const banUserFromCommunity = catchAsync (async (
   community.bannedUsers.push(userToBanId);
 
   // remove user from community chats
-  if (community.availableChats && community.availableChats.length > 0) {
-    await Chat.updateMany(
-      {
-        communityId: community._id,
-        members: { $in: [userToBanId] }
-      },
-      { $pull: { members: userToBanId } }
-    );
-  }
+  await CommunityService.removeUserFromAllCommunityChats(community._id, community.availableChats.length, userToBanId, 'Failed to remove banned user from chats');
 
   const responseData: BannedUserResDataType = {
     status: 'success',
@@ -507,15 +500,7 @@ export const userLeaveCommunity = catchAsync (async (
   }
 
   // remove user from community chats
-  if (community.availableChats && community.availableChats.length > 0) {
-    await Chat.updateMany(
-      {
-        communityId: community._id,
-        members: { $in: [userId] }
-      },
-      { $pull: { members: userId } }
-    );
-  }
+  await CommunityService.removeUserFromAllCommunityChats(community._id, community.availableChats.length, userId, 'Failed to remove you from communit chats');
 
   await community.save();
 

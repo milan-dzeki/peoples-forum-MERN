@@ -35,6 +35,23 @@ class CommunityService {
       throw new AppError(500, 'Failed to create chats for community. Maybe servers are down. Reftesh the page and try again');
     }
   }
+
+  static async removeUserFromAllCommunityChats (communityId: string, communityChatsLength: number, userId: string, actionFailMsg: string) {
+    if (communityChatsLength === 0) {
+      return;
+    }
+    try {
+      await Chat.updateMany(
+        {
+          communityId,
+          members: { $in: [userId] }
+        },
+        { $pull: { members: userId } }
+      );
+    } catch (error: unknown) {
+      throw new AppError(500, actionFailMsg);
+    }
+  }
 }
 
 export default CommunityService;

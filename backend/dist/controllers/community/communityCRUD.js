@@ -51,7 +51,8 @@ exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaite
         rules: parsedRules,
         pendingInvitedUsers: parsedPendingInvitedUsers,
         joinedUsers: [],
-        bannedUsers: []
+        bannedUsers: [],
+        availableChats: []
     };
     if (req.files) {
         if (req.files.profileImage) {

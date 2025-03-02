@@ -13,10 +13,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userLeaveCommunity = exports.userDeclineJoinCommunityInvite = exports.userAcceptJoinCommunityInvite = exports.moderatorWithdrawJoinCommunityInviteForUser = exports.inviteUserToJoinCommunity = exports.undoBanUserFromCommunity = exports.banUserFromCommunity = void 0;
+const communityService_1 = __importDefault(require("services/communityService"));
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const appError_1 = __importDefault(require("utils/appError"));
 const userModel_1 = __importDefault(require("models/userModel"));
-const chatModel_1 = __importDefault(require("models/chatModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { userToBanId, shouldNotifyUser = false } = req.body;
@@ -67,12 +67,7 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
     }
     community.bannedUsers.push(userToBanId);
     // remove user from community chats
-    if (community.availableChats && community.availableChats.length > 0) {
-        yield chatModel_1.default.updateMany({
-            communityId: community._id,
-            members: { $in: [userToBanId] }
-        }, { $pull: { members: userToBanId } });
-    }
+    yield communityService_1.default.removeUserFromAllCommunityChats(community._id, community.availableChats.length, userToBanId, 'Failed to remove banned user from chats');
     const responseData = {
         status: 'success',
         message: 'You have successfully banned user from community',
@@ -381,12 +376,7 @@ exports.userLeaveCommunity = (0, catchAsync_1.default)((req, res, next) => __awa
         community.moderators = community.moderators.filter((user) => user.toString() !== userId.toString());
     }
     // remove user from community chats
-    if (community.availableChats && community.availableChats.length > 0) {
-        yield chatModel_1.default.updateMany({
-            communityId: community._id,
-            members: { $in: [userId] }
-        }, { $pull: { members: userId } });
-    }
+    yield communityService_1.default.removeUserFromAllCommunityChats(community._id, community.availableChats.length, userId, 'Failed to remove you from communit chats');
     yield community.save();
     return res.status(200).json({
         status: 'success',

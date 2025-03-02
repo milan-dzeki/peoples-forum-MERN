@@ -58,7 +58,8 @@ export const createCommunity = catchAsync (async (
     rules: parsedRules,
     pendingInvitedUsers: parsedPendingInvitedUsers,
     joinedUsers: [],
-    bannedUsers: []
+    bannedUsers: [],
+    availableChats: []
   };
 
   if (req.files) {

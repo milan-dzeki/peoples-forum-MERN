@@ -16,6 +16,7 @@ export interface PrepareCommunityForCreateType {
   pendingInvitedUsers: string[];
   joinedUsers: string[];
   bannedUsers: string[];
+  availableChats: string[];
   bannerImageUrl?: string;
   bannerImagePublicId?: string;
   profileImageUrl?: string;
