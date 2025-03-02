@@ -300,25 +300,26 @@ exports.userAcceptJoinCommunityInvite = (0, catchAsync_1.default)((req, res, nex
     const user = yield userModel_1.default.findById(userId).select('_id fullName');
     const moderatorNotifictaions = [
         {
-            received: community.creator,
+            receiver: community.creator,
             notificationType: inviteType === 'member' ? 'userAcceptedCommunityMemberInvite' : 'userAcceptedCommunityModeratorInvite',
             text: `${user.fullName} has accepted to join as ${inviteType} "${community.name}" community that you manage`,
             community: community._id,
             sender: user._id
         }
     ];
-    const communityModeratorsWithoutNewUser = req.community.moderators.forEach((moderator) => {
+    req.community.moderators.forEach((moderator) => {
         moderatorNotifictaions.push({
-            received: moderator,
+            receiver: moderator,
             notificationType: inviteType === 'member' ? 'userAcceptedCommunityMemberInvite' : 'userAcceptedCommunityModeratorInvite',
             text: `${user.fullName} has accepted to join as ${inviteType} "${community.name}" community that you manage`,
             community: community._id,
             sender: user._id
         });
     });
+    const notificationsToSendToCommunityModerators = yield notificationModel_1.default.insertMany(moderatorNotifictaions);
     return res.status(200).json({
         status: 'success',
         message: `Accepted invite to become ${inviteType} of "${community.name}" community`,
-        notificationsToSendToCommunityModerators: communityModeratorsWithoutNewUser
+        notificationsToSendToCommunityModerators
     });
 }));

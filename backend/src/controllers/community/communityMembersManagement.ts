@@ -393,7 +393,7 @@ export const userAcceptJoinCommunityInvite = catchAsync (async (
 
   const moderatorNotifictaions = [
     {
-      received: community.creator,
+      receiver: community.creator,
       notificationType: inviteType === 'member' ? 'userAcceptedCommunityMemberInvite' : 'userAcceptedCommunityModeratorInvite',
       text: `${user.fullName} has accepted to join as ${inviteType} "${community.name}" community that you manage`,
       community: community._id,
@@ -401,9 +401,9 @@ export const userAcceptJoinCommunityInvite = catchAsync (async (
     }
   ];
 
-  const communityModeratorsWithoutNewUser = req.community!.moderators.forEach((moderator: any) => {
+  req.community!.moderators.forEach((moderator: any) => {
     moderatorNotifictaions.push({
-      received: moderator,
+      receiver: moderator,
       notificationType: inviteType === 'member' ? 'userAcceptedCommunityMemberInvite' : 'userAcceptedCommunityModeratorInvite',
       text: `${user.fullName} has accepted to join as ${inviteType} "${community.name}" community that you manage`,
       community: community._id,
@@ -411,9 +411,11 @@ export const userAcceptJoinCommunityInvite = catchAsync (async (
     });
   });
 
+  const notificationsToSendToCommunityModerators = await Notification.insertMany(moderatorNotifictaions);
+
   return res.status(200).json({
     status: 'success',
     message: `Accepted invite to become ${inviteType} of "${community.name}" community`,
-    notificationsToSendToCommunityModerators: communityModeratorsWithoutNewUser
+    notificationsToSendToCommunityModerators
   });
 });
