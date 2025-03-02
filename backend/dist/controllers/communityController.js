@@ -112,7 +112,7 @@ exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
     community.profileImagePublicId = uploadedPhotoData.public_id;
     yield community.save();
     return res.status(200).json({
-        status: 'Community profile image updated successfully',
+        message: 'Community profile image updated successfully',
         newProfileImage: community.profileImageUrl
     });
 }));
@@ -144,7 +144,7 @@ exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
     community.bannerImagePublicId = uploadedPhotoData.public_id;
     yield community.save();
     return res.status(200).json({
-        status: 'Community banner image updated successfully',
+        message: 'Community banner image updated successfully',
         newProfileImage: community.bannerImageUrl
     });
 }));

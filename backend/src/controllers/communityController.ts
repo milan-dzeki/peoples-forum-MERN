@@ -85,7 +85,8 @@ export const createCommunity = catchAsync (async (
   await newCommunity.save();
 
   return res.status(201).json({
-    status: 'Community created successfully',
+    status: 'success',
+    message: 'Community created successfully',
     community: newCommunity
   });
 });
@@ -118,6 +119,7 @@ export const deleteCommunity = catchAsync (async (
   await Community.deleteOne({ _id: communityToDelete._id });
 
   return res.status(204).json({
+    status: 'success',
     message: 'Community deleted successfully together with all associated chats'
   });
 });
@@ -151,7 +153,8 @@ export const updateCommunityProfileImage = catchAsync(async (
   await community.save();
 
   return res.status(200).json({
-    status: 'Community profile image updated successfully',
+    status: 'success',
+    message: 'Community profile image updated successfully',
     newProfileImage: community.profileImageUrl
   });
 });
@@ -172,6 +175,7 @@ export const removeCommunityProfileImage = catchAsync(async (
   await cloudinary.uploader.destroy(profileImagePublicId);
 
   return res.status(200).json({
+    status: 'success',
     message: 'Community profile image removed successfully'
   });
 });
@@ -205,7 +209,8 @@ export const updateCommunityBannerImage = catchAsync(async (
   await community.save();
 
   return res.status(200).json({
-    status: 'Community banner image updated successfully',
+    status: 'success',
+    message: 'Community banner image updated successfully',
     newProfileImage: community.bannerImageUrl
   });
 });
@@ -226,6 +231,7 @@ export const removeCommunityBannerImage = catchAsync(async (
   await cloudinary.uploader.destroy(bannerImagePublicId);
 
   return res.status(200).json({
+    status: 'success',
     message: 'Community banner image removed successfully'
   });
 });
