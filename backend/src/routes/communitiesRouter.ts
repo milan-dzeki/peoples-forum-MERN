@@ -66,14 +66,14 @@ router.patch(
 );
 
 router.patch(
-  '/:communityId/banUser',
+  '/:communityId/banUserFromCommunity',
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
   banUserFromCommunity
 );
 
 router.patch(
-  '/:communityId/removeUserBan',
+  '/:communityId/undoUserCommunityBan',
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
   undoBanUserFromCommunity
