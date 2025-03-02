@@ -39,7 +39,6 @@ exports.doesCommunityExist = doesCommunityExist;
 const isLoggedUserCommunityCreatorOrModerator = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const community = req.community;
-        console.log(community);
         const moderators = community.moderators.map((moderator) => moderator.toString());
         if (community.creator.toString() !== req.userId.toString() && !moderators.includes(req.userId.toString())) {
             next(new appError_1.default(401, 'Only moderators and crator can update community data'));

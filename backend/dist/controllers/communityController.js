@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeCommunityBannereImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.createCommunity = void 0;
+exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.createCommunity = void 0;
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
@@ -144,11 +144,11 @@ exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
     community.bannerImagePublicId = uploadedPhotoData.public_id;
     yield community.save();
     return res.status(200).json({
-        status: 'Community profile image updated successfully',
+        status: 'Community banner image updated successfully',
         newProfileImage: community.bannerImageUrl
     });
 }));
-exports.removeCommunityBannereImage = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
+exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const community = req.community;
     const bannerImagePublicId = community.bannerImagePublicId;
     community.bannerImageUrl = null;

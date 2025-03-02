@@ -1,4 +1,4 @@
-import { Schema, models, model, SchemaType } from 'mongoose';
+import { Schema, models, model } from 'mongoose';
 
 const notificationsSchema = new Schema({
   receiver: {

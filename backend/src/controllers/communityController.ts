@@ -205,12 +205,12 @@ export const updateCommunityBannerImage = catchAsync(async (
   await community.save();
 
   return res.status(200).json({
-    status: 'Community profile image updated successfully',
+    status: 'Community banner image updated successfully',
     newProfileImage: community.bannerImageUrl
   });
 });
 
-export const removeCommunityBannereImage = catchAsync(async (
+export const removeCommunityBannerImage = catchAsync(async (
   req: RequestWithCommunityType,
   res: Response,
   _: NextFunction

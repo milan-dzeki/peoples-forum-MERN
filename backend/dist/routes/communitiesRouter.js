@@ -14,4 +14,6 @@ router.post('/', (0, express_formidable_1.default)(), communityController_1.crea
 router.delete('/:communityId', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityController_1.deleteCommunity);
 router.patch('/:communityId/updateProfileImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), communityController_1.updateCommunityProfileImage);
 router.patch('/:communityId/removeProfileImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), communityController_1.removeCommunityProfileImage);
+router.patch('/:communityId/updateBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), communityController_1.updateCommunityBannerImage);
+router.patch('/:communityId/removeBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), communityController_1.removeCommunityBannerImage);
 exports.default = router;
