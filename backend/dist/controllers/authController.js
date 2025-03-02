@@ -15,10 +15,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.signup = void 0;
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
-const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const appError_1 = __importDefault(require("utils/appError"));
 const signupValidator_1 = __importDefault(require("configs/validators/auth/signupValidator"));
 const authService_1 = __importDefault(require("services/authService"));
+const cloudinaryManagementService_1 = __importDefault(require("services/cloudinaryManagementService"));
 const userModel_1 = __importDefault(require("models/userModel"));
 exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.fields) {
@@ -37,11 +37,6 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
         password,
         passwordConfirm
     });
-    const userWithEmailExists = yield userModel_1.default.find({ email });
-    if (userWithEmailExists.length) {
-        next(new appError_1.default(400, 'Provided email is already taken'));
-        return;
-    }
     if (errors) {
         next(new appError_1.default(422, 'Invalid inputs', errors));
         return;
@@ -60,22 +55,9 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
         lastTimeSeen: new Date()
     };
     if (req.files && req.files.profilePhoto) {
-        const profilePhoto = req.files.profilePhoto;
-        if (profilePhoto.path) {
-            const uploadCustomError = new appError_1.default(500, 'Unable to upload the photo. Maybe servers are down. Refresh the page and try again.');
-            const uploadedPhoto = yield cloudinary_1.default.uploader.upload(profilePhoto.path, (error) => {
-                if (error) {
-                    next(uploadCustomError);
-                    return;
-                }
-            });
-            if (!uploadedPhoto.secure_url || !uploadedPhoto.public_id) {
-                next(uploadCustomError);
-                return;
-            }
-            prepareUserForCreation.profilePhotoUrl = uploadedPhoto.secure_url;
-            prepareUserForCreation.profilePhotoPublicId = uploadedPhoto.secure_url;
-        }
+        const uploadedPhotoData = yield cloudinaryManagementService_1.default.uploadSinglePhotoToCloudinary(req.files.profilePhoto);
+        prepareUserForCreation.profilePhotoUrl = uploadedPhotoData.secure_url;
+        prepareUserForCreation.profilePhotoPublicId = uploadedPhotoData.secure_url;
     }
     const newUser = yield userModel_1.default.create(prepareUserForCreation);
     const signedUser = authService_1.default.createTokenCookieAndResponseUser(newUser);

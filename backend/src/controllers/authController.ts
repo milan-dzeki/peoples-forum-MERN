@@ -7,6 +7,7 @@ import cloudinary from 'configs/cloudinary';
 import AppError from 'utils/appError';
 import UserValidator from 'configs/validators/auth/signupValidator';
 import AuthService from 'services/authService';
+import CloudinaryManagementService from 'services/cloudinaryManagementService';
 import User from 'models/userModel';
 
 export const signup = catchAsync (async (
@@ -41,12 +42,6 @@ export const signup = catchAsync (async (
     passwordConfirm
   });
 
-  const userWithEmailExists = await User.find({ email });
-  if (userWithEmailExists.length) {
-    next(new AppError(400, 'Provided email is already taken'));
-    return;
-  }
-
   if (errors) {
     next(new AppError(422, 'Invalid inputs', errors));
     return;
@@ -69,27 +64,10 @@ export const signup = catchAsync (async (
   };
 
   if (req.files && req.files.profilePhoto) {
-    const profilePhoto = req.files.profilePhoto as any;
-    if (profilePhoto.path) {
-      const uploadCustomError = new AppError(
-        500, 
-        'Unable to upload the photo. Maybe servers are down. Refresh the page and try again.'
-      );
-      
-      const uploadedPhoto = await cloudinary.uploader.upload(profilePhoto.path, (error: any) => {
-        if (error) {
-          next(uploadCustomError);
-          return;
-        }
-      });
+    const uploadedPhotoData = await CloudinaryManagementService.uploadSinglePhotoToCloudinary(req.files.profilePhoto);
 
-      if (!uploadedPhoto.secure_url || !uploadedPhoto.public_id) {
-        next(uploadCustomError);
-        return;
-      } 
-      prepareUserForCreation.profilePhotoUrl = uploadedPhoto.secure_url;
-      prepareUserForCreation.profilePhotoPublicId = uploadedPhoto.secure_url;
-    }
+    prepareUserForCreation.profilePhotoUrl = uploadedPhotoData.secure_url;
+    prepareUserForCreation.profilePhotoPublicId = uploadedPhotoData.secure_url;
   }
 
   const newUser = await User.create(prepareUserForCreation);
