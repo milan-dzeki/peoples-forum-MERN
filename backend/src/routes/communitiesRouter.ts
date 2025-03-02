@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import formidable from 'express-formidable';
 import isAuth from 'middleware/isAuthMiddleware';
-import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator } from 'middleware/communityMiddlewares';
+import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator, checkIfTargetUserExist } from 'middleware/communityMiddlewares';
 import {
   communityCRUD,
   communityMembersManagement
@@ -82,6 +82,7 @@ router.patch(
   '/:communityId/banUserFromCommunity',
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
+  checkIfTargetUserExist,
   banUserFromCommunity
 );
 
@@ -89,6 +90,7 @@ router.patch(
   '/:communityId/undoUserCommunityBan',
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
+  checkIfTargetUserExist,
   undoBanUserFromCommunity
 );
 
@@ -96,6 +98,7 @@ router.patch(
   '/:communityId/invite',
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
+  checkIfTargetUserExist,
   inviteUserToJoinCommunity
 );
 
@@ -103,6 +106,7 @@ router.patch(
   '/:communityId/moderatorWidthrawJoinInviteForUser',
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
+  checkIfTargetUserExist,
   moderatorWithdrawJoinCommunityInviteForUser
 );
 

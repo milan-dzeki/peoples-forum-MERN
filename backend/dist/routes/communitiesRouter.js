@@ -19,10 +19,10 @@ router.patch('/:communityId/updateProfileImage', communityMiddlewares_1.doesComm
 router.patch('/:communityId/removeProfileImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), removeCommunityProfileImage);
 router.patch('/:communityId/updateBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), updateCommunityBannerImage);
 router.patch('/:communityId/removeBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, removeCommunityBannerImage);
-router.patch('/:communityId/banUserFromCommunity', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, banUserFromCommunity);
-router.patch('/:communityId/undoUserCommunityBan', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, undoBanUserFromCommunity);
-router.patch('/:communityId/invite', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, inviteUserToJoinCommunity);
-router.patch('/:communityId/moderatorWidthrawJoinInviteForUser', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, moderatorWithdrawJoinCommunityInviteForUser);
+router.patch('/:communityId/banUserFromCommunity', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityMiddlewares_1.checkIfTargetUserExist, banUserFromCommunity);
+router.patch('/:communityId/undoUserCommunityBan', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityMiddlewares_1.checkIfTargetUserExist, undoBanUserFromCommunity);
+router.patch('/:communityId/invite', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityMiddlewares_1.checkIfTargetUserExist, inviteUserToJoinCommunity);
+router.patch('/:communityId/moderatorWidthrawJoinInviteForUser', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityMiddlewares_1.checkIfTargetUserExist, moderatorWithdrawJoinCommunityInviteForUser);
 router.patch('/:communityId/userAcceptInviteJoinCommunity/:inviteType', communityMiddlewares_1.doesCommunityExist, userAcceptJoinCommunityInvite);
 router.patch('/:communityId/userDeclineInviteJoinCommunity/:inviteType', communityMiddlewares_1.doesCommunityExist, userDeclineJoinCommunityInvite);
 router.patch('/:communityId/userLeaveCommunity/:communityRole', communityMiddlewares_1.doesCommunityExist, userLeaveCommunity);

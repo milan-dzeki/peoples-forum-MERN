@@ -19,31 +19,22 @@ const appError_1 = __importDefault(require("utils/appError"));
 const userModel_1 = __importDefault(require("models/userModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userToBanId, shouldNotifyUser = false } = req.body;
-    if (!userToBanId) {
-        next(new appError_1.default(400, 'User to ban ID is not provided'));
-        return;
-    }
-    const userExist = yield userModel_1.default.exists({ _id: userToBanId });
-    if (!userExist) {
-        next(new appError_1.default(404, 'User you are trying to ban cannot be found. Maybe its account no longer exist'));
-        return;
-    }
+    const { targetUserId, shouldNotifyUser = false } = req.body;
     // if id is same as logged in user id - almost impossible, but why not check
-    if (userToBanId.toString() === req.userId.toString()) {
+    if (targetUserId.toString() === req.userId.toString()) {
         next(new appError_1.default(400, 'You cannot ban yourself'));
         return;
     }
     const community = req.community;
-    const userAlreadyBanned = community.bannedUsers.find((bannerUser) => bannerUser.toString() === userToBanId.toString());
+    const userAlreadyBanned = community.bannedUsers.find((bannerUser) => bannerUser.toString() === targetUserId.toString());
     if (userAlreadyBanned) {
         next(new appError_1.default(400, 'You have already banned this user - can not be done twice'));
         return;
     }
-    const isUserMember = community.joinedUsers.find((joined) => joined.toString() === userToBanId.toString());
-    const isUserInPendingMemberList = community.pendingInvitedUsers.find((pending) => pending.toString() === userToBanId.toString());
-    const isUserInPendingModeratorList = community.pendingInvitedModerators.find((pending) => pending.toString() === userToBanId.toString());
-    const isUserToBanModerator = community.moderators.find((moderator) => moderator.toString() === userToBanId.toString());
+    const isUserMember = community.joinedUsers.find((joined) => joined.toString() === targetUserId.toString());
+    const isUserInPendingMemberList = community.pendingInvitedUsers.find((pending) => pending.toString() === targetUserId.toString());
+    const isUserInPendingModeratorList = community.pendingInvitedModerators.find((pending) => pending.toString() === targetUserId.toString());
+    const isUserToBanModerator = community.moderators.find((moderator) => moderator.toString() === targetUserId.toString());
     if (!isUserMember && !isUserInPendingMemberList && !isUserInPendingModeratorList && !isUserToBanModerator) {
         next(new appError_1.default(400, 'User you are trying to ban is not a member of community, nor is he / she in pending lists. Maybe he / she already left'));
         return;
@@ -54,28 +45,28 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
             next(new appError_1.default(400, 'You are trying to ban moderator of this community. Only creator can ban moderators'));
             return;
         }
-        community.moderators = community.moderators.filter((user) => user.toString() !== userToBanId.toString());
+        community.moderators = community.moderators.filter((user) => user.toString() !== targetUserId.toString());
     }
     if (isUserMember) {
-        community.joinedUsers = community.joinedUsers.filter((user) => user.toString() !== userToBanId.toString());
+        community.joinedUsers = community.joinedUsers.filter((user) => user.toString() !== targetUserId.toString());
     }
     if (isUserInPendingMemberList) {
-        community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user) => user.toString() !== userToBanId.toString());
+        community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user) => user.toString() !== targetUserId.toString());
     }
     if (isUserInPendingModeratorList) {
-        community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user) => user.toString() !== userToBanId.toString());
+        community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user) => user.toString() !== targetUserId.toString());
     }
-    community.bannedUsers.push(userToBanId);
+    community.bannedUsers.push(targetUserId);
     // remove user from community chats
-    yield communityService_1.default.removeUserFromAllCommunityChats(community._id, community.availableChats.length, userToBanId, 'Failed to remove banned user from chats');
+    yield communityService_1.default.removeUserFromAllCommunityChats(community._id, community.availableChats.length, targetUserId, 'Failed to remove banned user from chats');
     const responseData = {
         status: 'success',
         message: 'You have successfully banned user from community',
-        bannedUserId: userToBanId
+        bannedUserId: targetUserId
     };
     if (shouldNotifyUser) {
         const bannedUserNotification = yield notificationModel_1.default.create({
-            receiver: userToBanId,
+            receiver: targetUserId,
             notificationType: 'bannedFromCommunity',
             text: `You have been banned from community: "${community.name}". You can no longer see this comuunity posts and chats unless admins remove ban`
         });
@@ -85,31 +76,22 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
     return res.status(200).json(responseData);
 }));
 exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userToRemoveBanId, shouldNotifyUser = false, inviteUserToJoinOrModerate = null } = req.body;
-    if (!userToRemoveBanId) {
-        next(new appError_1.default(400, 'User id is not provided.'));
-        return;
-    }
-    const userExist = yield userModel_1.default.exists({ _id: userToRemoveBanId });
-    if (!userExist) {
-        next(new appError_1.default(404, 'User you are trying to un-ban cannot be found. Maybe its account no longer exist'));
-        return;
-    }
+    const { targetUserId, shouldNotifyUser = false, inviteUserToJoinOrModerate = null } = req.body;
     const community = req.community;
-    const userInBannedList = community.bannedUsers.find((user) => user.toString() === userToRemoveBanId.toString());
+    const userInBannedList = community.bannedUsers.find((user) => user.toString() === targetUserId.toString());
     if (!userInBannedList) {
         next(new appError_1.default(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
         return;
     }
-    community.bannedUsers = community.bannedUsers.filter((user) => user.toString() !== userToRemoveBanId.toString());
+    community.bannedUsers = community.bannedUsers.filter((user) => user.toString() !== targetUserId.toString());
     const responseData = {
         status: 'success',
         message: 'You have successfully removed ban for user',
-        userRemovedBanId: userToRemoveBanId
+        userRemovedBanId: targetUserId
     };
     if (shouldNotifyUser) {
         const userRemovedBanNotifications = yield notificationModel_1.default.create({
-            receiver: userToRemoveBanId,
+            receiver: targetUserId,
             notificationType: 'removeCommunityBan',
             text: `Your ban from community: "${community.name}" has been removed. You can see this communities posts and chats now.`,
             community: community._id
@@ -119,16 +101,16 @@ exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, next) =>
     if (inviteUserToJoinOrModerate &&
         (inviteUserToJoinOrModerate === 'member' || inviteUserToJoinOrModerate === 'moderator')) {
         const notificationData = {
-            receiver: userToRemoveBanId,
+            receiver: targetUserId,
             notificationType: inviteUserToJoinOrModerate === 'member' ? 'becomeCommunityMemberRequest' : 'becomeCommunityModeratorRequest',
             text: `You have been invited to become ${inviteUserToJoinOrModerate} in "${community.name}" community.`,
             community: community._id
         };
         if (inviteUserToJoinOrModerate === 'member') {
-            community.pendingInvitedUsers.push(userToRemoveBanId);
+            community.pendingInvitedUsers.push(targetUserId);
         }
         if (inviteUserToJoinOrModerate === 'moderator') {
-            community.pendingInvitedModerators.push(userToRemoveBanId);
+            community.pendingInvitedModerators.push(targetUserId);
         }
         const inviteNotification = yield notificationModel_1.default.create(notificationData);
         if (responseData.userRemovedBanNotifications) {
@@ -142,28 +124,19 @@ exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, next) =>
     return res.status(200).json(responseData);
 }));
 exports.inviteUserToJoinCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userToInviteId, inviteType } = req.body;
-    if (!userToInviteId) {
-        next(new appError_1.default(400, 'User ID for invitation is not provided'));
-        return;
-    }
+    const { targetUserId, inviteType } = req.body;
     if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
         next(new appError_1.default(400, 'User invitation type must be either "member" or "moderator"'));
         return;
     }
-    const userExist = yield userModel_1.default.exists({ _id: userToInviteId });
-    if (!userExist) {
-        next(new appError_1.default(404, `User you are trying to invite as ${inviteType} doesnt exist. Maybe its account was deleted.`));
-        return;
-    }
     const community = req.community;
-    const userBanned = community.bannedUsers.find((user) => user.toString() === userToInviteId.toString());
+    const userBanned = community.bannedUsers.find((user) => user.toString() === targetUserId.toString());
     if (userBanned) {
         next(new appError_1.default(400, `You are trying to invite BANNED user to join as ${inviteType}. Remove ban first and then proceed.`));
         return;
     }
-    const userAlreadyInvitedAsMember = community.pendingInvitedUsers.find((user) => user.toString() === userToInviteId.toString());
-    const userAlreadyInvitedAsModerator = community.pendingInvitedModerators.find((user) => user.toString() === userToInviteId.toString());
+    const userAlreadyInvitedAsMember = community.pendingInvitedUsers.find((user) => user.toString() === targetUserId.toString());
+    const userAlreadyInvitedAsModerator = community.pendingInvitedModerators.find((user) => user.toString() === targetUserId.toString());
     if (userAlreadyInvitedAsMember) {
         next(new appError_1.default(400, 'You have already invitied this user to join as member. Only 1 invitation is allowed per user.'));
         return;
@@ -172,8 +145,8 @@ exports.inviteUserToJoinCommunity = (0, catchAsync_1.default)((req, res, next) =
         next(new appError_1.default(400, 'You have already invitied this user to join as moderator. Only 1 invitation is allowed per user.'));
         return;
     }
-    const userAlreadyMember = community.joinedUsers.find((user) => user.toString() === userToInviteId.toString());
-    const userAlreadyModerator = community.moderators.find((user) => user.toString() === userToInviteId.toString());
+    const userAlreadyMember = community.joinedUsers.find((user) => user.toString() === targetUserId.toString());
+    const userAlreadyModerator = community.moderators.find((user) => user.toString() === targetUserId.toString());
     if (inviteType === 'member' && userAlreadyMember) {
         next(new appError_1.default(400, 'This user is already a member of this community.'));
         return;
@@ -185,7 +158,7 @@ exports.inviteUserToJoinCommunity = (0, catchAsync_1.default)((req, res, next) =
     let responseDataMessage = '';
     // if user is member he can be invited as moderator
     if (inviteType === 'moderator') {
-        community.pendingInvitedModerators.push(userToInviteId);
+        community.pendingInvitedModerators.push(targetUserId);
         if (userAlreadyMember) {
             responseDataMessage = 'You have invited joined member to become moderator of this community successfully';
         }
@@ -195,11 +168,11 @@ exports.inviteUserToJoinCommunity = (0, catchAsync_1.default)((req, res, next) =
     }
     else if (inviteType === 'member') {
         responseDataMessage = 'You have invited user join this community successfully';
-        community.pendingInvitedUsers.push(userToInviteId);
+        community.pendingInvitedUsers.push(targetUserId);
     }
     yield community.save();
     const inviteUserNotification = yield notificationModel_1.default.create({
-        receiver: userToInviteId,
+        receiver: targetUserId,
         notificationType: inviteType === 'moderator' ? 'becomeCommunityModeratorRequest' : 'becomeCommunityMemberRequest',
         text: `You have been invited to become ${inviteType} of "${community.name}"${userAlreadyMember ? ' community where you are already a member.' : '.'}`,
         community: community._id
@@ -207,47 +180,38 @@ exports.inviteUserToJoinCommunity = (0, catchAsync_1.default)((req, res, next) =
     return res.status(200).json({
         status: 'success',
         message: responseDataMessage,
-        userToInviteId,
+        targetUserId,
         inviteUserNotification
     });
 }));
 exports.moderatorWithdrawJoinCommunityInviteForUser = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userToWithdrawInviteId, inviteType } = req.body;
-    if (!userToWithdrawInviteId) {
-        next(new appError_1.default(400, 'User ID for withdrwaing invitation is not provided'));
-        return;
-    }
+    const { targetUserid, inviteType } = req.body;
     if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
         next(new appError_1.default(400, 'User widthraw invitation type must be either "member" or "moderator"'));
         return;
     }
-    const userExist = yield userModel_1.default.exists({ _id: userToWithdrawInviteId });
-    if (!userExist) {
-        next(new appError_1.default(404, `User you are trying to invite as ${inviteType} doesnt exist. Maybe its account was deleted.`));
-        return;
-    }
     const community = req.community;
     if (inviteType === 'member') {
-        const isUserInPendingMembersList = community.pendingInvitedUsers.find((user) => user.toString() === userToWithdrawInviteId.toString());
+        const isUserInPendingMembersList = community.pendingInvitedUsers.find((user) => user.toString() === targetUserid.toString());
         if (!isUserInPendingMembersList) {
             next(new appError_1.default(400, 'User in not found in pending invite list. Maybe he / she has declined request in the meantime'));
             return;
         }
-        community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user) => user.toString() !== userToWithdrawInviteId.toString());
+        community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user) => user.toString() !== targetUserid.toString());
     }
     if (inviteType === 'moderator') {
-        const isUserInPendingModeratorsList = community.pendingInvitedModerators.find((user) => user.toString() === userToWithdrawInviteId.toString());
+        const isUserInPendingModeratorsList = community.pendingInvitedModerators.find((user) => user.toString() === targetUserid.toString());
         if (!isUserInPendingModeratorsList) {
             next(new appError_1.default(400, 'User in not found in pending invite moderator list. Maybe he / she has declined request in the meantime'));
             return;
         }
-        community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user) => user.toString() !== userToWithdrawInviteId.toString());
+        community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user) => user.toString() !== targetUserid.toString());
     }
     yield community.save();
     return res.status(200).json({
         status: 'success',
         message: `You have successfully withdrew ${inviteType} invite for user`,
-        userToWithdrawInviteId
+        userToWithdrawInviteId: targetUserid
     });
 }));
 exports.userAcceptJoinCommunityInvite = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
