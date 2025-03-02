@@ -1,5 +1,5 @@
 export interface MultipleErrorsType {
-  [errorName: string]: string;
+  [errorName: string]: string | object | any[];
 };
 
 export interface ErrorResponseType {

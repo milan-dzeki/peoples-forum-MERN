@@ -1,11 +1,15 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
+const communityInputRules_1 = __importDefault(require("configs/validators/community/communityInputRules"));
 const communitySchema = new mongoose_1.Schema({
     creator: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User',
-        required: [true, 'Community creator ID is required']
+        required: [true, communityInputRules_1.default.creatorId.requiredErrorMessage]
     },
     pendingInvitedModerators: [
         {
@@ -23,21 +27,33 @@ const communitySchema = new mongoose_1.Schema({
         type: String,
         enum: {
             values: ['public', 'private'],
-            message: 'Communitys access value can only be "public" or "private"'
+            message: communityInputRules_1.default.access.invalidValueMessage
         },
         default: 'public'
     },
     name: {
         type: String,
-        required: [true, 'Community Name is required'],
-        minLength: [2, 'Community Name must be at least 2 characters long'],
-        maxLength: [30, 'Community Name must not exceed 30 characters']
+        required: [true, communityInputRules_1.default.name.requiredErrorMessage],
+        minLength: [
+            communityInputRules_1.default.name.minLength.value,
+            communityInputRules_1.default.name.minLength.errorMessage
+        ],
+        maxLength: [
+            communityInputRules_1.default.name.maxLength.value,
+            communityInputRules_1.default.name.maxLength.errorMessage
+        ]
     },
     description: {
         type: String,
-        required: [true, 'Community Description is required'],
-        minLength: [10, 'Community Description must be at least 10 characters long'],
-        maxLength: [100, 'Community Description must not exceed 100 characters']
+        required: [true, communityInputRules_1.default.description.requiredErrorMessage],
+        minLength: [
+            communityInputRules_1.default.description.minLength.value,
+            communityInputRules_1.default.description.minLength.errorMessage
+        ],
+        maxLength: [
+            communityInputRules_1.default.description.maxLength.value,
+            communityInputRules_1.default.description.maxLength.errorMessage
+        ]
     },
     bannerImageUrl: String,
     bannerImagePublicId: {
@@ -45,7 +61,7 @@ const communitySchema = new mongoose_1.Schema({
         select: false
     },
     profileImageUrl: String,
-    profilImagePublicId: {
+    profileImagePublicId: {
         type: String,
         select: false
     },

@@ -16,6 +16,7 @@ const globalErrorHandler: ErrorRequestHandler = (
   res,
   _1
 ) => {
+  console.log(error, 'error');
   if (error instanceof AppError) {
     const {
       status,
@@ -37,7 +38,7 @@ const globalErrorHandler: ErrorRequestHandler = (
     res.status(statusCode).json(responseData);
     return;
   }
-  console.log(error);
+  
   res.status(500).json({
     status: 'error',
     message: 'Something went wrong'

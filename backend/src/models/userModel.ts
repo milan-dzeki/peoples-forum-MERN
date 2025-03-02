@@ -1,6 +1,6 @@
 import { Schema, models, model, InferSchemaType, HydratedDocument } from 'mongoose';
 import { isEmail } from 'validator';
-import signupInputRules from 'configs/validators/auth/signupInputsRules';
+import signupInputRules from 'configs/validators/auth/signupInputRules';
 
 const userSchema = new Schema({
   firstName: {

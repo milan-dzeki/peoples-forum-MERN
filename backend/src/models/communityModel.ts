@@ -1,10 +1,11 @@
 import { Schema, models, model } from 'mongoose';
+import communityInputRules from 'configs/validators/community/communityInputRules';
 
 const communitySchema = new Schema({
   creator: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Community creator ID is required']
+    required: [true, communityInputRules.creatorId.requiredErrorMessage]
   },
   pendingInvitedModerators: [
     {
@@ -22,21 +23,33 @@ const communitySchema = new Schema({
     type: String,
     enum: {
       values: ['public', 'private'],
-      message: 'Communitys access value can only be "public" or "private"'
+      message: communityInputRules.access.invalidValueMessage
     },
     default: 'public'
   }, 
   name: {
     type: String,
-    required: [true, 'Community Name is required'],
-    minLength: [2, 'Community Name must be at least 2 characters long'],
-    maxLength: [30, 'Community Name must not exceed 30 characters']
+    required: [true, communityInputRules.name.requiredErrorMessage],
+    minLength: [
+      communityInputRules.name.minLength.value, 
+      communityInputRules.name.minLength.errorMessage
+    ],
+    maxLength: [
+      communityInputRules.name.maxLength.value, 
+      communityInputRules.name.maxLength.errorMessage
+    ]
   },
   description: {
     type: String,
-    required: [true, 'Community Description is required'],
-    minLength: [10, 'Community Description must be at least 10 characters long'],
-    maxLength: [100, 'Community Description must not exceed 100 characters']
+    required: [true, communityInputRules.description.requiredErrorMessage],
+    minLength: [
+      communityInputRules.description.minLength.value,
+      communityInputRules.description.minLength.errorMessage
+    ],
+    maxLength: [
+      communityInputRules.description.maxLength.value,
+      communityInputRules.description.maxLength.errorMessage
+    ]
   },
   bannerImageUrl: String,
   bannerImagePublicId: {
@@ -44,7 +57,7 @@ const communitySchema = new Schema({
     select: false
   },
   profileImageUrl: String,
-  profilImagePublicId: {
+  profileImagePublicId: {
     type: String,
     select: false
   },

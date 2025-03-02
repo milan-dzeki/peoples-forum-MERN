@@ -1,6 +1,15 @@
 import { Schema, models, model } from 'mongoose';
 
 const chatSchema = new Schema({
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  name: {
+    type: String,
+    minLength: 2,
+    maxLength: 10
+  },
   lastMessage: {
     type: Schema.Types.ObjectId,
     ref: 'Message'

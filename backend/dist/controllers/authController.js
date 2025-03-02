@@ -18,7 +18,7 @@ const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const appError_1 = __importDefault(require("utils/appError"));
 const signupValidator_1 = __importDefault(require("configs/validators/auth/signupValidator"));
-const authService_1 = require("services/auth/authService");
+const authService_1 = __importDefault(require("services/authService"));
 const userModel_1 = __importDefault(require("models/userModel"));
 exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.fields) {
@@ -78,16 +78,16 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
         }
     }
     const newUser = yield userModel_1.default.create(prepareUserForCreation);
-    const signedUser = (0, authService_1.createTokenCookieAndResponseUser)(newUser);
+    const signedUser = authService_1.default.createTokenCookieAndResponseUser(newUser);
     if (!signedUser) {
-        yield (0, authService_1.deleteUserAndPhotoOnSignupFail)(newUser);
+        yield authService_1.default.deleteUserAndPhotoOnSignupFail(newUser);
         next(new appError_1.default(500, 'User creation failed. Maybe servers are down. Refresh the page and try again'));
         return;
     }
     const { user, token } = signedUser;
-    const { createModelsError } = yield (0, authService_1.createRequiredCollectionsAfterUserCreation)(user._id.toString());
+    const { createModelsError } = yield authService_1.default.createRequiredCollectionsAfterUserCreation(user._id.toString());
     if (createModelsError) {
-        yield (0, authService_1.deleteUserAndPhotoOnSignupFail)(newUser);
+        yield authService_1.default.deleteUserAndPhotoOnSignupFail(newUser);
         next(new appError_1.default(500, createModelsError));
         return;
     }
@@ -118,7 +118,7 @@ exports.login = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, 
         next(new appError_1.default(400, 'Invalid email or password'));
         return;
     }
-    const signedUser = (0, authService_1.createTokenCookieAndResponseUser)(userDB);
+    const signedUser = authService_1.default.createTokenCookieAndResponseUser(userDB);
     if (!signedUser) {
         next(new appError_1.default(500, 'User login. Maybe servers are down. Refresh the page and try again'));
         return;

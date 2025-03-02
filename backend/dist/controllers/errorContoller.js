@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const appError_1 = __importDefault(require("utils/appError"));
 const globalErrorHandler = (error, _, res, _1) => {
+    console.log(error, 'error');
     if (error instanceof appError_1.default) {
         const { status, statusCode, message, errors } = error;
         const responseData = { status };
@@ -17,7 +18,6 @@ const globalErrorHandler = (error, _, res, _1) => {
         res.status(statusCode).json(responseData);
         return;
     }
-    console.log(error);
     res.status(500).json({
         status: 'error',
         message: 'Something went wrong'

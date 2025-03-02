@@ -6,11 +6,7 @@ import catchAsync from 'utils/catchAsync';
 import cloudinary from 'configs/cloudinary';
 import AppError from 'utils/appError';
 import UserValidator from 'configs/validators/auth/signupValidator';
-import {
-  createTokenCookieAndResponseUser, 
-  createRequiredCollectionsAfterUserCreation ,
-  deleteUserAndPhotoOnSignupFail
-} from 'services/auth/authService';
+import AuthService from 'services/authService';
 import User from 'models/userModel';
 
 export const signup = catchAsync (async (
@@ -98,19 +94,19 @@ export const signup = catchAsync (async (
 
   const newUser = await User.create(prepareUserForCreation);
   
-  const signedUser = createTokenCookieAndResponseUser(newUser);
+  const signedUser = AuthService.createTokenCookieAndResponseUser(newUser);
 
   if (!signedUser) {
-    await deleteUserAndPhotoOnSignupFail(newUser);
+    await AuthService.deleteUserAndPhotoOnSignupFail(newUser);
     next(new AppError(500, 'User creation failed. Maybe servers are down. Refresh the page and try again'));
     return;
   }
 
   const { user, token } = signedUser;
 
-  const { createModelsError } = await createRequiredCollectionsAfterUserCreation(user._id.toString());
+  const { createModelsError } = await AuthService.createRequiredCollectionsAfterUserCreation(user._id.toString());
   if (createModelsError) {
-    await deleteUserAndPhotoOnSignupFail(newUser);
+    await AuthService.deleteUserAndPhotoOnSignupFail(newUser);
     next(new AppError(500, createModelsError));
     return;
   }
@@ -153,7 +149,7 @@ export const login = catchAsync (async (
     return;
   }
 
-  const signedUser = createTokenCookieAndResponseUser(userDB);
+  const signedUser = AuthService.createTokenCookieAndResponseUser(userDB);
   if (!signedUser) {
     next(new AppError(500, 'User login. Maybe servers are down. Refresh the page and try again'));
     return;

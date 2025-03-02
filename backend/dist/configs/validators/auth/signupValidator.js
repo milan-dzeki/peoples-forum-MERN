@@ -15,43 +15,24 @@ var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const validator_1 = require("validator");
 const userModel_1 = __importDefault(require("models/userModel"));
-const signupInputsRules_1 = __importDefault(require("./signupInputsRules"));
-class SignupValidator {
-    static doesExistAsString(value, errorMessage) {
-        return !value || (value && typeof value === 'string' && value.trim().length === 0) || (value && typeof value !== 'string')
-            ? errorMessage
-            : null;
-    }
-    static isSingleString(value, errorMessage) {
-        return value.split(' ').length > 1
-            ? errorMessage
-            : null;
-    }
-    static isSmallerThanMinLength(value, minLength, errorMessage) {
-        return value.trim().length < minLength
-            ? errorMessage
-            : null;
-    }
-    static isHigherThanMaxLength(value, maxLength, errorMessage) {
-        return value.trim().length > maxLength
-            ? errorMessage
-            : null;
-    }
+const signupInputRules_1 = __importDefault(require("./signupInputRules"));
+const parentValidator_1 = __importDefault(require("configs/validators/parentValidator"));
+class SignupValidator extends parentValidator_1.default {
     static isValidEmail(value) {
         return !value || !(0, validator_1.isEmail)(value)
-            ? { error: signupInputsRules_1.default.email.invalidEmailMesssage + 'validator' }
-            : { error: null };
+            ? signupInputRules_1.default.email.invalidEmailMesssage
+            : null;
     }
     static doesUserWithEmailAlreadyExist(email) {
         return __awaiter(this, void 0, void 0, function* () {
             const emailInvalidError = this.isValidEmail(email);
             if (emailInvalidError) {
-                return emailInvalidError.error;
+                return emailInvalidError;
             }
             try {
                 const userWithEmailExists = yield userModel_1.default.find({ email });
                 if (userWithEmailExists.length) {
-                    return signupInputsRules_1.default.email.emailTakenErrorMessage;
+                    return signupInputRules_1.default.email.emailTakenErrorMessage;
                 }
                 return null;
             }
@@ -62,44 +43,44 @@ class SignupValidator {
     }
     static arePasswordsTheSame(password, passwordConfim) {
         return !passwordConfim || password !== passwordConfim
-            ? signupInputsRules_1.default.password.passwordsNotTheSameErrorMessage
+            ? signupInputRules_1.default.password.passwordsNotTheSameErrorMessage
             : null;
     }
     static validatePassword(password, passwordConfim) {
-        const invalidPassword = this.doesExistAsString(password, signupInputsRules_1.default.password.requiredErrorMessage);
+        const invalidPassword = this.isValidNonEmptyString(password, signupInputRules_1.default.password.requiredErrorMessage);
         if (invalidPassword) {
-            return { error: invalidPassword };
+            return invalidPassword;
         }
-        const smallerLengthThanRequired = this.isSmallerThanMinLength(password, signupInputsRules_1.default.password.minLength.value, signupInputsRules_1.default.password.minLength.errorMessage);
+        const smallerLengthThanRequired = this.isSmallerThanMinLength(password, signupInputRules_1.default.password.minLength.value, signupInputRules_1.default.password.minLength.errorMessage);
         if (smallerLengthThanRequired) {
-            return { error: smallerLengthThanRequired };
+            return smallerLengthThanRequired;
         }
-        const higherLengthThanRequired = this.isHigherThanMaxLength(password, signupInputsRules_1.default.password.maxLength.value, signupInputsRules_1.default.password.maxLength.errorMessage);
+        const higherLengthThanRequired = this.isHigherThanMaxLength(password, signupInputRules_1.default.password.maxLength.value, signupInputRules_1.default.password.maxLength.errorMessage);
         if (higherLengthThanRequired) {
-            return { error: higherLengthThanRequired };
+            return higherLengthThanRequired;
         }
         const notSame = this.arePasswordsTheSame(password, passwordConfim);
         if (notSame) {
-            return { error: notSame };
+            return notSame;
         }
-        return { error: null };
+        return null;
     }
     static validateUserInputs(userInputs) {
         return __awaiter(this, void 0, void 0, function* () {
             const { firstName, lastName, email, password, passwordConfirm } = userInputs;
             const errors = {};
+            const userWithEmailExistsError = yield this.doesUserWithEmailAlreadyExist(email);
             const validationErrors = {
-                firstNameError: this.validateNames(firstName, 'firstName').error,
-                lastNameError: this.validateNames(lastName, 'lastName').error,
-                emailError: yield this.doesUserWithEmailAlreadyExist(email),
-                passwordError: this.validatePassword(password, passwordConfirm).error
+                firstNameError: this.validateNames(firstName, 'firstName'),
+                lastNameError: this.validateNames(lastName, 'lastName'),
+                emailError: userWithEmailExistsError,
+                passwordError: this.validatePassword(password, passwordConfirm)
             };
             Object.keys(validationErrors).forEach((key) => {
                 if (validationErrors[key]) {
                     errors[key] = validationErrors[key];
                 }
             });
-            console.log(errors);
             return Object.keys(errors).length
                 ? { errors }
                 : { errors: null };
@@ -108,23 +89,23 @@ class SignupValidator {
 }
 _a = SignupValidator;
 SignupValidator.validateNames = (value, key) => {
-    const invalidName = _a.doesExistAsString(value, signupInputsRules_1.default[key].requiredErrorMessage);
+    const invalidName = _a.isValidNonEmptyString(value, signupInputRules_1.default[key].requiredErrorMessage);
     if (invalidName) {
-        return { error: invalidName };
+        return invalidName;
     }
     // add exclamation marks for value because it will exist if first check (above) doesn't return error msg
-    const multiWord = _a.isSingleString(value, signupInputsRules_1.default[key].mustBeOneWordErrorMessage);
+    const multiWord = _a.isSingleString(value, signupInputRules_1.default[key].mustBeOneWordErrorMessage);
     if (multiWord) {
-        return { error: multiWord };
+        return multiWord;
     }
-    const smallerLengthThanRequired = _a.isSmallerThanMinLength(value, signupInputsRules_1.default[key].minLength.value, signupInputsRules_1.default[key].minLength.errorMessage);
+    const smallerLengthThanRequired = _a.isSmallerThanMinLength(value, signupInputRules_1.default[key].minLength.value, signupInputRules_1.default[key].minLength.errorMessage);
     if (smallerLengthThanRequired) {
-        return { error: smallerLengthThanRequired };
+        return smallerLengthThanRequired;
     }
-    const higherLengthThanRequired = _a.isHigherThanMaxLength(value, signupInputsRules_1.default[key].maxLength.value, signupInputsRules_1.default[key].maxLength.errorMessage);
+    const higherLengthThanRequired = _a.isHigherThanMaxLength(value, signupInputRules_1.default[key].maxLength.value, signupInputRules_1.default[key].maxLength.errorMessage);
     if (higherLengthThanRequired) {
-        return { error: higherLengthThanRequired };
+        return higherLengthThanRequired;
     }
-    return { error: null };
+    return null;
 };
 exports.default = SignupValidator;

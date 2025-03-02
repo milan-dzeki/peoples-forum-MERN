@@ -10,4 +10,9 @@ export interface RequestWithUserIdType extends Request {
   userId?: string;
 }
 
+export interface RequestWithCommunityType extends Request {
+  userId?: string;
+  community?: any;
+}
+
 export type ControllerType = (req: RequestWithBodyType, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;

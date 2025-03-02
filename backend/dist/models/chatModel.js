@@ -2,6 +2,15 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const chatSchema = new mongoose_1.Schema({
+    creator: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    name: {
+        type: String,
+        minLength: 2,
+        maxLength: 10
+    },
     lastMessage: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Message'

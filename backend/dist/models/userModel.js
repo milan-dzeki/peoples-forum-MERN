@@ -5,52 +5,52 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const validator_1 = require("validator");
-const signupInputsRules_1 = __importDefault(require("configs/validators/auth/signupInputsRules"));
+const signupInputRules_1 = __importDefault(require("configs/validators/auth/signupInputRules"));
 const userSchema = new mongoose_1.Schema({
     firstName: {
         type: String,
         required: [
             true,
-            signupInputsRules_1.default.firstName.requiredErrorMessage
+            signupInputRules_1.default.firstName.requiredErrorMessage
         ],
         minLength: [
-            signupInputsRules_1.default.firstName.minLength.value,
-            signupInputsRules_1.default.firstName.minLength.errorMessage
+            signupInputRules_1.default.firstName.minLength.value,
+            signupInputRules_1.default.firstName.minLength.errorMessage
         ],
         maxLength: [
-            signupInputsRules_1.default.firstName.maxLength.value,
-            signupInputsRules_1.default.firstName.maxLength.errorMessage
+            signupInputRules_1.default.firstName.maxLength.value,
+            signupInputRules_1.default.firstName.maxLength.errorMessage
         ]
     },
     lastName: {
         type: String,
         required: [
             true,
-            signupInputsRules_1.default.lastName.requiredErrorMessage
+            signupInputRules_1.default.lastName.requiredErrorMessage
         ],
         minLength: [
-            signupInputsRules_1.default.lastName.minLength.value,
-            signupInputsRules_1.default.lastName.minLength.errorMessage
+            signupInputRules_1.default.lastName.minLength.value,
+            signupInputRules_1.default.lastName.minLength.errorMessage
         ],
         maxLength: [
-            signupInputsRules_1.default.lastName.maxLength.value,
-            signupInputsRules_1.default.lastName.maxLength.errorMessage
+            signupInputRules_1.default.lastName.maxLength.value,
+            signupInputRules_1.default.lastName.maxLength.errorMessage
         ]
     },
     fullName: String,
     email: {
         type: String,
-        required: [true, signupInputsRules_1.default.email.requiredErrorMessage],
+        required: [true, signupInputRules_1.default.email.requiredErrorMessage],
         lowercase: true,
         unique: true,
         validate: [
             validator_1.isEmail,
-            signupInputsRules_1.default.email.invalidEmailMesssage
+            signupInputRules_1.default.email.invalidEmailMesssage
         ]
     },
     password: {
         type: String,
-        required: [true, signupInputsRules_1.default.password.requiredErrorMessage],
+        required: [true, signupInputRules_1.default.password.requiredErrorMessage],
         select: false
     },
     role: {
