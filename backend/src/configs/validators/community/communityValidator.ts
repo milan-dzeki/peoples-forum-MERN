@@ -5,7 +5,7 @@ import communityInputRules from './communityInputRules';
 import ParentValidator from 'configs/validators/parentValidator';
 
 class CommunityValidator extends ParentValidator {
-  private static validateStringValues = (value: string | undefined, key: 'name' | 'description'): string | null => {
+  static validateStringValues = (value: string | undefined, key: 'name' | 'description'): string | null => {
     const invalidName = this.isValidNonEmptyString(value, communityInputRules[key].requiredErrorMessage);
     if (invalidName) {
       return invalidName;

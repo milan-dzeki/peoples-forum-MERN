@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.createCommunity = void 0;
+exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.updateCommunityDescription = exports.createCommunity = void 0;
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
@@ -70,8 +70,25 @@ exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaite
     newCommunity.availableChats = chatIds;
     yield newCommunity.save();
     return res.status(201).json({
-        status: 'Community created successfully',
+        status: 'success',
+        message: 'Community created successfully',
         community: newCommunity
+    });
+}));
+exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { description } = req.body;
+    const descriptionInvalidError = communityValidator_1.default.validateStringValues(description, 'description');
+    if (descriptionInvalidError) {
+        next(new appError_1.default(422, descriptionInvalidError));
+        return;
+    }
+    const community = req.community;
+    community.description = description;
+    yield community.save();
+    return res.status(200).json({
+        status: 'success',
+        message: 'Community description updated successfully',
+        newDescription: community.description
     });
 }));
 exports.deleteCommunity = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
@@ -92,6 +109,7 @@ exports.deleteCommunity = (0, catchAsync_1.default)((req, res, _) => __awaiter(v
     }
     yield communityModel_1.default.deleteOne({ _id: communityToDelete._id });
     return res.status(204).json({
+        status: 'success',
         message: 'Community deleted successfully together with all associated chats'
     });
 }));
@@ -112,6 +130,7 @@ exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
     community.profileImagePublicId = uploadedPhotoData.public_id;
     yield community.save();
     return res.status(200).json({
+        status: 'success',
         message: 'Community profile image updated successfully',
         newProfileImage: community.profileImageUrl
     });
@@ -124,6 +143,7 @@ exports.removeCommunityProfileImage = (0, catchAsync_1.default)((req, res, _) =>
     yield community.save();
     yield cloudinary_1.default.uploader.destroy(profileImagePublicId);
     return res.status(200).json({
+        status: 'success',
         message: 'Community profile image removed successfully'
     });
 }));
@@ -144,6 +164,7 @@ exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
     community.bannerImagePublicId = uploadedPhotoData.public_id;
     yield community.save();
     return res.status(200).json({
+        status: 'success',
         message: 'Community banner image updated successfully',
         newProfileImage: community.bannerImageUrl
     });
@@ -156,6 +177,7 @@ exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, _) => 
     yield community.save();
     yield cloudinary_1.default.uploader.destroy(bannerImagePublicId);
     return res.status(200).json({
+        status: 'success',
         message: 'Community banner image removed successfully'
     });
 }));

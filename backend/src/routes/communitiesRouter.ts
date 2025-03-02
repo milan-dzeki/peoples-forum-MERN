@@ -3,6 +3,7 @@ import formidable from 'express-formidable';
 import isAuth from 'middleware/isAuthMiddleware';
 import { 
   createCommunity, 
+  updateCommunityDescription,
   deleteCommunity, 
   updateCommunityProfileImage,
   removeCommunityProfileImage,
@@ -22,6 +23,13 @@ router.delete(
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,  
   deleteCommunity
+);
+
+router.patch(
+  '/:communityId/updateDescription',
+  doesCommunityExist, 
+  isLoggedUserCommunityCreatorOrModerator, 
+  updateCommunityDescription
 );
 
 router.patch(

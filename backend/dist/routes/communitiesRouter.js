@@ -12,6 +12,7 @@ const router = (0, express_1.Router)();
 router.use(isAuthMiddleware_1.default);
 router.post('/', (0, express_formidable_1.default)(), communityController_1.createCommunity);
 router.delete('/:communityId', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityController_1.deleteCommunity);
+router.patch('/:communityId/updateDescription', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityController_1.updateCommunityDescription);
 router.patch('/:communityId/updateProfileImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), communityController_1.updateCommunityProfileImage);
 router.patch('/:communityId/removeProfileImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), communityController_1.removeCommunityProfileImage);
 router.patch('/:communityId/updateBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), communityController_1.updateCommunityBannerImage);

@@ -91,6 +91,31 @@ export const createCommunity = catchAsync (async (
   });
 });
 
+export const updateCommunityDescription = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const { description } = req.body;
+
+  const descriptionInvalidError = CommunityValidator.validateStringValues(description, 'description');
+  if (descriptionInvalidError) {
+    next(new AppError(422, descriptionInvalidError));
+    return;
+  } 
+
+  const community = req.community!;
+
+  community.description = description;
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Community description updated successfully',
+    newDescription: community.description
+  });
+});
+
 export const deleteCommunity = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
