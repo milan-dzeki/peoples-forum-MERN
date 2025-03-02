@@ -19,6 +19,7 @@ const appError_1 = __importDefault(require("utils/appError"));
 const signupValidator_1 = __importDefault(require("configs/validators/auth/signupValidator"));
 const authService_1 = __importDefault(require("services/authService"));
 const cloudinaryManagementService_1 = __importDefault(require("services/cloudinaryManagementService"));
+const cookieName_1 = require("configs/cookieName");
 const userModel_1 = __importDefault(require("models/userModel"));
 exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     if (!req.fields) {
@@ -73,7 +74,7 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
         next(new appError_1.default(500, createModelsError));
         return;
     }
-    res.cookie('_pplFrmCKK', token, {
+    res.cookie(cookieName_1.COOKIE_NAME, token, {
         httpOnly: true,
         secure: false,
         sameSite: 'strict'
@@ -106,7 +107,7 @@ exports.login = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, 
         return;
     }
     const { user, token } = signedUser;
-    res.cookie('_pplFrmCKK', token, {
+    res.cookie(cookieName_1.COOKIE_NAME, token, {
         httpOnly: true,
         secure: false,
         sameSite: 'strict'

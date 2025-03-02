@@ -1,6 +1,7 @@
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Response, NextFunction } from 'express';
 import { RequestWithUserIdType } from 'types/lib';
+import { COOKIE_NAME } from 'configs/cookieName';
 import AppError from 'utils/appError';
 import User from 'models/userModel';
 
@@ -22,7 +23,7 @@ const isAuth = async (
       return;
     }
 
-    const token = cookies['_pplFrmCKK'];
+    const token = cookies[COOKIE_NAME];
     if (!token) {
       next(notLoggedInError);
       return;

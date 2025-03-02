@@ -3,11 +3,11 @@ import bcrypt from 'bcryptjs';
 import { RequestWithBodyType } from 'types/lib';
 import { PrepareUserForCreateType } from 'types/controllers/auth';
 import catchAsync from 'utils/catchAsync';
-import cloudinary from 'configs/cloudinary';
 import AppError from 'utils/appError';
 import UserValidator from 'configs/validators/auth/signupValidator';
 import AuthService from 'services/authService';
 import CloudinaryManagementService from 'services/cloudinaryManagementService';
+import { COOKIE_NAME } from 'configs/cookieName';
 import User from 'models/userModel';
 
 export const signup = catchAsync (async (
@@ -89,7 +89,7 @@ export const signup = catchAsync (async (
     return;
   }
 
-  res.cookie('_pplFrmCKK', token, {
+  res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: false,
     sameSite: 'strict'
@@ -135,7 +135,7 @@ export const login = catchAsync (async (
 
   const { user, token } = signedUser;
 
-  res.cookie('_pplFrmCKK', token, {
+  res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     secure: false,
     sameSite: 'strict'

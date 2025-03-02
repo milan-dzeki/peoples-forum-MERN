@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const cookieName_1 = require("configs/cookieName");
 const appError_1 = __importDefault(require("utils/appError"));
 const userModel_1 = __importDefault(require("models/userModel"));
 const notLoggedInError = new appError_1.default(401, 'You are not logged in or your session has expired.');
@@ -23,7 +24,7 @@ const isAuth = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () 
             next(notLoggedInError);
             return;
         }
-        const token = cookies['_pplFrmCKK'];
+        const token = cookies[cookieName_1.COOKIE_NAME];
         if (!token) {
             next(notLoggedInError);
             return;
