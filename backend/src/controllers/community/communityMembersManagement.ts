@@ -387,8 +387,6 @@ export const userAcceptJoinCommunityInvite = catchAsync (async (
     }
   }
 
-  await community.save();
-
   const user = await User.findById(userId).select('_id fullName');
 
   const moderatorNotifictaions = [
@@ -411,11 +409,57 @@ export const userAcceptJoinCommunityInvite = catchAsync (async (
     });
   });
 
+  await community.save();
+
   const notificationsToSendToCommunityModerators = await Notification.insertMany(moderatorNotifictaions);
 
   return res.status(200).json({
     status: 'success',
     message: `Accepted invite to become ${inviteType} of "${community.name}" community`,
     notificationsToSendToCommunityModerators
+  });
+});
+
+export const userDeclineJoinCommunityInvite = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const { inviteType } = req.params;
+
+  if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
+    next(new AppError(400, 'User invitation type must be either "member" or "moderator"'));
+    return;
+  }
+
+  const userId = req.userId!;
+  const community = req.community!;
+
+  const isInPendingMemberList = community.pendingInvitedUsers.find((user: any) => user.toString() === userId.toString());
+  if (inviteType === 'member' && !isInPendingMemberList) {
+    next(new AppError(400, `There seems to be missing invitation for joining "${community.name}". Maybe admins have withdrew it.`));
+    return;
+  }
+
+  const isInPendingModeratorList = community.pendingInvitedModerators.find((user: any) => user.toString() === userId.toString());
+
+  if (inviteType === 'moderator' && !isInPendingModeratorList) {
+    next(new AppError(400, `There seems to be missing invitation for joining "${community.name}" as moderator. Maybe admins have withdrew it.`));
+    return;
+  }
+
+  if (inviteType === 'member') {
+    community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user: any) => user.toString() !== userId.toString());
+  }
+
+  if (inviteType === 'moderator') {
+    community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user: any) => user.toString() !== userId.toString());
+  }
+
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: `Invitation to join "${community.name}" community as ${inviteType} declined successfully.`
   });
 });

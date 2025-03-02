@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userAcceptJoinCommunityInvite = exports.moderatorWithdrawJoinCommunityInviteForUser = exports.inviteUserToJoinCommunity = exports.undoBanUserFromCommunity = exports.banUserFromCommunity = void 0;
+exports.userDeclineJoinCommunityInvite = exports.userAcceptJoinCommunityInvite = exports.moderatorWithdrawJoinCommunityInviteForUser = exports.inviteUserToJoinCommunity = exports.undoBanUserFromCommunity = exports.banUserFromCommunity = void 0;
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const appError_1 = __importDefault(require("utils/appError"));
 const userModel_1 = __importDefault(require("models/userModel"));
@@ -296,7 +296,6 @@ exports.userAcceptJoinCommunityInvite = (0, catchAsync_1.default)((req, res, nex
             community.joinedUsers = community.joinedUsers.filter((user) => user.toString() !== userId.toString());
         }
     }
-    yield community.save();
     const user = yield userModel_1.default.findById(userId).select('_id fullName');
     const moderatorNotifictaions = [
         {
@@ -316,10 +315,41 @@ exports.userAcceptJoinCommunityInvite = (0, catchAsync_1.default)((req, res, nex
             sender: user._id
         });
     });
+    yield community.save();
     const notificationsToSendToCommunityModerators = yield notificationModel_1.default.insertMany(moderatorNotifictaions);
     return res.status(200).json({
         status: 'success',
         message: `Accepted invite to become ${inviteType} of "${community.name}" community`,
         notificationsToSendToCommunityModerators
+    });
+}));
+exports.userDeclineJoinCommunityInvite = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { inviteType } = req.params;
+    if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
+        next(new appError_1.default(400, 'User invitation type must be either "member" or "moderator"'));
+        return;
+    }
+    const userId = req.userId;
+    const community = req.community;
+    const isInPendingMemberList = community.pendingInvitedUsers.find((user) => user.toString() === userId.toString());
+    if (inviteType === 'member' && !isInPendingMemberList) {
+        next(new appError_1.default(400, `There seems to be missing invitation for joining "${community.name}". Maybe admins have withdrew it.`));
+        return;
+    }
+    const isInPendingModeratorList = community.pendingInvitedModerators.find((user) => user.toString() === userId.toString());
+    if (inviteType === 'moderator' && !isInPendingModeratorList) {
+        next(new appError_1.default(400, `There seems to be missing invitation for joining "${community.name}" as moderator. Maybe admins have withdrew it.`));
+        return;
+    }
+    if (inviteType === 'member') {
+        community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user) => user.toString() !== userId.toString());
+    }
+    if (inviteType === 'moderator') {
+        community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user) => user.toString() !== userId.toString());
+    }
+    yield community.save();
+    return res.status(200).json({
+        status: 'success',
+        message: `Invitation to join "${community.name}" community as ${inviteType} declined successfully.`
     });
 }));

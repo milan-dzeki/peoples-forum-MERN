@@ -2,24 +2,10 @@ import { Router } from 'express';
 import formidable from 'express-formidable';
 import isAuth from 'middleware/isAuthMiddleware';
 import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator } from 'middleware/communityMiddlewares';
-// import { 
-//   createCommunity, 
-//   updateCommunityDescription,
-//   deleteCommunity, 
-//   updateCommunityProfileImage,
-//   removeCommunityProfileImage,
-//   updateCommunityBannerImage,
-//   removeCommunityBannerImage, 
-//   banUserFromCommunity,
-//   undoBanUserFromCommunity,
-//   inviteUserToJoinCommunity,
-//   moderatorWithdrawJoinCommunityInviteForUser
-// } from 'controllers/communityController';
 import {
   communityCRUD,
   communityMembersManagement
 } from 'controllers/community';
-import { userAcceptJoinCommunityInvite } from 'controllers/community/communityMembersManagement';
 
 const {
   createCommunity,
@@ -35,7 +21,9 @@ const {
   banUserFromCommunity,
   undoBanUserFromCommunity,
   inviteUserToJoinCommunity,
-  moderatorWithdrawJoinCommunityInviteForUser
+  moderatorWithdrawJoinCommunityInviteForUser,
+  userAcceptJoinCommunityInvite,
+  userDeclineJoinCommunityInvite
 } = communityMembersManagement
 
 const router = Router();
@@ -121,6 +109,12 @@ router.patch(
   '/:communityId/userAcceptInviteJoinCommunity/:inviteType',
   doesCommunityExist,
   userAcceptJoinCommunityInvite
+);
+
+router.patch(
+  '/:communityId/userDeclineInviteJoinCommunity/:inviteType',
+  doesCommunityExist,
+  userDeclineJoinCommunityInvite
 );
 
 export default router;

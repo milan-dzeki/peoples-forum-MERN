@@ -7,23 +7,9 @@ const express_1 = require("express");
 const express_formidable_1 = __importDefault(require("express-formidable"));
 const isAuthMiddleware_1 = __importDefault(require("middleware/isAuthMiddleware"));
 const communityMiddlewares_1 = require("middleware/communityMiddlewares");
-// import { 
-//   createCommunity, 
-//   updateCommunityDescription,
-//   deleteCommunity, 
-//   updateCommunityProfileImage,
-//   removeCommunityProfileImage,
-//   updateCommunityBannerImage,
-//   removeCommunityBannerImage, 
-//   banUserFromCommunity,
-//   undoBanUserFromCommunity,
-//   inviteUserToJoinCommunity,
-//   moderatorWithdrawJoinCommunityInviteForUser
-// } from 'controllers/communityController';
 const community_1 = require("controllers/community");
-const communityMembersManagement_1 = require("controllers/community/communityMembersManagement");
 const { createCommunity, deleteCommunity, updateCommunityDescription, updateCommunityProfileImage, removeCommunityProfileImage, updateCommunityBannerImage, removeCommunityBannerImage } = community_1.communityCRUD;
-const { banUserFromCommunity, undoBanUserFromCommunity, inviteUserToJoinCommunity, moderatorWithdrawJoinCommunityInviteForUser } = community_1.communityMembersManagement;
+const { banUserFromCommunity, undoBanUserFromCommunity, inviteUserToJoinCommunity, moderatorWithdrawJoinCommunityInviteForUser, userAcceptJoinCommunityInvite, userDeclineJoinCommunityInvite } = community_1.communityMembersManagement;
 const router = (0, express_1.Router)();
 router.use(isAuthMiddleware_1.default);
 router.post('/', (0, express_formidable_1.default)(), createCommunity);
@@ -37,5 +23,6 @@ router.patch('/:communityId/banUserFromCommunity', communityMiddlewares_1.doesCo
 router.patch('/:communityId/undoUserCommunityBan', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, undoBanUserFromCommunity);
 router.patch('/:communityId/invite', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, inviteUserToJoinCommunity);
 router.patch('/:communityId/moderatorWidthrawJoinInviteForUser', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, moderatorWithdrawJoinCommunityInviteForUser);
-router.patch('/:communityId/userAcceptInviteJoinCommunity/:inviteType', communityMiddlewares_1.doesCommunityExist, communityMembersManagement_1.userAcceptJoinCommunityInvite);
+router.patch('/:communityId/userAcceptInviteJoinCommunity/:inviteType', communityMiddlewares_1.doesCommunityExist, userAcceptJoinCommunityInvite);
+router.patch('/:communityId/userDeclineInviteJoinCommunity/:inviteType', communityMiddlewares_1.doesCommunityExist, userDeclineJoinCommunityInvite);
 exports.default = router;
