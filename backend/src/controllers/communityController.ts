@@ -523,3 +523,59 @@ export const inviteUserToJoinCommunity = catchAsync (async (
     inviteUserNotification
   });
 });
+
+export const moderatorWithdrawJoinCommunityInviteForUser = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userToWithdrawInviteId, inviteType } = req.body;
+
+  if (!userToWithdrawInviteId) {
+    next(new AppError(400, 'User ID for withdrwaing invitation is not provided'));
+    return;
+  }
+
+  if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
+    next(new AppError(400, 'User widthraw invitation type must be either "member" or "moderator"'));
+    return;
+  }
+
+  const userExist = await User.exists({ _id: userToWithdrawInviteId });
+  if (!userExist) {
+    next(new AppError(404, `User you are trying to invite as ${inviteType} doesnt exist. Maybe its account was deleted.`));
+    return;
+  }
+
+  const community = req.community!;
+
+  if (inviteType === 'member') {
+    const isUserInPendingMembersList = community.pendingInvitedUsers.find((user: any) => user.toString() === userToWithdrawInviteId.toString());
+
+    if (!isUserInPendingMembersList) {
+      next(new AppError(400, 'User in not found in pending invite list. Maybe he / she has declined request in the meantime'));
+      return;
+    }
+
+    community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user: any) => user.toString() !== userToWithdrawInviteId.toString());
+  }
+
+  if (inviteType === 'moderator') {
+    const isUserInPendingModeratorsList = community.pendingInvitedModerators.find((user: any) => user.toString() === userToWithdrawInviteId.toString());
+
+    if (!isUserInPendingModeratorsList) {
+      next(new AppError(400, 'User in not found in pending invite moderator list. Maybe he / she has declined request in the meantime'));
+      return;
+    }
+
+    community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user: any) => user.toString() !== userToWithdrawInviteId.toString());
+  }
+
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: `You have successfully withdrew ${inviteType} invite for user`,
+    userToWithdrawInviteId
+  });
+});

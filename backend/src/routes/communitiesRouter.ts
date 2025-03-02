@@ -11,7 +11,8 @@ import {
   removeCommunityBannerImage, 
   banUserFromCommunity,
   undoBanUserFromCommunity,
-  inviteUserToJoinCommunity
+  inviteUserToJoinCommunity,
+  moderatorWithdrawJoinCommunityInviteForUser
 } from 'controllers/communityController';
 import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator } from 'middleware/communityMiddlewares';
 
@@ -85,6 +86,13 @@ router.patch(
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
   inviteUserToJoinCommunity
+);
+
+router.patch(
+  '/:communityId/moderatorWidthrawJoinInviteForUser',
+  doesCommunityExist, 
+  isLoggedUserCommunityCreatorOrModerator,
+  moderatorWithdrawJoinCommunityInviteForUser
 );
 
 export default router;

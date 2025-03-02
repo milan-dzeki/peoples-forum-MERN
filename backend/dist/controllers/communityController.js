@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.inviteUserToJoinCommunity = exports.undoBanUserFromCommunity = exports.banUserFromCommunity = exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.updateCommunityDescription = exports.createCommunity = void 0;
+exports.moderatorWithdrawJoinCommunityInviteForUser = exports.inviteUserToJoinCommunity = exports.undoBanUserFromCommunity = exports.banUserFromCommunity = exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.updateCommunityDescription = exports.createCommunity = void 0;
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
@@ -376,5 +376,44 @@ exports.inviteUserToJoinCommunity = (0, catchAsync_1.default)((req, res, next) =
         message: responseDataMessage,
         userToInviteId,
         inviteUserNotification
+    });
+}));
+exports.moderatorWithdrawJoinCommunityInviteForUser = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userToWithdrawInviteId, inviteType } = req.body;
+    if (!userToWithdrawInviteId) {
+        next(new appError_1.default(400, 'User ID for withdrwaing invitation is not provided'));
+        return;
+    }
+    if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
+        next(new appError_1.default(400, 'User widthraw invitation type must be either "member" or "moderator"'));
+        return;
+    }
+    const userExist = yield userModel_1.default.exists({ _id: userToWithdrawInviteId });
+    if (!userExist) {
+        next(new appError_1.default(404, `User you are trying to invite as ${inviteType} doesnt exist. Maybe its account was deleted.`));
+        return;
+    }
+    const community = req.community;
+    if (inviteType === 'member') {
+        const isUserInPendingMembersList = community.pendingInvitedUsers.find((user) => user.toString() === userToWithdrawInviteId.toString());
+        if (!isUserInPendingMembersList) {
+            next(new appError_1.default(400, 'User in not found in pending invite list. Maybe he / she has declined request in the meantime'));
+            return;
+        }
+        community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user) => user.toString() !== userToWithdrawInviteId.toString());
+    }
+    if (inviteType === 'moderator') {
+        const isUserInPendingModeratorsList = community.pendingInvitedModerators.find((user) => user.toString() === userToWithdrawInviteId.toString());
+        if (!isUserInPendingModeratorsList) {
+            next(new appError_1.default(400, 'User in not found in pending invite moderator list. Maybe he / she has declined request in the meantime'));
+            return;
+        }
+        community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user) => user.toString() !== userToWithdrawInviteId.toString());
+    }
+    yield community.save();
+    return res.status(200).json({
+        status: 'success',
+        message: `You have successfully withdrew ${inviteType} invite for user`,
+        userToWithdrawInviteId
     });
 }));
