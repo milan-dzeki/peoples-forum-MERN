@@ -1,20 +1,41 @@
 import { Router } from 'express';
 import formidable from 'express-formidable';
 import isAuth from 'middleware/isAuthMiddleware';
-import { 
-  createCommunity, 
+import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator } from 'middleware/communityMiddlewares';
+// import { 
+//   createCommunity, 
+//   updateCommunityDescription,
+//   deleteCommunity, 
+//   updateCommunityProfileImage,
+//   removeCommunityProfileImage,
+//   updateCommunityBannerImage,
+//   removeCommunityBannerImage, 
+//   banUserFromCommunity,
+//   undoBanUserFromCommunity,
+//   inviteUserToJoinCommunity,
+//   moderatorWithdrawJoinCommunityInviteForUser
+// } from 'controllers/communityController';
+import {
+  communityCRUD,
+  communityMembersManagement
+} from 'controllers/community';
+
+const {
+  createCommunity,
+  deleteCommunity,
   updateCommunityDescription,
-  deleteCommunity, 
   updateCommunityProfileImage,
   removeCommunityProfileImage,
   updateCommunityBannerImage,
-  removeCommunityBannerImage, 
+  removeCommunityBannerImage
+} = communityCRUD;
+
+const {
   banUserFromCommunity,
   undoBanUserFromCommunity,
   inviteUserToJoinCommunity,
   moderatorWithdrawJoinCommunityInviteForUser
-} from 'controllers/communityController';
-import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator } from 'middleware/communityMiddlewares';
+} = communityMembersManagement
 
 const router = Router();
 
