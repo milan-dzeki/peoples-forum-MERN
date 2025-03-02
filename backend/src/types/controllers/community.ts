@@ -1,3 +1,5 @@
+import { NotificationSchemaType } from "models/notificationModel";
+
 export interface CommunityRuleType {
   title: string;
   description: string;
@@ -18,4 +20,11 @@ export interface PrepareCommunityForCreateType {
   bannerImagePublicId?: string;
   profileImageUrl?: string;
   profileImagePublicId?: string;
+}
+
+export interface BannedUserResDataType {
+  status: string;
+  message: string;
+  bannedUserId: string;
+  bannedUserNotification?: NotificationSchemaType;
 }

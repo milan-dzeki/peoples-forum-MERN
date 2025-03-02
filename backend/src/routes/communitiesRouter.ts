@@ -8,7 +8,8 @@ import {
   updateCommunityProfileImage,
   removeCommunityProfileImage,
   updateCommunityBannerImage,
-  removeCommunityBannerImage 
+  removeCommunityBannerImage, 
+  banUserFromCommunity
 } from 'controllers/communityController';
 import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator } from 'middleware/communityMiddlewares';
 
@@ -59,9 +60,15 @@ router.patch(
 router.patch(
   '/:communityId/removeBannerImage', 
   doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator, 
-  formidable(), 
+  isLoggedUserCommunityCreatorOrModerator,
   removeCommunityBannerImage
+);
+
+router.patch(
+  '/:communityId/banUser',
+  doesCommunityExist, 
+  isLoggedUserCommunityCreatorOrModerator,
+  banUserFromCommunity
 );
 
 export default router;

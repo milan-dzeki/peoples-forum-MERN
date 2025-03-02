@@ -1,4 +1,4 @@
-import { Schema, models, model } from 'mongoose';
+import { Schema, models, model, HydratedDocument, InferSchemaType } from 'mongoose';
 
 const notificationsSchema = new Schema({
   receiver: {
@@ -10,7 +10,8 @@ const notificationsSchema = new Schema({
     type: String,
     enum: [
       'becomeCommunityModeratorRequest',
-      'becomeCommunityMemberRequest'
+      'becomeCommunityMemberRequest',
+      'bannedFromCommunity'
     ]
   },
   text: {
@@ -44,6 +45,8 @@ const notificationsSchema = new Schema({
 }, {
   timestamps: true
 });
+
+export type NotificationSchemaType = HydratedDocument<InferSchemaType<typeof notificationsSchema>>;
 
 const Notification = models.Notification || model('Notification', notificationsSchema);
 

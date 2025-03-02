@@ -1,15 +1,17 @@
 import { Response, NextFunction } from 'express';
 import type { RequestWithCommunityType, RequestWithUserIdType } from 'types/lib';
-import type { PrepareCommunityForCreateType } from 'types/controllers/community';
+import type { BannedUserResDataType, PrepareCommunityForCreateType } from 'types/controllers/community';
 import catchAsync from 'utils/catchAsync';
 import cloudinary from 'configs/cloudinary';
 import CommunityValidator from 'configs/validators/community/communityValidator';
 import AppError from 'utils/appError';
+import User from 'models/userModel';
 import Community from 'models/communityModel';
 import Chat from 'models/chatModel';
 import CommunityService from 'services/communityService';
 import CloudinaryManagementService from 'services/cloudinaryManagementService';
 import Message from 'models/messageModel';
+import Notification, { NotificationSchemaType } from 'models/notificationModel';
 
 export const createCommunity = catchAsync (async (
   req: RequestWithUserIdType,
@@ -259,4 +261,99 @@ export const removeCommunityBannerImage = catchAsync(async (
     status: 'success',
     message: 'Community banner image removed successfully'
   });
+});
+
+export const banUserFromCommunity = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userToBanId, shouldNotifyUser = false } = req.body;
+
+  if (!userToBanId) {
+    next(new AppError(400, 'User to ban ID is not provided'));
+    return;
+  }
+
+  const userExist = await User.exists({ _id: userToBanId });
+  if (!userExist) {
+    next(new AppError(404, 'User you are trying to ban cannot be found. Maybe its account no longer exist'));
+    return;
+  }
+
+  // if id is same as logged in user id - almost impossible, but why not check
+  if (userToBanId.toString() === req.userId!.toString()) {
+    next(new AppError(400, 'You cannot ban yourself'));
+    return;
+  }
+
+  const community = req.community!;
+
+  const userAlreadyBanned = community.bannedUsers.find((bannerUser: any) => bannerUser.toString() === userToBanId.toString());
+  if (userAlreadyBanned) {
+    next(new AppError(400, 'You have already banned this user - can not be done twice'));
+    return;
+  }
+
+  const isUserMember = community.joinedUsers.find((joined: any) => joined.toString() === userToBanId.toString());
+  const isUserInPendingMemberList = community.pendingInvitedUsers.find((pending: any) => pending.toString() === userToBanId.toString());
+  const isUserInPendingModeratorList = community.pendingInvitedModerators.find((pending: any) => pending.toString() === userToBanId.toString());
+  const isUserToBanModerator = community.moderators.find((moderator: any) => moderator.toString() === userToBanId.toString());
+
+  if (!isUserMember && !isUserInPendingMemberList && !isUserInPendingModeratorList && !isUserToBanModerator) {
+    next(new AppError(400, 'User you are trying to ban is not a member of community, nor is he / she in pending lists. Maybe he / she already left'));
+    return;
+  }
+
+  const isBannerCommunityCreator = community.creator.toString() === req.userId!.toString();
+
+  if (!isBannerCommunityCreator && isUserToBanModerator) {
+    next(new AppError(400, 'You are trying to ban moderator of this community. Only creator can ban moderators'));
+    return;
+  }
+
+  if (isUserMember) {
+    community.joinedUsers = community.joinedUsers.filter((user: any) => user.toString() !== userToBanId.toString());
+  }
+
+  if (isUserInPendingMemberList) {
+    community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user: any) => user.toString() !== userToBanId.toString());
+  }
+
+  if (isUserInPendingModeratorList) {
+    community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user: any) => user.toString() !== userToBanId.toString());
+  }
+
+  community.bannedUsers.push(userToBanId);
+
+  await community.save();
+
+  // remove user from community chats
+  if (community.availableChats && community.availableChats.length > 0) {
+    await Chat.updateMany(
+      {
+        communityId: community._id,
+        members: { $in: [userToBanId] }
+      },
+      { $pull: { members: userToBanId } }
+    );
+  }
+
+  const responseData: BannedUserResDataType = {
+    status: 'success',
+    message: 'You have successfully baned user from community',
+    bannedUserId: userToBanId
+  };
+
+  if (shouldNotifyUser) {
+    const bannedUserNotification = await Notification.create({
+      receiver: userToBanId,
+      notificationType: 'bannedFromCommunity',
+      text: `You have been banned from community: "${community.name}". You can no longer see this comuunity posts and chats unless admins remove ban`
+    });
+
+    responseData.bannedUserNotification = bannedUserNotification;
+  }
+
+  return res.status(200).json(responseData);
 });

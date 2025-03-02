@@ -12,16 +12,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.updateCommunityDescription = exports.createCommunity = void 0;
+exports.banUserFromCommunity = exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.updateCommunityDescription = exports.createCommunity = void 0;
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 const appError_1 = __importDefault(require("utils/appError"));
+const userModel_1 = __importDefault(require("models/userModel"));
 const communityModel_1 = __importDefault(require("models/communityModel"));
 const chatModel_1 = __importDefault(require("models/chatModel"));
 const communityService_1 = __importDefault(require("services/communityService"));
 const cloudinaryManagementService_1 = __importDefault(require("services/cloudinaryManagementService"));
 const messageModel_1 = __importDefault(require("models/messageModel"));
+const notificationModel_1 = __importDefault(require("models/notificationModel"));
 exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { pendingInvitedModerators, access, name, description, rules, pendingInvitedUsers, chatNames } = req.fields;
     const parsedPendingInvitedModerators = pendingInvitedModerators ? JSON.parse(pendingInvitedModerators) : [];
@@ -180,4 +182,72 @@ exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, _) => 
         status: 'success',
         message: 'Community banner image removed successfully'
     });
+}));
+exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userToBanId, shouldNotifyUser = false } = req.body;
+    if (!userToBanId) {
+        next(new appError_1.default(400, 'User to ban ID is not provided'));
+        return;
+    }
+    const userExist = yield userModel_1.default.exists({ _id: userToBanId });
+    if (!userExist) {
+        next(new appError_1.default(404, 'User you are trying to ban cannot be found. Maybe its account no longer exist'));
+        return;
+    }
+    // if id is same as logged in user id - almost impossible, but why not check
+    if (userToBanId.toString() === req.userId.toString()) {
+        next(new appError_1.default(400, 'You cannot ban yourself'));
+        return;
+    }
+    const community = req.community;
+    const userAlreadyBanned = community.bannedUsers.find((bannerUser) => bannerUser.toString() === userToBanId.toString());
+    if (userAlreadyBanned) {
+        next(new appError_1.default(400, 'You have already banned this user - can not be done twice'));
+        return;
+    }
+    const isUserMember = community.joinedUsers.find((joined) => joined.toString() === userToBanId.toString());
+    const isUserInPendingMemberList = community.pendingInvitedUsers.find((pending) => pending.toString() === userToBanId.toString());
+    const isUserInPendingModeratorList = community.pendingInvitedModerators.find((pending) => pending.toString() === userToBanId.toString());
+    const isUserToBanModerator = community.moderators.find((moderator) => moderator.toString() === userToBanId.toString());
+    if (!isUserMember && !isUserInPendingMemberList && !isUserInPendingModeratorList && !isUserToBanModerator) {
+        next(new appError_1.default(400, 'User you are trying to ban is not a member of community, nor is he / she in pending lists. Maybe he / she already left'));
+        return;
+    }
+    const isBannerCommunityCreator = community.creator.toString() === req.userId.toString();
+    if (!isBannerCommunityCreator && isUserToBanModerator) {
+        next(new appError_1.default(400, 'You are trying to ban moderator of this community. Only creator can ban moderators'));
+        return;
+    }
+    if (isUserMember) {
+        community.joinedUsers = community.joinedUsers.filter((user) => user.toString() !== userToBanId.toString());
+    }
+    if (isUserInPendingMemberList) {
+        community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user) => user.toString() !== userToBanId.toString());
+    }
+    if (isUserInPendingModeratorList) {
+        community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user) => user.toString() !== userToBanId.toString());
+    }
+    community.bannedUsers.push(userToBanId);
+    yield community.save();
+    // remove user from community chats
+    if (community.availableChats && community.availableChats.length > 0) {
+        yield chatModel_1.default.updateMany({
+            communityId: community._id,
+            members: { $in: [userToBanId] }
+        }, { $pull: { members: userToBanId } });
+    }
+    const responseData = {
+        status: 'success',
+        message: 'You have successfully baned user from community',
+        bannedUserId: userToBanId
+    };
+    if (shouldNotifyUser) {
+        const bannedUserNotification = yield notificationModel_1.default.create({
+            receiver: userToBanId,
+            notificationType: 'bannedFromCommunity',
+            text: `You have been banned from community: "${community.name}". You can no longer see this comuunity posts and chats unless admins remove ban`
+        });
+        responseData.bannedUserNotification = bannedUserNotification;
+    }
+    return res.status(200).json(responseData);
 }));

@@ -11,7 +11,8 @@ const notificationsSchema = new mongoose_1.Schema({
         type: String,
         enum: [
             'becomeCommunityModeratorRequest',
-            'becomeCommunityMemberRequest'
+            'becomeCommunityMemberRequest',
+            'bannedFromCommunity'
         ]
     },
     text: {
