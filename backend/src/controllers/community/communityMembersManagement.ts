@@ -51,9 +51,13 @@ export const banUserFromCommunity = catchAsync (async (
 
   const isBannerCommunityCreator = community.creator.toString() === req.userId!.toString();
 
-  if (!isBannerCommunityCreator && isUserToBanModerator) {
-    next(new AppError(400, 'You are trying to ban moderator of this community. Only creator can ban moderators'));
-    return;
+  if (isUserToBanModerator) {
+    if (!isBannerCommunityCreator) {
+      next(new AppError(400, 'You are trying to ban moderator of this community. Only creator can ban moderators'));
+      return;
+    }
+    
+    community.moderators = community.moderators.filter((user: any) => user.toString() !== userToBanId.toString());
   }
 
   if (isUserMember) {
@@ -69,8 +73,6 @@ export const banUserFromCommunity = catchAsync (async (
   }
 
   community.bannedUsers.push(userToBanId);
-
-  await community.save();
 
   // remove user from community chats
   if (community.availableChats && community.availableChats.length > 0) {
@@ -98,6 +100,8 @@ export const banUserFromCommunity = catchAsync (async (
 
     responseData.bannedUserNotification = bannedUserNotification;
   }
+
+  await community.save();
 
   return res.status(200).json(responseData);
 });
@@ -461,5 +465,62 @@ export const userDeclineJoinCommunityInvite = catchAsync (async (
   return res.status(200).json({
     status: 'success',
     message: `Invitation to join "${community.name}" community as ${inviteType} declined successfully.`
+  });
+});
+
+export const userLeaveCommunity = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const { communityRole } = req.params;
+
+  if (!communityRole || (communityRole && communityRole !== 'member' && communityRole !== 'moderator')) {
+    next(new AppError(400, 'Invalid community role provided: must be either "member" or "moderator"'));
+    return;
+  }
+
+  const userId = req.userId!;
+  const community = req.community!;
+
+  
+  if (communityRole === 'member') {
+    const isMember = community.joinedUsers.find((user: any) => user.toString() === userId.toString());
+
+    if (!isMember) {
+      next(new AppError(400, `You seem not to be member of "${community.name}" community. Maybe you have been kicked out already. Try refreshing the page.`));
+      return;
+    }
+
+    community.joinedUsers = community.joinedUsers.filter((user: any) => user.toString() !== userId.toString());
+  }
+
+  if (communityRole === 'moderator') {
+    const isModerator = community.moderators.find((user: any) => user.toString() === userId.toString())
+
+    if (!isModerator) {
+      next(new AppError(400, `You seem not to be moderator of "${community.name}" community. Maybe you have been kicked out already. Try refreshing the page.`));
+      return;
+    }
+
+    community.moderators = community.moderators.filter((user: any) => user.toString() !== userId.toString());
+  }
+
+  // remove user from community chats
+  if (community.availableChats && community.availableChats.length > 0) {
+    await Chat.updateMany(
+      {
+        communityId: community._id,
+        members: { $in: [userId] }
+      },
+      { $pull: { members: userId } }
+    );
+  }
+
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: `You have left "${community.name}" community`
   });
 });

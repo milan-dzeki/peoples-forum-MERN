@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.userDeclineJoinCommunityInvite = exports.userAcceptJoinCommunityInvite = exports.moderatorWithdrawJoinCommunityInviteForUser = exports.inviteUserToJoinCommunity = exports.undoBanUserFromCommunity = exports.banUserFromCommunity = void 0;
+exports.userLeaveCommunity = exports.userDeclineJoinCommunityInvite = exports.userAcceptJoinCommunityInvite = exports.moderatorWithdrawJoinCommunityInviteForUser = exports.inviteUserToJoinCommunity = exports.undoBanUserFromCommunity = exports.banUserFromCommunity = void 0;
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const appError_1 = __importDefault(require("utils/appError"));
 const userModel_1 = __importDefault(require("models/userModel"));
@@ -49,9 +49,12 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
         return;
     }
     const isBannerCommunityCreator = community.creator.toString() === req.userId.toString();
-    if (!isBannerCommunityCreator && isUserToBanModerator) {
-        next(new appError_1.default(400, 'You are trying to ban moderator of this community. Only creator can ban moderators'));
-        return;
+    if (isUserToBanModerator) {
+        if (!isBannerCommunityCreator) {
+            next(new appError_1.default(400, 'You are trying to ban moderator of this community. Only creator can ban moderators'));
+            return;
+        }
+        community.moderators = community.moderators.filter((user) => user.toString() !== userToBanId.toString());
     }
     if (isUserMember) {
         community.joinedUsers = community.joinedUsers.filter((user) => user.toString() !== userToBanId.toString());
@@ -63,7 +66,6 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
         community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user) => user.toString() !== userToBanId.toString());
     }
     community.bannedUsers.push(userToBanId);
-    yield community.save();
     // remove user from community chats
     if (community.availableChats && community.availableChats.length > 0) {
         yield chatModel_1.default.updateMany({
@@ -84,6 +86,7 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
         });
         responseData.bannedUserNotification = bannedUserNotification;
     }
+    yield community.save();
     return res.status(200).json(responseData);
 }));
 exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -351,5 +354,42 @@ exports.userDeclineJoinCommunityInvite = (0, catchAsync_1.default)((req, res, ne
     return res.status(200).json({
         status: 'success',
         message: `Invitation to join "${community.name}" community as ${inviteType} declined successfully.`
+    });
+}));
+exports.userLeaveCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { communityRole } = req.params;
+    if (!communityRole || (communityRole && communityRole !== 'member' && communityRole !== 'moderator')) {
+        next(new appError_1.default(400, 'Invalid community role provided: must be either "member" or "moderator"'));
+        return;
+    }
+    const userId = req.userId;
+    const community = req.community;
+    if (communityRole === 'member') {
+        const isMember = community.joinedUsers.find((user) => user.toString() === userId.toString());
+        if (!isMember) {
+            next(new appError_1.default(400, `You seem not to be member of "${community.name}" community. Maybe you have been kicked out already. Try refreshing the page.`));
+            return;
+        }
+        community.joinedUsers = community.joinedUsers.filter((user) => user.toString() !== userId.toString());
+    }
+    if (communityRole === 'moderator') {
+        const isModerator = community.moderators.find((user) => user.toString() === userId.toString());
+        if (!isModerator) {
+            next(new appError_1.default(400, `You seem not to be moderator of "${community.name}" community. Maybe you have been kicked out already. Try refreshing the page.`));
+            return;
+        }
+        community.moderators = community.moderators.filter((user) => user.toString() !== userId.toString());
+    }
+    // remove user from community chats
+    if (community.availableChats && community.availableChats.length > 0) {
+        yield chatModel_1.default.updateMany({
+            communityId: community._id,
+            members: { $in: [userId] }
+        }, { $pull: { members: userId } });
+    }
+    yield community.save();
+    return res.status(200).json({
+        status: 'success',
+        message: `You have left "${community.name}" community`
     });
 }));

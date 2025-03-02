@@ -23,7 +23,8 @@ const {
   inviteUserToJoinCommunity,
   moderatorWithdrawJoinCommunityInviteForUser,
   userAcceptJoinCommunityInvite,
-  userDeclineJoinCommunityInvite
+  userDeclineJoinCommunityInvite,
+  userLeaveCommunity
 } = communityMembersManagement
 
 const router = Router();
@@ -115,6 +116,12 @@ router.patch(
   '/:communityId/userDeclineInviteJoinCommunity/:inviteType',
   doesCommunityExist,
   userDeclineJoinCommunityInvite
+);
+
+router.patch(
+  '/:communityId/userLeaveCommunity/:communityRole',
+  doesCommunityExist,
+  userLeaveCommunity
 );
 
 export default router;
