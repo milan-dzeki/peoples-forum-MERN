@@ -28,3 +28,10 @@ export interface BannedUserResDataType {
   bannedUserId: string;
   bannedUserNotification?: NotificationSchemaType;
 }
+
+export interface RemoveUserBanResDataType {
+  status: string;
+  message: string;
+  userRemovedBanId: string;
+  userRemovedBanNotifications?: NotificationSchemaType[];
+}

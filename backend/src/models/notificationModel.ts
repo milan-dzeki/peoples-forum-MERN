@@ -11,7 +11,8 @@ const notificationsSchema = new Schema({
     enum: [
       'becomeCommunityModeratorRequest',
       'becomeCommunityMemberRequest',
-      'bannedFromCommunity'
+      'bannedFromCommunity',
+      'removeCommunityBan'
     ]
   },
   text: {

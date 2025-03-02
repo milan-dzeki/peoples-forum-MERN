@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.banUserFromCommunity = exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.updateCommunityDescription = exports.createCommunity = void 0;
+exports.undoBanUserFromCommunity = exports.banUserFromCommunity = exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.deleteCommunity = exports.updateCommunityDescription = exports.createCommunity = void 0;
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
@@ -238,7 +238,7 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
     }
     const responseData = {
         status: 'success',
-        message: 'You have successfully baned user from community',
+        message: 'You have successfully banned user from community',
         bannedUserId: userToBanId
     };
     if (shouldNotifyUser) {
@@ -249,5 +249,62 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
         });
         responseData.bannedUserNotification = bannedUserNotification;
     }
+    return res.status(200).json(responseData);
+}));
+exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userToRemoveBanId, shouldNotifyUser = false, inviteUserToJoinOrModerate = null } = req.body;
+    if (!userToRemoveBanId) {
+        next(new appError_1.default(400, 'User id is not provided.'));
+        return;
+    }
+    const userExist = yield userModel_1.default.exists({ _id: userToRemoveBanId });
+    if (!userExist) {
+        next(new appError_1.default(404, 'User you are trying to un-ban cannot be found. Maybe its account no longer exist'));
+        return;
+    }
+    const community = req.community;
+    const userInBannedList = community.bannedUsers.find((user) => user.toString() === userToRemoveBanId.toString());
+    if (!userInBannedList) {
+        next(new appError_1.default(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
+        return;
+    }
+    community.bannedUsers = community.bannedUsers.filter((user) => user.toString() !== userToRemoveBanId.toString());
+    const responseData = {
+        status: 'success',
+        message: 'You have successfully removed ban for user',
+        userRemovedBanId: userToRemoveBanId
+    };
+    if (shouldNotifyUser) {
+        const userRemovedBanNotifications = yield notificationModel_1.default.create({
+            receiver: userToRemoveBanId,
+            notificationType: 'removeCommunityBan',
+            text: `Your ban from community: "${community.name}" has been removed. You can see this communities posts and chats now.`,
+            community: community._id
+        });
+        responseData.userRemovedBanNotifications = [userRemovedBanNotifications];
+    }
+    if (inviteUserToJoinOrModerate &&
+        (inviteUserToJoinOrModerate === 'member' || inviteUserToJoinOrModerate === 'moderator')) {
+        let notificationData = {
+            receiver: userToRemoveBanId,
+            notificationType: inviteUserToJoinOrModerate === 'member' ? 'becomeCommunityMemberRequest' : 'becomeCommunityModeratorRequest',
+            text: `You have been invited to become ${inviteUserToJoinOrModerate} in "${community.name}" community.`,
+            community: community._id
+        };
+        if (inviteUserToJoinOrModerate === 'member') {
+            community.pendingInvitedUsers.push(userToRemoveBanId);
+        }
+        if (inviteUserToJoinOrModerate === 'moderator') {
+            community.pendingInvitedModerators.push(userToRemoveBanId);
+        }
+        const inviteNotification = yield notificationModel_1.default.create(notificationData);
+        if (responseData.userRemovedBanNotifications) {
+            responseData.userRemovedBanNotifications.push(inviteNotification);
+        }
+        else {
+            responseData.userRemovedBanNotifications = [inviteNotification];
+        }
+    }
+    yield community.save();
     return res.status(200).json(responseData);
 }));

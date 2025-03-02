@@ -9,7 +9,8 @@ import {
   removeCommunityProfileImage,
   updateCommunityBannerImage,
   removeCommunityBannerImage, 
-  banUserFromCommunity
+  banUserFromCommunity,
+  undoBanUserFromCommunity
 } from 'controllers/communityController';
 import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator } from 'middleware/communityMiddlewares';
 
@@ -69,6 +70,13 @@ router.patch(
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
   banUserFromCommunity
+);
+
+router.patch(
+  '/:communityId/removeUserBan',
+  doesCommunityExist, 
+  isLoggedUserCommunityCreatorOrModerator,
+  undoBanUserFromCommunity
 );
 
 export default router;

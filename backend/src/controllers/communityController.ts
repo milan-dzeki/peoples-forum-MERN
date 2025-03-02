@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
 import type { RequestWithCommunityType, RequestWithUserIdType } from 'types/lib';
-import type { BannedUserResDataType, PrepareCommunityForCreateType } from 'types/controllers/community';
+import type { BannedUserResDataType, PrepareCommunityForCreateType, RemoveUserBanResDataType } from 'types/controllers/community';
 import catchAsync from 'utils/catchAsync';
 import cloudinary from 'configs/cloudinary';
 import CommunityValidator from 'configs/validators/community/communityValidator';
@@ -341,7 +341,7 @@ export const banUserFromCommunity = catchAsync (async (
 
   const responseData: BannedUserResDataType = {
     status: 'success',
-    message: 'You have successfully baned user from community',
+    message: 'You have successfully banned user from community',
     bannedUserId: userToBanId
   };
 
@@ -354,6 +354,84 @@ export const banUserFromCommunity = catchAsync (async (
 
     responseData.bannedUserNotification = bannedUserNotification;
   }
+
+  return res.status(200).json(responseData);
+});
+
+export const undoBanUserFromCommunity = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const { userToRemoveBanId, shouldNotifyUser = false, inviteUserToJoinOrModerate = null } = req.body;
+
+  if (!userToRemoveBanId) {
+    next(new AppError(400, 'User id is not provided.'));
+    return;
+  }
+
+  const userExist = await User.exists({ _id: userToRemoveBanId });
+  if (!userExist) {
+    next(new AppError(404, 'User you are trying to un-ban cannot be found. Maybe its account no longer exist'));
+    return;
+  }
+
+  const community = req.community!;
+
+  const userInBannedList = community.bannedUsers.find((user: any) => user.toString() === userToRemoveBanId.toString());
+  if (!userInBannedList) {
+    next(new AppError(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
+    return;
+  }
+
+  community.bannedUsers = community.bannedUsers.filter((user: any) => user.toString() !== userToRemoveBanId.toString());
+
+  const responseData: RemoveUserBanResDataType = {
+    status: 'success',
+    message: 'You have successfully removed ban for user',
+    userRemovedBanId: userToRemoveBanId 
+  };
+
+  if (shouldNotifyUser) {
+    const userRemovedBanNotifications = await Notification.create({
+      receiver: userToRemoveBanId,
+      notificationType: 'removeCommunityBan',
+      text: `Your ban from community: "${community.name}" has been removed. You can see this communities posts and chats now.`,
+      community: community._id
+    });
+
+    responseData.userRemovedBanNotifications = [userRemovedBanNotifications];
+  }
+
+  if (
+    inviteUserToJoinOrModerate &&
+    (inviteUserToJoinOrModerate === 'member' || inviteUserToJoinOrModerate === 'moderator')
+  ) {
+    let notificationData = {
+      receiver: userToRemoveBanId,
+      notificationType: inviteUserToJoinOrModerate === 'member' ? 'becomeCommunityMemberRequest' : 'becomeCommunityModeratorRequest',
+      text: `You have been invited to become ${inviteUserToJoinOrModerate} in "${community.name}" community.`,
+      community: community._id
+    };
+
+    if (inviteUserToJoinOrModerate === 'member') {
+      community.pendingInvitedUsers.push(userToRemoveBanId);
+    }
+
+    if (inviteUserToJoinOrModerate === 'moderator') {
+      community.pendingInvitedModerators.push(userToRemoveBanId);
+    }
+
+    const inviteNotification = await Notification.create(notificationData);
+    
+    if (responseData.userRemovedBanNotifications) {
+      responseData.userRemovedBanNotifications.push(inviteNotification);
+    } else {
+      responseData.userRemovedBanNotifications = [inviteNotification];
+    }
+  }
+
+  await community.save();
 
   return res.status(200).json(responseData);
 });

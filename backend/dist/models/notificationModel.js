@@ -12,7 +12,8 @@ const notificationsSchema = new mongoose_1.Schema({
         enum: [
             'becomeCommunityModeratorRequest',
             'becomeCommunityMemberRequest',
-            'bannedFromCommunity'
+            'bannedFromCommunity',
+            'removeCommunityBan'
         ]
     },
     text: {
