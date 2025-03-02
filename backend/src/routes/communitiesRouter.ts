@@ -19,6 +19,7 @@ import {
   communityCRUD,
   communityMembersManagement
 } from 'controllers/community';
+import { userAcceptJoinCommunityInvite } from 'controllers/community/communityMembersManagement';
 
 const {
   createCommunity,
@@ -114,6 +115,12 @@ router.patch(
   doesCommunityExist, 
   isLoggedUserCommunityCreatorOrModerator,
   moderatorWithdrawJoinCommunityInviteForUser
+);
+
+router.patch(
+  '/:communityId/userAcceptInviteJoinCommunity/:inviteType',
+  doesCommunityExist,
+  userAcceptJoinCommunityInvite
 );
 
 export default router;

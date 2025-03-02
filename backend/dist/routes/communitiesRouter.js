@@ -21,6 +21,7 @@ const communityMiddlewares_1 = require("middleware/communityMiddlewares");
 //   moderatorWithdrawJoinCommunityInviteForUser
 // } from 'controllers/communityController';
 const community_1 = require("controllers/community");
+const communityMembersManagement_1 = require("controllers/community/communityMembersManagement");
 const { createCommunity, deleteCommunity, updateCommunityDescription, updateCommunityProfileImage, removeCommunityProfileImage, updateCommunityBannerImage, removeCommunityBannerImage } = community_1.communityCRUD;
 const { banUserFromCommunity, undoBanUserFromCommunity, inviteUserToJoinCommunity, moderatorWithdrawJoinCommunityInviteForUser } = community_1.communityMembersManagement;
 const router = (0, express_1.Router)();
@@ -36,4 +37,5 @@ router.patch('/:communityId/banUserFromCommunity', communityMiddlewares_1.doesCo
 router.patch('/:communityId/undoUserCommunityBan', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, undoBanUserFromCommunity);
 router.patch('/:communityId/invite', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, inviteUserToJoinCommunity);
 router.patch('/:communityId/moderatorWidthrawJoinInviteForUser', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, moderatorWithdrawJoinCommunityInviteForUser);
+router.patch('/:communityId/userAcceptInviteJoinCommunity/:inviteType', communityMiddlewares_1.doesCommunityExist, communityMembersManagement_1.userAcceptJoinCommunityInvite);
 exports.default = router;

@@ -323,3 +323,97 @@ export const moderatorWithdrawJoinCommunityInviteForUser = catchAsync (async (
     userToWithdrawInviteId
   });
 });
+
+export const userAcceptJoinCommunityInvite = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const { inviteType } = req.params;
+
+  if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
+    next(new AppError(400, 'User invitation type must be either "member" or "moderator"'));
+    return;
+  }
+
+  const userId = req.userId!;
+  const community = req.community!;
+
+  if (community.creator.toString() === userId.toString()) {
+    next(new AppError(400, `You are creator of "${community.name}", so if you have invites for it, we have a bug in application :).`));
+    return;
+  }
+
+  const isAlreadyMember = community.joinedUsers.find((user: any) => user.toString() === userId.toString());
+
+  if (inviteType === 'member' && isAlreadyMember) {
+    next(new AppError(400, `You are already a member of "${community.name}". Try refreshing the page`));
+    return;
+  }
+  
+  const isAlreadyModerator = community.moderators.find((user: any) => user.toString() === userId.toString());
+
+  if (isAlreadyModerator) {
+    next(new AppError(400, `You are already a moderator of "${community.name}". Try refreshing the page`));
+    return;
+  }
+
+  const isInPendingMemberList = community.pendingInvitedUsers.find((user: any) => user.toString() === userId.toString());
+
+  if (inviteType === 'member' && !isInPendingMemberList) {
+    next(new AppError(400, `There seems to be missing invitation for joining "${community.name}" as member. Maybe admins have withdrew it.`));
+    return;
+  }
+
+  const isInPendingModeratorList = community.pendingInvitedModerators.find((user: any) => user.toString() === userId.toString());
+
+  if (inviteType === 'moderator' && !isInPendingModeratorList) {
+    next(new AppError(400, `There seems to be missing invitation for joining "${community.name}" as moderator. Maybe admins have withdrew it.`));
+    return;
+  }
+
+  if (inviteType === 'member' && isInPendingMemberList) {
+    community.pendingInvitedUsers = community.pendingInvitedUsers.filter((user: any) => user.toString() !== userId.toString());
+    community.joinedUsers.push(userId);
+  }
+
+  if (inviteType === 'moderator' && isInPendingModeratorList) {
+    community.pendingInvitedModerators = community.pendingInvitedModerators.filter((user: any) => user.toString() !== userId.toString());
+    community.moderators.push(userId);
+
+    // if user was regular member before
+    if (isAlreadyMember) {
+      community.joinedUsers = community.joinedUsers.filter((user: any) => user.toString() !== userId.toString());
+    }
+  }
+
+  await community.save();
+
+  const user = await User.findById(userId).select('_id fullName');
+
+  const moderatorNotifictaions = [
+    {
+      received: community.creator,
+      notificationType: inviteType === 'member' ? 'userAcceptedCommunityMemberInvite' : 'userAcceptedCommunityModeratorInvite',
+      text: `${user.fullName} has accepted to join as ${inviteType} "${community.name}" community that you manage`,
+      community: community._id,
+      sender: user._id
+    }
+  ];
+
+  const communityModeratorsWithoutNewUser = req.community!.moderators.forEach((moderator: any) => {
+    moderatorNotifictaions.push({
+      received: moderator,
+      notificationType: inviteType === 'member' ? 'userAcceptedCommunityMemberInvite' : 'userAcceptedCommunityModeratorInvite',
+      text: `${user.fullName} has accepted to join as ${inviteType} "${community.name}" community that you manage`,
+      community: community._id,
+      sender: user._id
+    });
+  });
+
+  return res.status(200).json({
+    status: 'success',
+    message: `Accepted invite to become ${inviteType} of "${community.name}" community`,
+    notificationsToSendToCommunityModerators: communityModeratorsWithoutNewUser
+  });
+});
