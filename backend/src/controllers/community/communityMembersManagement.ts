@@ -214,14 +214,14 @@ export const inviteUserToJoinCommunity = catchAsync (async (
     community.pendingInvitedUsers.push(targetUserId);
   }
 
-  await community.save();
-
   const inviteUserNotification = await Notification.create({
     receiver: targetUserId,
     notificationType: inviteType === 'moderator' ? 'becomeCommunityModeratorRequest' : 'becomeCommunityMemberRequest',
     text: `You have been invited to become ${inviteType} of "${community.name}"${userAlreadyMember ? ' community where you are already a member.' : '.'}`,
     community: community._id
   });
+
+  await community.save();
 
   return res.status(200).json({
     status: 'success',

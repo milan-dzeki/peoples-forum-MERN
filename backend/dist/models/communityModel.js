@@ -19,18 +19,40 @@ const communitySchema = new mongoose_1.Schema({
     ],
     moderators: [
         {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'User'
+            user: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            customPermissions: {
+                type: [{
+                        type: String,
+                        enum: [
+                            'update_description',
+                            'update_profile_photo',
+                            'remove_profile_photo',
+                            'update_banner_photo',
+                            'remove_banner_photo',
+                            'update_rules',
+                            'update_community_access',
+                            'remove_posts',
+                            'remove_comments',
+                            'pin_posts',
+                            'ban_users',
+                            'undo_ban_users',
+                            'invite_users_as_members',
+                            'invite_users_as_moderators',
+                            'withdraw_invite_users_as_members',
+                            'withdraw_invite_users_as_meoderators',
+                            'ban_users_from_chats',
+                            "undo_ban_users_from_chats",
+                            "remove_chats",
+                            'remove_chat_messages'
+                        ]
+                    }],
+                default: []
+            }
         }
     ],
-    access: {
-        type: String,
-        enum: {
-            values: ['public', 'private'],
-            message: communityInputRules_1.default.access.invalidValueMessage
-        },
-        default: 'public'
-    },
     name: {
         type: String,
         required: [true, communityInputRules_1.default.name.requiredErrorMessage],

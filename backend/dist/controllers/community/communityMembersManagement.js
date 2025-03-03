@@ -170,13 +170,13 @@ exports.inviteUserToJoinCommunity = (0, catchAsync_1.default)((req, res, next) =
         responseDataMessage = 'You have invited user join this community successfully';
         community.pendingInvitedUsers.push(targetUserId);
     }
-    yield community.save();
     const inviteUserNotification = yield notificationModel_1.default.create({
         receiver: targetUserId,
         notificationType: inviteType === 'moderator' ? 'becomeCommunityModeratorRequest' : 'becomeCommunityMemberRequest',
         text: `You have been invited to become ${inviteType} of "${community.name}"${userAlreadyMember ? ' community where you are already a member.' : '.'}`,
         community: community._id
     });
+    yield community.save();
     return res.status(200).json({
         status: 'success',
         message: responseDataMessage,
