@@ -8,6 +8,7 @@ import CommunityService from 'services/communityService';
 import CloudinaryManagementService from 'services/cloudinaryManagementService';
 import AppError from 'utils/appError';
 import Community from 'models/communityModel';
+import CommunitySettings from 'models/settings/communitySettingsModel';
 import Chat from 'models/chatModel';
 import Message from 'models/messageModel';
 
@@ -18,7 +19,6 @@ export const createCommunity = catchAsync (async (
 ) => {
   const {
     pendingInvitedModerators,
-    access,
     name,
     description,
     rules,
@@ -35,7 +35,6 @@ export const createCommunity = catchAsync (async (
 
   const { errors } = await CommunityValidator.validateCommunityInputs({
     pendingInvitedModerators: parsedPendingInvitedModerators,
-    access,
     name,
     description,
     rules: parsedRules,
@@ -52,7 +51,6 @@ export const createCommunity = catchAsync (async (
     creator: req.userId!,
     pendingInvitedModerators: parsedPendingInvitedModerators,
     moderators: [],
-    access: access! as 'public' | 'private',
     name: name!,
     description: description!,
     rules: parsedRules,
@@ -80,6 +78,9 @@ export const createCommunity = catchAsync (async (
 
   const newCommunity = await Community.create(prepareCommunity);
 
+  const communitySettings = await CommunitySettings.create({ community: newCommunity._id });
+  const communitySettingsWithVirtuals = communitySettings.toJSON({ virtuals: true })
+
   const chatIds = await CommunityService.createCommunityChatsUponCommunityCreation(req.userId!, newCommunity._id, parsedChatNames);
   
   newCommunity.availableChats = chatIds;
@@ -88,7 +89,8 @@ export const createCommunity = catchAsync (async (
   return res.status(201).json({
     status: 'success',
     message: 'Community created successfully',
-    community: newCommunity
+    community: newCommunity,
+    communitySettings: communitySettingsWithVirtuals
   });
 });
 
@@ -120,9 +122,13 @@ export const updateCommunityDescription = catchAsync (async (
 export const deleteCommunity = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  _: NextFunction
+  next: NextFunction
 ) => {
   const communityToDelete = req.community!;
+  if (communityToDelete.creator.toString() !== req.userId!.toString()) {
+    next(new AppError(401, 'Only creator can remove delete community.'));
+    return;
+  }
 
   if (communityToDelete.bannerImagePublicId) {
     await cloudinary.uploader.destroy(communityToDelete.bannerImagePublicId);
@@ -188,11 +194,15 @@ export const updateCommunityProfileImage = catchAsync(async (
 export const removeCommunityProfileImage = catchAsync(async (
   req: RequestWithCommunityType,
   res: Response,
-  _: NextFunction
+  next: NextFunction
 ) => {
   const community = req.community!;
 
   const profileImagePublicId = community.profileImagePublicId;
+  if (!profileImagePublicId) {
+    next(new AppError(404, 'Community doesnt have profile image, so there is nothing to remove'));
+    return;
+  }
   community.profileImageUrl = null;
   community.profileImagePublicId = null;
 
@@ -244,11 +254,15 @@ export const updateCommunityBannerImage = catchAsync(async (
 export const removeCommunityBannerImage = catchAsync(async (
   req: RequestWithCommunityType,
   res: Response,
-  _: NextFunction
+  next: NextFunction
 ) => {
   const community = req.community!;
 
   const bannerImagePublicId = community.bannerImagePublicId;
+  if (!bannerImagePublicId) {
+    next(new AppError(404, 'Community doesnt have banner image so there is nothing to remove'));
+    return;
+  }
   community.bannerImageUrl = null;
   community.bannerImagePublicId = null;
 

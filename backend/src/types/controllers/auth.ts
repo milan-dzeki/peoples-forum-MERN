@@ -1,7 +1,7 @@
 export interface PrepareUserForCreateType {
   firstName: string;
   lastName: string;
-  fullname: string;
+  fullName: string;
   email: string;
   password: string;
   profilePhotoUrl?: string;

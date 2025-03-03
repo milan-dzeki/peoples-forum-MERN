@@ -32,12 +32,6 @@ class CommunityValidator extends ParentValidator {
     return null;
   }
 
-  private static isAccessValid (value: string | undefined): string | null {
-    return value === 'public' || value === 'private'
-      ? null
-      : communityInputRules.access.invalidValueMessage;
-  }
-
   static async areUsersValid (users: string[] | undefined, list: 'members' | 'moderators'): Promise<string | null> {
     if (!users) {
       return null;
@@ -182,7 +176,6 @@ class CommunityValidator extends ParentValidator {
     const {
       name,
       rules,
-      access,
       chatNames,
       description,
       pendingInvitedModerators,
@@ -198,7 +191,6 @@ class CommunityValidator extends ParentValidator {
       name: this.validateStringValues(name, 'name'),
       description: this.validateStringValues(description, 'description'),
       rules: this.areRulesValid(rules),
-      access: this.isAccessValid(access),
       pendingInvitedUsers: membersInvalidError || this.doModeratorsAndUsersOverlap(pendingInvitedModerators, pendingInvitedUsers),
       pendingInvitedModerators: moderatorsInvalidError,
       chatNames: this.areChatNamesValid(chatNames)

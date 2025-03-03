@@ -50,7 +50,7 @@ exports.signup = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0,
     const prepareUserForCreation = {
         firstName: firstName,
         lastName: lastName,
-        fullname: `${firstName} ${lastName}`,
+        fullName: `${firstName} ${lastName}`,
         email: email,
         password: hashedPassword,
         lastTimeSeen: new Date()

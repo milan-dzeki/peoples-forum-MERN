@@ -1,6 +1,5 @@
 export interface ComunityInputs {
   pendingInvitedModerators: string[];
-  access: string | undefined;
   name: string | undefined;
   description: string | undefined;
   rules: {

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import formidable from 'express-formidable';
 import isAuth from 'middleware/isAuthMiddleware';
-import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator, checkIfTargetUserExist } from 'middleware/communityMiddlewares';
+import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator, checkIfTargetUserExist, havePermissionToPerformAction } from 'middleware/communityMiddlewares';
 import {
   communityCRUD,
   communityMembersManagement
@@ -35,46 +35,49 @@ router.post('/', formidable(), createCommunity);
 
 router.delete(
   '/:communityId',
-  doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator,  
+  doesCommunityExist,  
   deleteCommunity
 );
 
 router.patch(
   '/:communityId/updateDescription',
   doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator, 
+  // isLoggedUserCommunityCreatorOrModerator, 
+  havePermissionToPerformAction,
   updateCommunityDescription
 );
 
 router.patch(
   '/:communityId/updateProfileImage', 
   doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator, 
+  // isLoggedUserCommunityCreatorOrModerator, 
   formidable(), 
+  havePermissionToPerformAction,
   updateCommunityProfileImage
 );
 
 router.patch(
   '/:communityId/removeProfileImage', 
   doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator, 
-  formidable(), 
+  // isLoggedUserCommunityCreatorOrModerator, 
+  havePermissionToPerformAction,
   removeCommunityProfileImage
 );
 
 router.patch(
   '/:communityId/updateBannerImage', 
   doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator, 
+  // isLoggedUserCommunityCreatorOrModerator, 
   formidable(), 
+  havePermissionToPerformAction,
   updateCommunityBannerImage
 );
 
 router.patch(
   '/:communityId/removeBannerImage', 
   doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator,
+  // isLoggedUserCommunityCreatorOrModerator,
+  havePermissionToPerformAction,
   removeCommunityBannerImage
 );
 

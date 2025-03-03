@@ -13,12 +13,22 @@ const { banUserFromCommunity, undoBanUserFromCommunity, inviteUserToJoinCommunit
 const router = (0, express_1.Router)();
 router.use(isAuthMiddleware_1.default);
 router.post('/', (0, express_formidable_1.default)(), createCommunity);
-router.delete('/:communityId', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, deleteCommunity);
-router.patch('/:communityId/updateDescription', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, updateCommunityDescription);
-router.patch('/:communityId/updateProfileImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), updateCommunityProfileImage);
-router.patch('/:communityId/removeProfileImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), removeCommunityProfileImage);
-router.patch('/:communityId/updateBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, (0, express_formidable_1.default)(), updateCommunityBannerImage);
-router.patch('/:communityId/removeBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, removeCommunityBannerImage);
+router.delete('/:communityId', communityMiddlewares_1.doesCommunityExist, deleteCommunity);
+router.patch('/:communityId/updateDescription', communityMiddlewares_1.doesCommunityExist, 
+// isLoggedUserCommunityCreatorOrModerator, 
+communityMiddlewares_1.havePermissionToPerformAction, updateCommunityDescription);
+router.patch('/:communityId/updateProfileImage', communityMiddlewares_1.doesCommunityExist, 
+// isLoggedUserCommunityCreatorOrModerator, 
+(0, express_formidable_1.default)(), communityMiddlewares_1.havePermissionToPerformAction, updateCommunityProfileImage);
+router.patch('/:communityId/removeProfileImage', communityMiddlewares_1.doesCommunityExist, 
+// isLoggedUserCommunityCreatorOrModerator, 
+communityMiddlewares_1.havePermissionToPerformAction, removeCommunityProfileImage);
+router.patch('/:communityId/updateBannerImage', communityMiddlewares_1.doesCommunityExist, 
+// isLoggedUserCommunityCreatorOrModerator, 
+(0, express_formidable_1.default)(), communityMiddlewares_1.havePermissionToPerformAction, updateCommunityBannerImage);
+router.patch('/:communityId/removeBannerImage', communityMiddlewares_1.doesCommunityExist, 
+// isLoggedUserCommunityCreatorOrModerator,
+communityMiddlewares_1.havePermissionToPerformAction, removeCommunityBannerImage);
 router.patch('/:communityId/banUserFromCommunity', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityMiddlewares_1.checkIfTargetUserExist, banUserFromCommunity);
 router.patch('/:communityId/undoUserCommunityBan', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityMiddlewares_1.checkIfTargetUserExist, undoBanUserFromCommunity);
 router.patch('/:communityId/invite', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.isLoggedUserCommunityCreatorOrModerator, communityMiddlewares_1.checkIfTargetUserExist, inviteUserToJoinCommunity);

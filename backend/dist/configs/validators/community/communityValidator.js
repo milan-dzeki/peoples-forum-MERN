@@ -18,11 +18,6 @@ const userModel_1 = __importDefault(require("models/userModel"));
 const communityInputRules_1 = __importDefault(require("./communityInputRules"));
 const parentValidator_1 = __importDefault(require("configs/validators/parentValidator"));
 class CommunityValidator extends parentValidator_1.default {
-    static isAccessValid(value) {
-        return value === 'public' || value === 'private'
-            ? null
-            : communityInputRules_1.default.access.invalidValueMessage;
-    }
     static areUsersValid(users, list) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!users) {
@@ -132,7 +127,7 @@ class CommunityValidator extends parentValidator_1.default {
     }
     static validateCommunityInputs(inputs) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { name, rules, access, chatNames, description, pendingInvitedModerators, pendingInvitedUsers } = inputs;
+            const { name, rules, chatNames, description, pendingInvitedModerators, pendingInvitedUsers } = inputs;
             const errors = {};
             const membersInvalidError = yield this.areUsersValid(pendingInvitedUsers, 'members');
             const moderatorsInvalidError = yield this.areUsersValid(pendingInvitedModerators, 'moderators');
@@ -140,7 +135,6 @@ class CommunityValidator extends parentValidator_1.default {
                 name: this.validateStringValues(name, 'name'),
                 description: this.validateStringValues(description, 'description'),
                 rules: this.areRulesValid(rules),
-                access: this.isAccessValid(access),
                 pendingInvitedUsers: membersInvalidError || this.doModeratorsAndUsersOverlap(pendingInvitedModerators, pendingInvitedUsers),
                 pendingInvitedModerators: moderatorsInvalidError,
                 chatNames: this.areChatNamesValid(chatNames)

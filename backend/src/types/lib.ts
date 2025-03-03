@@ -13,6 +13,10 @@ export interface RequestWithUserIdType extends Request {
 export interface RequestWithCommunityType extends Request {
   userId?: string;
   community?: any;
+  moderatorPermissions?: string[];
+  targetModeratorPermissions?: string[];
+  isCreator?: boolean;
+  allowedToProceed?: boolean;
 }
 
 export type ControllerType = (req: RequestWithBodyType, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;

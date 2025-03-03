@@ -9,7 +9,6 @@ export interface PrepareCommunityForCreateType {
   creator: string;
   pendingInvitedModerators: string[];
   moderators: string[];
-  access: 'public' | 'private';
   name: string;
   description: string;
   rules: CommunityRuleType[];

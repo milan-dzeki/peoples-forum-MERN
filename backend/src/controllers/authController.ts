@@ -57,7 +57,7 @@ export const signup = catchAsync (async (
   const prepareUserForCreation: PrepareUserForCreateType = {
     firstName: firstName!,
     lastName: lastName!,
-    fullname: `${firstName} ${lastName}`,
+    fullName: `${firstName} ${lastName}`,
     email: email!,
     password: hashedPassword,
     lastTimeSeen: new Date()

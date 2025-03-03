@@ -20,17 +20,17 @@ const communityService_1 = __importDefault(require("services/communityService"))
 const cloudinaryManagementService_1 = __importDefault(require("services/cloudinaryManagementService"));
 const appError_1 = __importDefault(require("utils/appError"));
 const communityModel_1 = __importDefault(require("models/communityModel"));
+const communitySettingsModel_1 = __importDefault(require("models/settings/communitySettingsModel"));
 const chatModel_1 = __importDefault(require("models/chatModel"));
 const messageModel_1 = __importDefault(require("models/messageModel"));
 exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { pendingInvitedModerators, access, name, description, rules, pendingInvitedUsers, chatNames } = req.fields;
+    const { pendingInvitedModerators, name, description, rules, pendingInvitedUsers, chatNames } = req.fields;
     const parsedPendingInvitedModerators = pendingInvitedModerators ? JSON.parse(pendingInvitedModerators) : [];
     const parsedRules = rules ? JSON.parse(rules) : [];
     const parsedPendingInvitedUsers = pendingInvitedUsers ? JSON.parse(pendingInvitedUsers) : [];
     const parsedChatNames = chatNames ? JSON.parse(chatNames) : [];
     const { errors } = yield communityValidator_1.default.validateCommunityInputs({
         pendingInvitedModerators: parsedPendingInvitedModerators,
-        access,
         name,
         description,
         rules: parsedRules,
@@ -45,7 +45,6 @@ exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaite
         creator: req.userId,
         pendingInvitedModerators: parsedPendingInvitedModerators,
         moderators: [],
-        access: access,
         name: name,
         description: description,
         rules: parsedRules,
@@ -67,13 +66,16 @@ exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaite
         }
     }
     const newCommunity = yield communityModel_1.default.create(prepareCommunity);
+    const communitySettings = yield communitySettingsModel_1.default.create({ community: newCommunity._id });
+    const communitySettingsWithVirtuals = communitySettings.toJSON({ virtuals: true });
     const chatIds = yield communityService_1.default.createCommunityChatsUponCommunityCreation(req.userId, newCommunity._id, parsedChatNames);
     newCommunity.availableChats = chatIds;
     yield newCommunity.save();
     return res.status(201).json({
         status: 'success',
         message: 'Community created successfully',
-        community: newCommunity
+        community: newCommunity,
+        communitySettings: communitySettingsWithVirtuals
     });
 }));
 exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -92,8 +94,12 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, next) 
         newDescription: community.description
     });
 }));
-exports.deleteCommunity = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
+exports.deleteCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const communityToDelete = req.community;
+    if (communityToDelete.creator.toString() !== req.userId.toString()) {
+        next(new appError_1.default(401, 'Only creator can remove delete community.'));
+        return;
+    }
     if (communityToDelete.bannerImagePublicId) {
         yield cloudinary_1.default.uploader.destroy(communityToDelete.bannerImagePublicId);
     }
@@ -136,9 +142,13 @@ exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
         newProfileImage: community.profileImageUrl
     });
 }));
-exports.removeCommunityProfileImage = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
+exports.removeCommunityProfileImage = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const community = req.community;
     const profileImagePublicId = community.profileImagePublicId;
+    if (!profileImagePublicId) {
+        next(new appError_1.default(404, 'Community doesnt have profile image, so there is nothing to remove'));
+        return;
+    }
     community.profileImageUrl = null;
     community.profileImagePublicId = null;
     yield community.save();
@@ -170,9 +180,13 @@ exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
         newProfileImage: community.bannerImageUrl
     });
 }));
-exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
+exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const community = req.community;
     const bannerImagePublicId = community.bannerImagePublicId;
+    if (!bannerImagePublicId) {
+        next(new appError_1.default(404, 'Community doesnt have banner image so there is nothing to remove'));
+        return;
+    }
     community.bannerImageUrl = null;
     community.bannerImagePublicId = null;
     yield community.save();
