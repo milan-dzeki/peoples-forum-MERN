@@ -12,6 +12,12 @@ const {
   createCommunity,
   deleteCommunity,
   updateCommunityDescription,
+  addNewCommunityRule,
+  updateSingleCommunityRule,
+  updateCommunityRules,
+  deleteSingleCommunityRule,
+  deleteMultipleCommunityRules,
+  deleteAllCommunityRules,
   updateCommunityProfileImage,
   removeCommunityProfileImage,
   updateCommunityBannerImage,
@@ -86,6 +92,50 @@ router.patch(
   havePermissionToPerformAction,
   removeCommunityBannerImage
 );
+
+// community rules --start
+router.post(
+  '/:communityId/addNewRule',
+  doesCommunityExist,
+  havePermissionToPerformAction,
+  addNewCommunityRule
+);
+
+router.patch(
+  '/:communityId/updateSingleRule/',
+  doesCommunityExist, 
+  havePermissionToPerformAction,
+  updateSingleCommunityRule
+);
+
+router.put(
+  '/:communityId/updateRules',
+  doesCommunityExist, 
+  havePermissionToPerformAction,
+  updateCommunityRules
+);
+
+router.patch(
+  '/:communityId/deleteSingleRule/:ruleId',
+  doesCommunityExist, 
+  havePermissionToPerformAction,
+  deleteSingleCommunityRule
+);
+
+router.patch(
+  '/:communityId/deleteMultipleRules',
+  doesCommunityExist,
+  havePermissionToPerformAction,
+  deleteMultipleCommunityRules
+);
+
+router.patch(
+  '/:communityId/deleteAllRules',
+  doesCommunityExist,
+  havePermissionToPerformAction,
+  deleteAllCommunityRules
+);
+// community rules --end
 
 // COMMUNUTY CRUD --end
 

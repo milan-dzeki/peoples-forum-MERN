@@ -8,7 +8,7 @@ const express_formidable_1 = __importDefault(require("express-formidable"));
 const isAuthMiddleware_1 = __importDefault(require("middleware/isAuthMiddleware"));
 const communityMiddlewares_1 = require("middleware/communityMiddlewares");
 const community_1 = require("controllers/community");
-const { createCommunity, deleteCommunity, updateCommunityDescription, updateCommunityProfileImage, removeCommunityProfileImage, updateCommunityBannerImage, removeCommunityBannerImage } = community_1.communityCRUD;
+const { createCommunity, deleteCommunity, updateCommunityDescription, addNewCommunityRule, updateSingleCommunityRule, updateCommunityRules, deleteSingleCommunityRule, deleteMultipleCommunityRules, deleteAllCommunityRules, updateCommunityProfileImage, removeCommunityProfileImage, updateCommunityBannerImage, removeCommunityBannerImage } = community_1.communityCRUD;
 const { banUserFromCommunity, undoBanUserFromCommunity, inviteUserToJoinAsMember, inviteUserToJoinAsModerator, withdrawCommunityInviteForUser, widthrawCommunityModeratorInvite, moderatorAcceptUserJoinRequest, moderatorDeclineUserJoinRequest } = community_1.communityMembersManagement;
 const { userAcceptJoinCommunityInvite, userDeclineJoinCommunityInvite, userLeaveCommunity, userRequestCommunityJoin, userWithdrawRequestToJoinCommunity, } = community_1.communityUserActions;
 const router = (0, express_1.Router)();
@@ -21,6 +21,14 @@ router.patch('/:communityId/updateProfileImage', communityMiddlewares_1.doesComm
 router.patch('/:communityId/removeProfileImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.havePermissionToPerformAction, removeCommunityProfileImage);
 router.patch('/:communityId/updateBannerImage', communityMiddlewares_1.doesCommunityExist, (0, express_formidable_1.default)(), communityMiddlewares_1.havePermissionToPerformAction, updateCommunityBannerImage);
 router.patch('/:communityId/removeBannerImage', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.havePermissionToPerformAction, removeCommunityBannerImage);
+// community rules --start
+router.post('/:communityId/addNewRule', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.havePermissionToPerformAction, addNewCommunityRule);
+router.patch('/:communityId/updateSingleRule/', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.havePermissionToPerformAction, updateSingleCommunityRule);
+router.put('/:communityId/updateRules', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.havePermissionToPerformAction, updateCommunityRules);
+router.patch('/:communityId/deleteSingleRule/:ruleId', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.havePermissionToPerformAction, deleteSingleCommunityRule);
+router.patch('/:communityId/deleteMultipleRules', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.havePermissionToPerformAction, deleteMultipleCommunityRules);
+router.patch('/:communityId/deleteAllRules', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.havePermissionToPerformAction, deleteAllCommunityRules);
+// community rules --end
 // COMMUNUTY CRUD --end
 // COMMUNITY MEMBER MANAGEMENT --start
 router.patch('/:communityId/banUserFromCommunity', communityMiddlewares_1.doesCommunityExist, communityMiddlewares_1.checkIfTargetUserExist, communityMiddlewares_1.isTargetUserLoggedInUser, communityMiddlewares_1.havePermissionToPerformAction, communityMiddlewares_1.isTargetUserAlreadyInLists, banUserFromCommunity);

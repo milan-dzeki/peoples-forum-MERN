@@ -7,10 +7,11 @@ import CommunityValidator from 'configs/validators/community/communityValidator'
 import CommunityService from 'services/communityService';
 import CloudinaryManagementService from 'services/cloudinaryManagementService';
 import AppError from 'utils/appError';
-import Community from 'models/communityModel';
+import Community, { CommunitySchemaType } from 'models/communityModel';
 import CommunitySettings from 'models/settings/communitySettingsModel';
 import Chat from 'models/chatModel';
 import Message from 'models/messageModel';
+import { Types } from 'mongoose';
 
 export const createCommunity = catchAsync (async (
   req: RequestWithUserIdType,
@@ -107,7 +108,7 @@ export const updateCommunityDescription = catchAsync (async (
     return;
   } 
 
-  const community = req.community!;
+  const community = req.community! as CommunitySchemaType;
 
   community.description = description;
   await community.save();
@@ -116,43 +117,6 @@ export const updateCommunityDescription = catchAsync (async (
     status: 'success',
     message: 'Community description updated successfully',
     newDescription: community.description
-  });
-});
-
-export const deleteCommunity = catchAsync (async (
-  req: RequestWithCommunityType,
-  res: Response,
-  next: NextFunction
-) => {
-  const communityToDelete = req.community!;
-  if (communityToDelete.creator.toString() !== req.userId!.toString()) {
-    next(new AppError(401, 'Only creator can remove delete community.'));
-    return;
-  }
-
-  if (communityToDelete.bannerImagePublicId) {
-    await cloudinary.uploader.destroy(communityToDelete.bannerImagePublicId);
-  }
-
-  if (communityToDelete.profileImagePublicId) {
-    await cloudinary.uploader.destroy(communityToDelete.profileImagePublicId);
-  }
-
-  if (communityToDelete.availableChats) {
-    for (const chatId of communityToDelete.availableChats) {
-      // should delete chat images
-      await Chat.deleteOne({ _id: chatId });
-    }
-
-    // should delete message images. videos, files and audios
-    await Message.deleteMany({ communityId: communityToDelete._id });
-  }
-
-  await Community.deleteOne({ _id: communityToDelete._id });
-
-  return res.status(204).json({
-    status: 'success',
-    message: 'Community deleted successfully together with all associated chats'
   });
 });
 
@@ -170,8 +134,8 @@ export const updateCommunityProfileImage = catchAsync(async (
     next(new AppError(400, 'No new photo is provided'));
     return;
   }
-
-  const community = req.community!;
+  
+  const community = req.community! as CommunitySchemaType;
 
   if (community.profileImageUrl && community.profileImagePublicId) {
     await cloudinary.uploader.destroy(community.profileImagePublicId);
@@ -196,7 +160,7 @@ export const removeCommunityProfileImage = catchAsync(async (
   res: Response,
   next: NextFunction
 ) => {
-  const community = req.community!;
+  const community = req.community! as CommunitySchemaType;
 
   const profileImagePublicId = community.profileImagePublicId;
   if (!profileImagePublicId) {
@@ -256,7 +220,7 @@ export const removeCommunityBannerImage = catchAsync(async (
   res: Response,
   next: NextFunction
 ) => {
-  const community = req.community!;
+  const community = req.community! as CommunitySchemaType;
 
   const bannerImagePublicId = community.bannerImagePublicId;
   if (!bannerImagePublicId) {
@@ -273,6 +237,206 @@ export const removeCommunityBannerImage = catchAsync(async (
   return res.status(200).json({
     status: 'success',
     message: 'Community banner image removed successfully'
+  });
+});
+
+export const addNewCommunityRule = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction  
+) => {
+  const community = req.community! as CommunitySchemaType;
+  const { rule } = req.body;
+
+  if (!rule || (rule && !rule.title)) {
+    next(new AppError(400, 'Rule to add not provided'));
+    return;
+  }
+
+  const ruleInvalidError = CommunityValidator.areRulesValid([rule]);
+  if (ruleInvalidError) {
+    next(new AppError(422, 'Rule data invalid', { rule: ruleInvalidError }));
+    return;
+  }
+
+  community.rules.push(rule);
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'New Rule added successfully',
+    updatedRules: community.rules
+  });
+});
+
+export const updateSingleCommunityRule = catchAsync(async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const community = req.community! as CommunitySchemaType;
+
+  const { rule } = req.body;
+  if (!rule || (rule && !rule.data && !rule.id) || (rule && rule.data && !rule.data.title)) {
+    next(new AppError(422, 'Invalid rule data provided'));
+    return;
+  }
+
+  const targetRuleIndex = community.rules.findIndex((rule) => rule._id.toString() === rule.id.toString());
+  if (targetRuleIndex === -1) {
+    next(new AppError(400, 'Rule at provided position is not found'));
+  }
+
+  const rulesInvalidError = CommunityValidator.areRulesValid([rule.data]);
+  if (rulesInvalidError) {
+    next(new AppError(422, 'Invalid rules data provided', { rules: rulesInvalidError }));
+    return;
+  }
+
+  community.rules[targetRuleIndex] = {
+    _id: rule.id,
+    ...rule.data
+  };
+
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: `Rule #${targetRuleIndex + 1} updated successfully`,
+    updatedRule: community.rules[targetRuleIndex]
+  });
+});
+
+export const updateCommunityRules = catchAsync(async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const community = req.community! as CommunitySchemaType;
+
+  const { rules } = req.body;
+  if (!rules || (rules && rules.length === 0)) {
+    next(new AppError(422, 'No rules have been provided'));
+    return;
+  }
+
+  const rulesInvalidError = CommunityValidator.areRulesValid(rules);
+  if (rulesInvalidError) {
+    next(new AppError(422, 'Invalid rules data provided', { rules: rulesInvalidError }));
+    return;
+  }
+
+  community.rules = rules;
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Community rules updated successfully',
+    updatedRules: community.rules
+  });
+});
+
+export const deleteSingleCommunityRule = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction  
+) => {
+  const community = req.community! as CommunitySchemaType;
+
+  const { ruleId } = req.params;
+  if (!ruleId) {
+    next(new AppError(400, 'Rule id not provided'));
+    return;
+  }
+
+  const ruleExist = community.rules.find((rule) => rule._id.toString() === ruleId.toString());
+  if (!ruleExist) {
+    next(new AppError(404, 'Rule for provided id is not found'));
+    return;
+  }
+
+  community.rules = community.rules.filter((rule) => rule._id.toString() !== ruleId.toString()) as typeof community.rules;
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Community rule deleted successfully',
+    deletedCommunityId: ruleId
+  });
+});
+
+export const deleteMultipleCommunityRules = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction 
+) => {
+  const community = req.community! as CommunitySchemaType;
+
+  const { ruleIds } = req.body;
+  if (!ruleIds || (ruleIds && ruleIds.length === 0)) {
+    next(new AppError(422, 'No rule ids are provided'));
+    return;
+  }
+
+  community.rules = community.rules.filter((rule) => !ruleIds.includes(rule._id.toString())) as typeof community.rules;
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'Multiple community rules deleted successfully',
+    updatedRules: community.rules
+  });
+});
+
+export const deleteAllCommunityRules = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  _: NextFunction 
+) => {
+  const community = req.community! as CommunitySchemaType;
+  community.set('rules', []);
+  await community.save();
+
+  return res.status(200).json({
+    status: 'success',
+    message: 'All community rules successfully deleted'
+  });
+});
+
+export const deleteCommunity = catchAsync (async (
+  req: RequestWithCommunityType,
+  res: Response,
+  next: NextFunction
+) => {
+  const communityToDelete = req.community!;
+  if (communityToDelete.creator.toString() !== req.userId!.toString()) {
+    next(new AppError(401, 'Only creator can remove delete community.'));
+    return;
+  }
+
+  if (communityToDelete.bannerImagePublicId) {
+    await cloudinary.uploader.destroy(communityToDelete.bannerImagePublicId);
+  }
+
+  if (communityToDelete.profileImagePublicId) {
+    await cloudinary.uploader.destroy(communityToDelete.profileImagePublicId);
+  }
+
+  if (communityToDelete.availableChats) {
+    for (const chatId of communityToDelete.availableChats) {
+      // should delete chat images
+      await Chat.deleteOne({ _id: chatId });
+    }
+
+    // should delete message images. videos, files and audios
+    await Message.deleteMany({ communityId: communityToDelete._id });
+  }
+
+  await Community.deleteOne({ _id: communityToDelete._id });
+
+  return res.status(204).json({
+    status: 'success',
+    message: 'Community deleted successfully together with all associated chats'
   });
 });
 
