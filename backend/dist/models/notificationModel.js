@@ -14,8 +14,11 @@ const notificationsSchema = new mongoose_1.Schema({
             'becomeCommunityMemberRequest',
             'bannedFromCommunity',
             'removeCommunityBan',
+            'userRequestedToJoinCommunity',
             'userAcceptedCommunityMemberInvite',
-            'userAcceptedCommunityModeratorInvite'
+            'userAcceptedCommunityModeratorInvite',
+            'requestToJoinCommunityAccepted',
+            'requestToJoinCommunityDeclined'
         ]
     },
     text: {

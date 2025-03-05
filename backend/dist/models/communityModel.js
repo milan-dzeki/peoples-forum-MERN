@@ -21,7 +21,8 @@ const communitySchema = new mongoose_1.Schema({
         {
             user: {
                 type: mongoose_1.Schema.Types.ObjectId,
-                ref: 'User'
+                ref: 'User',
+                required: true
             },
             customPermissions: {
                 type: [{
@@ -45,6 +46,8 @@ const communitySchema = new mongoose_1.Schema({
                             'withdraw_invite_users_as_meoderators',
                             'ban_users_from_chats',
                             "undo_ban_users_from_chats",
+                            "accept_join_requests",
+                            "decline_join_requests",
                             "remove_chats",
                             'remove_chat_messages'
                         ]
@@ -116,6 +119,12 @@ const communitySchema = new mongoose_1.Schema({
         }
     ],
     bannedUsers: [
+        {
+            type: mongoose_1.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
+    userJoinRequests: [
         {
             type: mongoose_1.Schema.Types.ObjectId,
             ref: 'User'

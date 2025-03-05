@@ -33,8 +33,10 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.communityMembersManagement = exports.communityCRUD = void 0;
+exports.communityUserActions = exports.communityMembersManagement = exports.communityCRUD = void 0;
 const communityCRUD = __importStar(require("./communityCRUD"));
 exports.communityCRUD = communityCRUD;
 const communityMembersManagement = __importStar(require("./communityMembersManagement"));
 exports.communityMembersManagement = communityMembersManagement;
+const communityUserActions = __importStar(require("./communityUserActions"));
+exports.communityUserActions = communityUserActions;

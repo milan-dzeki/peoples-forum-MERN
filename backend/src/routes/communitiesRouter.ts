@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import formidable from 'express-formidable';
 import isAuth from 'middleware/isAuthMiddleware';
-import { doesCommunityExist, isLoggedUserCommunityCreatorOrModerator, checkIfTargetUserExist, havePermissionToPerformAction } from 'middleware/communityMiddlewares';
+import { doesCommunityExist, checkIfTargetUserExist, isTargetUserLoggedInUser, havePermissionToPerformAction, isTargetUserAlreadyInLists } from 'middleware/communityMiddlewares';
 import {
   communityCRUD,
-  communityMembersManagement
+  communityMembersManagement,
+  communityUserActions
 } from 'controllers/community';
 
 const {
@@ -20,17 +21,27 @@ const {
 const {
   banUserFromCommunity,
   undoBanUserFromCommunity,
-  inviteUserToJoinCommunity,
-  moderatorWithdrawJoinCommunityInviteForUser,
+  inviteUserToJoinAsMember,
+  inviteUserToJoinAsModerator,
+  withdrawCommunityInviteForUser,
+  widthrawCommunityModeratorInvite,
+  moderatorAcceptUserJoinRequest,
+  moderatorDeclineUserJoinRequest
+} = communityMembersManagement;
+
+const {
   userAcceptJoinCommunityInvite,
   userDeclineJoinCommunityInvite,
-  userLeaveCommunity
-} = communityMembersManagement
+  userLeaveCommunity,
+  userRequestCommunityJoin,
+  userWithdrawRequestToJoinCommunity,
+} = communityUserActions;
 
 const router = Router();
 
 router.use(isAuth);
 
+// COMMUNUTY CRUD --start
 router.post('/', formidable(), createCommunity);
 
 router.delete(
@@ -42,7 +53,6 @@ router.delete(
 router.patch(
   '/:communityId/updateDescription',
   doesCommunityExist, 
-  // isLoggedUserCommunityCreatorOrModerator, 
   havePermissionToPerformAction,
   updateCommunityDescription
 );
@@ -50,7 +60,6 @@ router.patch(
 router.patch(
   '/:communityId/updateProfileImage', 
   doesCommunityExist, 
-  // isLoggedUserCommunityCreatorOrModerator, 
   formidable(), 
   havePermissionToPerformAction,
   updateCommunityProfileImage
@@ -58,8 +67,7 @@ router.patch(
 
 router.patch(
   '/:communityId/removeProfileImage', 
-  doesCommunityExist, 
-  // isLoggedUserCommunityCreatorOrModerator, 
+  doesCommunityExist,  
   havePermissionToPerformAction,
   removeCommunityProfileImage
 );
@@ -67,7 +75,6 @@ router.patch(
 router.patch(
   '/:communityId/updateBannerImage', 
   doesCommunityExist, 
-  // isLoggedUserCommunityCreatorOrModerator, 
   formidable(), 
   havePermissionToPerformAction,
   updateCommunityBannerImage
@@ -76,46 +83,111 @@ router.patch(
 router.patch(
   '/:communityId/removeBannerImage', 
   doesCommunityExist, 
-  // isLoggedUserCommunityCreatorOrModerator,
   havePermissionToPerformAction,
   removeCommunityBannerImage
 );
 
+// COMMUNUTY CRUD --end
+
+// COMMUNITY MEMBER MANAGEMENT --start
 router.patch(
   '/:communityId/banUserFromCommunity',
   doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator,
   checkIfTargetUserExist,
+  isTargetUserLoggedInUser,
+  havePermissionToPerformAction,
+  isTargetUserAlreadyInLists,
   banUserFromCommunity
 );
 
 router.patch(
   '/:communityId/undoUserCommunityBan',
   doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator,
   checkIfTargetUserExist,
+  isTargetUserLoggedInUser,
+  havePermissionToPerformAction,
+  isTargetUserAlreadyInLists,
   undoBanUserFromCommunity
 );
 
 router.patch(
-  '/:communityId/invite',
-  doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator,
+  '/:communityId/inviteToJoinAsMember',
+  doesCommunityExist,
   checkIfTargetUserExist,
-  inviteUserToJoinCommunity
+  havePermissionToPerformAction,
+  isTargetUserLoggedInUser,
+  isTargetUserAlreadyInLists,
+  inviteUserToJoinAsMember
 );
 
 router.patch(
-  '/:communityId/moderatorWidthrawJoinInviteForUser',
-  doesCommunityExist, 
-  isLoggedUserCommunityCreatorOrModerator,
+  '/:communityId/inviteToJoinAsModerator',
+  doesCommunityExist,
   checkIfTargetUserExist,
-  moderatorWithdrawJoinCommunityInviteForUser
+  isTargetUserAlreadyInLists,
+  inviteUserToJoinAsModerator
+);
+
+router.patch(
+  '/:communityId/withdrawMemberJoinInvite',
+  doesCommunityExist, 
+  checkIfTargetUserExist,
+  isTargetUserLoggedInUser,
+  isTargetUserAlreadyInLists,
+  havePermissionToPerformAction,
+  withdrawCommunityInviteForUser
+);
+
+router.patch(
+  '/:communityId/withdrawModeratorJoinInvite',
+  doesCommunityExist, 
+  checkIfTargetUserExist,
+  isTargetUserLoggedInUser,
+  isTargetUserAlreadyInLists,
+  widthrawCommunityModeratorInvite
+);
+
+router.patch(
+  '/:communityId/acceptUserJoinRequest',
+  doesCommunityExist, 
+  checkIfTargetUserExist,
+  isTargetUserLoggedInUser,
+  isTargetUserAlreadyInLists,
+  havePermissionToPerformAction,
+  moderatorAcceptUserJoinRequest
+);
+
+router.patch(
+  '/:communityId/declineUserJoinRequest',
+  doesCommunityExist, 
+  checkIfTargetUserExist,
+  isTargetUserLoggedInUser,
+  isTargetUserAlreadyInLists,
+  havePermissionToPerformAction,
+  moderatorDeclineUserJoinRequest,
+);
+
+// COMMUNITY MEMBER MANAGEMENT --end
+
+// COMMUNITY USER ACTIONS --start
+router.patch(
+  '/:communityId/requestToJoin',
+  doesCommunityExist,
+  isTargetUserAlreadyInLists,
+  userRequestCommunityJoin
+);
+
+router.patch(
+  '/:communityId/userWithdrawRequestToJoin',
+  doesCommunityExist,
+  isTargetUserAlreadyInLists,
+  userWithdrawRequestToJoinCommunity
 );
 
 router.patch(
   '/:communityId/userAcceptInviteJoinCommunity/:inviteType',
   doesCommunityExist,
+  isTargetUserAlreadyInLists,
   userAcceptJoinCommunityInvite
 );
 
@@ -130,5 +202,6 @@ router.patch(
   doesCommunityExist,
   userLeaveCommunity
 );
+// COMMUNITY USER ACTIONS --end
 
 export default router;

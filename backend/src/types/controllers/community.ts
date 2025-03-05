@@ -33,5 +33,14 @@ export interface RemoveUserBanResDataType {
   status: string;
   message: string;
   userRemovedBanId: string;
-  userRemovedBanNotifications?: NotificationSchemaType[];
+  userRemovedBanNotifications?: NotificationSchemaType;
+}
+
+export type CommunityListType = 'bannedUsers' | 'joinedUsers' | 'pendingInvitedUsers' | 'pendingInvitedModerators' | 'userJoinRequests' | 'moderators';
+
+export type UserExistInListsType = {
+  [list in CommunityListType]: {
+    exists: boolean;
+    alias: string;
+  }
 }

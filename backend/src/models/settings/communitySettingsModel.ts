@@ -44,6 +44,8 @@ const communitySettingsSchema = new Schema({
             'withdraw_invite_users_as_moderators',
             'ban_users_from_chats',
             "undo_ban_users_from_chats",
+            "accept_join_requests",
+            "decline_join_requests",
             "remove_chats",
             'remove_chat_messages'
           ]

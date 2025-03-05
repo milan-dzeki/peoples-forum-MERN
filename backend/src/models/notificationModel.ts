@@ -13,8 +13,11 @@ const notificationsSchema = new Schema({
       'becomeCommunityMemberRequest',
       'bannedFromCommunity',
       'removeCommunityBan',
+      'userRequestedToJoinCommunity',
       'userAcceptedCommunityMemberInvite',
-      'userAcceptedCommunityModeratorInvite'
+      'userAcceptedCommunityModeratorInvite',
+      'requestToJoinCommunityAccepted',
+      'requestToJoinCommunityDeclined'
     ]
   },
   text: {
