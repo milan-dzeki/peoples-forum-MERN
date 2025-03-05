@@ -11,7 +11,6 @@ import Community, { CommunitySchemaType } from 'models/communityModel';
 import CommunitySettings from 'models/settings/communitySettingsModel';
 import Chat from 'models/chatModel';
 import Message from 'models/messageModel';
-import { Types } from 'mongoose';
 
 export const createCommunity = catchAsync (async (
   req: RequestWithUserIdType,
@@ -56,7 +55,7 @@ export const createCommunity = catchAsync (async (
     description: description!,
     rules: parsedRules,
     pendingInvitedUsers: parsedPendingInvitedUsers,
-    joinedUsers: [],
+    members: [],
     bannedUsers: [],
     availableChats: []
   };

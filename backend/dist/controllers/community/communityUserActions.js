@@ -20,7 +20,14 @@ const userModel_1 = __importDefault(require("models/userModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 const communitySettingsModel_1 = __importDefault(require("models/settings/communitySettingsModel"));
 const communityService_1 = __importDefault(require("services/communityService"));
+const community_1 = require("configs/community");
 exports.userRequestCommunityJoin = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.userId;
+    const community = req.community;
+    if (userId.toString() === community.creator.toString()) {
+        next(new appError_1.default(400, 'You cannot join - you are the creator of this community'));
+        return;
+    }
     const existInLists = req.existInLists;
     if (existInLists.userJoinRequests.exists) {
         next(new appError_1.default(400, 'You have already requested to join this community. Cannot request twice'));
@@ -31,9 +38,7 @@ exports.userRequestCommunityJoin = (0, catchAsync_1.default)((req, res, next) =>
         next(new appError_1.default(400, `You are alredy registered in ${existInLists[existInAnyLists].alias}, so request cannot be sent.`));
         return;
     }
-    const community = req.community;
-    const userId = req.userId;
-    community.userJoinRequests.push(new mongoose_1.Types.ObjectId(userId));
+    community.userJoinRequests.push({ user: new mongoose_1.Types.ObjectId(userId) });
     const communityModeratorPermissions = yield communitySettingsModel_1.default.findOne({ community: community._id }).select('moderators_settings.moderatorPermissions -_id');
     const communityModeratorPermissionsList = communityModeratorPermissions.moderators_settings.moderatorPermissions.value;
     let moderatorsToGetNotified = [];
@@ -42,9 +47,9 @@ exports.userRequestCommunityJoin = (0, catchAsync_1.default)((req, res, next) =>
       user request to join are sent to all moderators + creator
       ELSE only to moderators that have this permission in their custom field
     */
-    if (!communityModeratorPermissionsList.includes('accept_join_requests')) {
+    if (!communityModeratorPermissionsList.includes(community_1.COMMUNITY_PERMISSION_NAMES.ACCEPT_JOIN_REQUESTS)) {
         moderatorsToGetNotified = community.moderators
-            .filter((moderator) => moderator.customPermissions.includes('accept_join_requests'))
+            .filter((moderator) => moderator.customPermissions.includes(community_1.COMMUNITY_PERMISSION_NAMES.ACCEPT_JOIN_REQUESTS))
             .map((moderator) => moderator.user);
     }
     else {
@@ -79,6 +84,11 @@ exports.userWithdrawRequestToJoinCommunity = (0, catchAsync_1.default)((req, res
         next(new appError_1.default(400, 'You are not in request list. Maybe moderators have approved or declined your request. Try refreshing the page and check whether you are already member of community'));
         return;
     }
+    const existInAnyList = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'userJoinRequests');
+    if (existInAnyList) {
+        next(new appError_1.default(400, `You are already in ${existInLists[existInAnyList].alias}. If you dont want to be, remove yourself`));
+        return;
+    }
     communityService_1.default.removeUserFromLists(community, ['userJoinRequests'], userId);
     yield community.save();
     // should somehow update / remove notifications sent to moderators
@@ -101,7 +111,7 @@ exports.userAcceptJoinCommunityInvite = (0, catchAsync_1.default)((req, res, nex
         return;
     }
     const existInAnyLists = Object.keys(existInLists)
-        .find((list) => existInLists[list].exists && list !== 'pendingInvitedUsers' && list !== 'pendingInvitedModerators' && list !== 'joinedUsers');
+        .find((list) => existInLists[list].exists && list !== 'pendingInvitedUsers' && list !== 'pendingInvitedModerators' && list !== 'members');
     if (existInAnyLists) {
         next(new appError_1.default(400, `You are already in ${existInLists[existInAnyLists].alias}, so cannot accept request`));
         return;
@@ -112,14 +122,14 @@ exports.userAcceptJoinCommunityInvite = (0, catchAsync_1.default)((req, res, nex
             return;
         }
         communityService_1.default.removeUserFromLists(community, ['pendingInvitedUsers'], userId.toString());
-        community.joinedUsers.push(new mongoose_1.Types.ObjectId(userId));
+        community.members.push({ user: new mongoose_1.Types.ObjectId(userId) });
     }
     if (inviteType === 'moderator') {
         if (!existInLists.pendingInvitedModerators.exists) {
             next(new appError_1.default(400, 'You are not in request list. Maybe moderators have widthrew request. Try refreshing the page.'));
             return;
         }
-        communityService_1.default.removeUserFromLists(community, existInLists.joinedUsers.exists ? ['pendingInvitedModerators', 'joinedUsers'] : ['pendingInvitedModerators'], userId.toString());
+        communityService_1.default.removeUserFromLists(community, existInLists.members.exists ? ['pendingInvitedModerators', 'members'] : ['pendingInvitedModerators'], userId.toString());
         community.moderators.push({ user: userId, customPermissions: [] });
     }
     const user = yield userModel_1.default.findById(userId).select('_id fullName');
@@ -154,12 +164,22 @@ exports.userAcceptJoinCommunityInvite = (0, catchAsync_1.default)((req, res, nex
 exports.userDeclineJoinCommunityInvite = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const existInLists = req.existInLists;
     const { inviteType } = req.params;
+    const userId = req.userId;
+    const community = req.community;
     if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
         next(new appError_1.default(400, 'User invitation type must be either "member" or "moderator"'));
         return;
     }
-    const userId = req.userId;
-    const community = req.community;
+    if (community.creator.toString() === userId.toString()) {
+        next(new appError_1.default(400, `You are creator of "${community.name}", so if you have invites for it, we have a bug in application :).`));
+        return;
+    }
+    const existInAnyLists = Object.keys(existInLists)
+        .find((list) => existInLists[list].exists && list !== 'pendingInvitedUsers' && list !== 'pendingInvitedModerators' && list !== 'members');
+    if (existInAnyLists) {
+        next(new appError_1.default(400, `You are already in ${existInLists[existInAnyLists].alias}, so cannot accept request`));
+        return;
+    }
     if (inviteType === 'member') {
         if (!existInLists.pendingInvitedUsers.exists) {
             next(new appError_1.default(400, `There seems to be missing invitation for joining "${community.name}". Maybe admins have already accepted / declined it. Check whether you are already a member`));
@@ -180,6 +200,7 @@ exports.userDeclineJoinCommunityInvite = (0, catchAsync_1.default)((req, res, ne
         message: `Invitation to join "${community.name}" community as ${inviteType} declined successfully.`
     });
 }));
+// still needs some checking
 exports.userLeaveCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { communityRole } = req.params;
     if (!communityRole || (communityRole && communityRole !== 'member' && communityRole !== 'moderator')) {
@@ -189,12 +210,12 @@ exports.userLeaveCommunity = (0, catchAsync_1.default)((req, res, next) => __awa
     const userId = req.userId;
     const community = req.community;
     if (communityRole === 'member') {
-        const isMember = community.joinedUsers.find((user) => user.toString() === userId.toString());
+        const isMember = community.members.find((user) => user.toString() === userId.toString());
         if (!isMember) {
             next(new appError_1.default(400, `You seem not to be member of "${community.name}" community. Maybe you have been kicked out already. Try refreshing the page.`));
             return;
         }
-        community.joinedUsers = community.joinedUsers.filter((user) => user.toString() !== userId.toString());
+        communityService_1.default.removeUserFromLists(community, ['members'], req.userId.toString());
     }
     if (communityRole === 'moderator') {
         const isModerator = community.moderators.find((moderator) => moderator.user.toString() === userId.toString());

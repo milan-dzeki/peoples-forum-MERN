@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isTargetUserAlreadyInLists = exports.isTargetUserLoggedInUser = exports.checkIfTargetUserExist = exports.havePermissionToPerformAction = exports.doesCommunityExist = void 0;
+exports.isRequestUserAlreadyInLists = exports.isTargetUserAlreadyInLists = exports.isTargetUserLoggedInUser = exports.checkIfTargetUserExist = exports.havePermissionToPerformAction = exports.doesCommunityExist = void 0;
 const communityModel_1 = __importDefault(require("models/communityModel"));
 const appError_1 = __importDefault(require("utils/appError"));
 const userModel_1 = __importDefault(require("models/userModel"));
@@ -51,9 +51,6 @@ const havePermissionToPerformAction = (permissionName) => {
                 return;
             }
             let allowedToProceed = false;
-            // const permissionNameInBody = req.body.permissionName;
-            // const permissionNameInFields = req.fields?.permissionName as string | undefined;
-            // const permissionName = permissionNameInBody || permissionNameInFields;
             if (!permissionName) {
                 next(new appError_1.default(400, 'Cannot find permission for this action.'));
                 return;
@@ -131,49 +128,50 @@ const isTargetUserLoggedInUser = (req, _, next) => __awaiter(void 0, void 0, voi
     }
 });
 exports.isTargetUserLoggedInUser = isTargetUserLoggedInUser;
+const getIsInListsInfo = (userId, community) => {
+    const listInfo = {
+        pendingInvitedModerators: {
+            exists: false,
+            alias: 'pending invited moderators list'
+        },
+        moderators: {
+            exists: false,
+            alias: 'moderator list'
+        },
+        pendingInvitedUsers: {
+            exists: false,
+            alias: 'pending invited members list'
+        },
+        members: {
+            exists: false,
+            alias: 'members list'
+        },
+        bannedUsers: {
+            exists: false,
+            alias: 'banned list'
+        },
+        userJoinRequests: {
+            exists: false,
+            alias: 'requested to join list'
+        }
+    };
+    Object.keys(listInfo).forEach((list) => {
+        const isInList = community[list].find((user) => user.user.toString() === userId.toString());
+        if (isInList) {
+            listInfo[list].exists = true;
+        }
+    });
+    return listInfo;
+};
+/*
+  this is for community requests where moderator manage users
+  user is got in request body
+*/
 const isTargetUserAlreadyInLists = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const community = req.community;
         const { targetUserId } = req.body;
-        const listInfo = {
-            pendingInvitedModerators: {
-                exists: false,
-                alias: 'pending invited moderators list'
-            },
-            moderators: {
-                exists: false,
-                alias: 'moderator list'
-            },
-            pendingInvitedUsers: {
-                exists: false,
-                alias: 'pending invited members list'
-            },
-            joinedUsers: {
-                exists: false,
-                alias: 'members list'
-            },
-            bannedUsers: {
-                exists: false,
-                alias: 'banned list'
-            },
-            userJoinRequests: {
-                exists: false,
-                alias: 'requested to join list'
-            }
-        };
-        Object.keys(listInfo).forEach((list) => {
-            if (list !== 'moderators') {
-                const isInList = community[list]
-                    .find((user) => user.toString() === targetUserId.toString());
-                if (isInList) {
-                    listInfo[list].exists = true;
-                }
-            }
-        });
-        const existsInModeratorList = community.moderators.find((moderator) => moderator.user.toString() === targetUserId.toString());
-        if (existsInModeratorList) {
-            listInfo.moderators.exists = true;
-        }
+        const listInfo = getIsInListsInfo(targetUserId, community);
         req.existInLists = listInfo;
         next();
     }
@@ -183,3 +181,21 @@ const isTargetUserAlreadyInLists = (req, _, next) => __awaiter(void 0, void 0, v
     }
 });
 exports.isTargetUserAlreadyInLists = isTargetUserAlreadyInLists;
+/*
+  this is for community requests where logged in users manage actions
+  accepting / declining invitations got by communities etc
+*/
+const isRequestUserAlreadyInLists = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const community = req.community;
+        const userId = req.userId;
+        const listInfo = getIsInListsInfo(userId, community);
+        req.existInLists = listInfo;
+        next();
+    }
+    catch (error) {
+        next(error);
+        return;
+    }
+});
+exports.isRequestUserAlreadyInLists = isRequestUserAlreadyInLists;

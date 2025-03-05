@@ -14,8 +14,14 @@ const communitySchema = new mongoose_1.Schema({
     },
     pendingInvitedModerators: [
         {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'User'
+            invitedBy: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            user: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            }
         }
     ],
     moderators: [
@@ -109,26 +115,50 @@ const communitySchema = new mongoose_1.Schema({
     ],
     pendingInvitedUsers: [
         {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'User'
+            invitedBy: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            user: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            }
         }
     ],
-    joinedUsers: [
+    members: [
         {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'User'
+            user: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            joinDate: {
+                type: Date,
+                default: Date.now
+            }
         }
     ],
     bannedUsers: [
         {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'User'
+            user: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            bannedBy: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            }
         }
     ],
     userJoinRequests: [
         {
-            type: mongoose_1.Schema.Types.ObjectId,
-            ref: 'User'
+            user: {
+                type: mongoose_1.Schema.Types.ObjectId,
+                ref: 'User'
+            },
+            requestDate: {
+                type: Date,
+                default: Date.now
+            }
         }
     ],
     availableChats: [

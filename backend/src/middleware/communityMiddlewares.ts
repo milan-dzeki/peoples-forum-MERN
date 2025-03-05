@@ -13,6 +13,7 @@ export const doesCommunityExist = async (
 ) => {
   try {
     const { communityId } = req.params;
+    
     if (!communityId) {
       next(new AppError(400, 'Community ID is missing'));
       return;
@@ -50,9 +51,6 @@ export const havePermissionToPerformAction = (permissionName: CommunityPermissio
       }
 
       let allowedToProceed = false;
-      // const permissionNameInBody = req.body.permissionName;
-      // const permissionNameInFields = req.fields?.permissionName as string | undefined;
-      // const permissionName = permissionNameInBody || permissionNameInFields;
 
       if (!permissionName) {
         next(new AppError(400, 'Cannot find permission for this action.'));
@@ -149,6 +147,48 @@ export const isTargetUserLoggedInUser = async (
   }
 };
 
+const getIsInListsInfo = (userId: string, community: CommunitySchemaType) => {
+  const listInfo: UserExistInListsType = {
+    pendingInvitedModerators: {
+      exists: false,
+      alias: 'pending invited moderators list'
+    },
+    moderators: {
+      exists: false,
+      alias: 'moderator list'
+    },
+    pendingInvitedUsers: {
+      exists: false,
+      alias: 'pending invited members list'
+    },
+    members: {
+      exists: false,
+      alias: 'members list'
+    },
+    bannedUsers: {
+      exists: false,
+      alias: 'banned list'
+    },
+    userJoinRequests: {
+      exists: false,
+      alias: 'requested to join list'
+    }
+  };
+
+  Object.keys(listInfo).forEach((list) => {
+    const isInList = community[list as keyof CommunitySchemaType].find((user: any) => user.user.toString() === userId.toString());
+    if (isInList) {
+        listInfo[list as keyof typeof listInfo].exists = true;
+      }
+  });
+
+  return listInfo;
+}
+
+/*
+  this is for community requests where moderator manage users
+  user is got in request body
+*/
 export const isTargetUserAlreadyInLists = async (
   req: RequestWithCommunityType,
   _: Response,
@@ -159,48 +199,31 @@ export const isTargetUserAlreadyInLists = async (
 
     const { targetUserId } = req.body;
 
-    const listInfo: UserExistInListsType = {
-      pendingInvitedModerators: {
-        exists: false,
-        alias: 'pending invited moderators list'
-      },
-      moderators: {
-        exists: false,
-        alias: 'moderator list'
-      },
-      pendingInvitedUsers: {
-        exists: false,
-        alias: 'pending invited members list'
-      },
-      joinedUsers: {
-        exists: false,
-        alias: 'members list'
-      },
-      bannedUsers: {
-        exists: false,
-        alias: 'banned list'
-      },
-      userJoinRequests: {
-        exists: false,
-        alias: 'requested to join list'
-      }
-    };
+    const listInfo = getIsInListsInfo(targetUserId, community);
 
-    Object.keys(listInfo).forEach((list) => {
-      if (list !== 'moderators') {
-        const isInList = community[list as keyof CommunitySchemaType]
-          .find((user: any) => user.toString() === targetUserId.toString());
+    req.existInLists = listInfo;
+    next();
+  } catch (error: unknown) {
+    next(error);
+    return
+  }
+};
 
-        if (isInList) {
-          listInfo[list as keyof typeof listInfo].exists = true;
-        }
-      }
-    });
+/*
+  this is for community requests where logged in users manage actions
+  accepting / declining invitations got by communities etc
+*/
+export const isRequestUserAlreadyInLists = async (
+  req: RequestWithCommunityType,
+  _: Response,
+  next: NextFunction
+) => {
+  try {
+    const community = req.community! as CommunitySchemaType;
 
-    const existsInModeratorList = community.moderators.find((moderator) => moderator.user.toString() === targetUserId.toString());
-    if (existsInModeratorList) {
-      listInfo.moderators.exists = true;
-    }
+    const userId = req.userId!;
+
+    const listInfo = getIsInListsInfo(userId, community);
 
     req.existInLists = listInfo;
     next();

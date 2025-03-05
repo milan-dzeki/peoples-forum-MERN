@@ -13,7 +13,7 @@ export interface PrepareCommunityForCreateType {
   description: string;
   rules: CommunityRuleType[];
   pendingInvitedUsers: string[];
-  joinedUsers: string[];
+  members: string[];
   bannedUsers: string[];
   availableChats: string[];
   bannerImageUrl?: string;
@@ -36,7 +36,7 @@ export interface RemoveUserBanResDataType {
   userRemovedBanNotifications?: NotificationSchemaType;
 }
 
-export type CommunityListType = 'bannedUsers' | 'joinedUsers' | 'pendingInvitedUsers' | 'pendingInvitedModerators' | 'userJoinRequests' | 'moderators';
+export type CommunityListType = 'bannedUsers' | 'members' | 'pendingInvitedUsers' | 'pendingInvitedModerators' | 'userJoinRequests' | 'moderators';
 
 export type UserExistInListsType = {
   [list in CommunityListType]: {

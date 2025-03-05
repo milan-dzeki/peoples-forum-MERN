@@ -61,12 +61,15 @@ export const banUserFromCommunity = catchAsync (async (
   // remove from all lists except moderator lists
   CommunityService.removeUserFromLists(
     community,
-    ['joinedUsers', 'pendingInvitedUsers', 'userJoinRequests', 'bannedUsers'],
+    ['members', 'pendingInvitedUsers', 'userJoinRequests', 'bannedUsers'],
     targetUserIdString
   );
 
   // add to banned list
-  community.bannedUsers.push(new Types.ObjectId(targetUserIdString));
+  community.bannedUsers.push({
+    user: new Types.ObjectId(targetUserIdString),
+    bannedBy: new Types.ObjectId(req.userId!)
+  });
 
   // remove user from community chats
   await CommunityService.removeUserFromAllCommunityChats(community._id.toString(), community.availableChats.length, targetUserIdString, 'Failed to remove banned user from chats');
@@ -99,14 +102,14 @@ export const undoBanUserFromCommunity = catchAsync (async (
 ) => {
   const existInLists = req.existInLists! as UserExistInListsType;
 
-  if (!existInLists.bannedUsers.exists) {
-    next(new AppError(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
-    return;
-  }
-
   const isInOtherLists = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'bannedUsers');
   if (isInOtherLists) {
     next(new AppError(400, `User you are trying to un-ban is member of ${existInLists[isInOtherLists as keyof UserExistInListsType].alias}. If this was not intended, remove user from this list`));
+    return;
+  }
+
+  if (!existInLists.bannedUsers.exists) {
+    next(new AppError(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
     return;
   }
 
@@ -161,7 +164,10 @@ export const inviteUserToJoinAsMember = catchAsync (async (
 
   const community = req.community! as CommunitySchemaType;
 
-  community.pendingInvitedUsers.push(new Types.ObjectId(targetUserIdString));
+  community.pendingInvitedUsers.push({
+    user: new Types.ObjectId(targetUserIdString),
+    invitedBy: new Types.ObjectId(req.userId!)
+  });
 
   const inviteUserNotification = await CommunityService.createInviteUserNotification(
     targetUserIdString,
@@ -196,21 +202,25 @@ export const inviteUserToJoinAsModerator = catchAsync (async (
   const existInLists = req.existInLists! as UserExistInListsType;
 
   // joinedUsers is not checked because creator can invite them to become moderators
-  const existInAnyListsExcetJoinedUsers = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'joinedUsers');
-  if (existInAnyListsExcetJoinedUsers) {
-    next(new AppError(400, `Invitation failed. User already found in ${existInLists[existInAnyListsExcetJoinedUsers as keyof UserExistInListsType].alias}.`));
+  const existInAnyListsExcetMembers = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'members');
+  if (existInAnyListsExcetMembers) {
+    next(new AppError(400, `Invitation failed. User already found in ${existInLists[existInAnyListsExcetMembers as keyof UserExistInListsType].alias}.`));
     return;
   }
 
   const { targetUserId } = req.body;
+  const targetUserIdString: string = targetUserId.toString();
 
-  // NOTE: if user is already in JoinedUsers, now he will be in 2 lists
+  // NOTE: if user is already in members, now he will be in 2 lists
   // becuase he can decline moderator role and stay member
   // This need to be handled in user accept invite
-  community.pendingInvitedModerators.push(targetUserId);
+  community.pendingInvitedModerators.push({
+    user: new Types.ObjectId(targetUserIdString),
+    invitedBy: new Types.ObjectId(req.userId!)
+  });
 
   const inviteUserNotification = await CommunityService.createInviteUserNotification(
-    targetUserId,
+    targetUserIdString,
     req.userId!,
     community._id.toString(),
     community.name,
@@ -288,7 +298,7 @@ export const widthrawCommunityModeratorInvite = catchAsync (async (
 
   // user can be regular member while being invited as moderator
   const existInAnyLists = Object.keys(existInLists)
-    .find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'pendingInvitedModerators' && list !== 'joinedUsers');
+    .find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'pendingInvitedModerators' && list !== 'members');
   if (existInAnyLists) {
     next(new AppError(400, `User also exists in ${existInLists[existInAnyLists as keyof UserExistInListsType]}. If this was not indented, remove user from that list before proceeding.`));
     return;
@@ -337,7 +347,7 @@ export const moderatorAcceptUserJoinRequest = catchAsync (async (
     targetUserIdString
   );
 
-  community.joinedUsers.push(new Types.ObjectId(targetUserIdString));
+  community.members.push({ user: new Types.ObjectId(targetUserIdString) });
 
   const userNotification = await Notification.create({
     receiver: targetUserId,
@@ -395,7 +405,7 @@ export const moderatorDeclineUserJoinRequest = catchAsync (async (
 
   return res.status(200).json({
     status: 'success',
-    message: 'User join request approved successfully',
+    message: 'User join request declined successfully',
     declinedUser: targetUserId,
     userNotification
   });

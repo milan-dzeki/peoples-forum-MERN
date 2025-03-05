@@ -48,9 +48,12 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
         communityService_1.default.removeUserFromLists(community, ['pendingInvitedModerators'], targetUserIdString);
     }
     // remove from all lists except moderator lists
-    communityService_1.default.removeUserFromLists(community, ['joinedUsers', 'pendingInvitedUsers', 'userJoinRequests', 'bannedUsers'], targetUserIdString);
+    communityService_1.default.removeUserFromLists(community, ['members', 'pendingInvitedUsers', 'userJoinRequests', 'bannedUsers'], targetUserIdString);
     // add to banned list
-    community.bannedUsers.push(new mongoose_1.Types.ObjectId(targetUserIdString));
+    community.bannedUsers.push({
+        user: new mongoose_1.Types.ObjectId(targetUserIdString),
+        bannedBy: new mongoose_1.Types.ObjectId(req.userId)
+    });
     // remove user from community chats
     yield communityService_1.default.removeUserFromAllCommunityChats(community._id.toString(), community.availableChats.length, targetUserIdString, 'Failed to remove banned user from chats');
     const responseData = {
@@ -71,13 +74,13 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
 }));
 exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const existInLists = req.existInLists;
-    if (!existInLists.bannedUsers.exists) {
-        next(new appError_1.default(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
-        return;
-    }
     const isInOtherLists = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'bannedUsers');
     if (isInOtherLists) {
         next(new appError_1.default(400, `User you are trying to un-ban is member of ${existInLists[isInOtherLists].alias}. If this was not intended, remove user from this list`));
+        return;
+    }
+    if (!existInLists.bannedUsers.exists) {
+        next(new appError_1.default(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
         return;
     }
     const { targetUserId, shouldNotifyUser = false } = req.body;
@@ -111,7 +114,10 @@ exports.inviteUserToJoinAsMember = (0, catchAsync_1.default)((req, res, next) =>
     const { targetUserId } = req.body;
     const targetUserIdString = targetUserId.toString();
     const community = req.community;
-    community.pendingInvitedUsers.push(new mongoose_1.Types.ObjectId(targetUserIdString));
+    community.pendingInvitedUsers.push({
+        user: new mongoose_1.Types.ObjectId(targetUserIdString),
+        invitedBy: new mongoose_1.Types.ObjectId(req.userId)
+    });
     const inviteUserNotification = yield communityService_1.default.createInviteUserNotification(targetUserIdString, req.userId, community._id.toString(), community.name, 'becomeCommunityMemberRequest');
     yield community.save();
     return res.status(200).json({
@@ -130,17 +136,21 @@ exports.inviteUserToJoinAsModerator = (0, catchAsync_1.default)((req, res, next)
     }
     const existInLists = req.existInLists;
     // joinedUsers is not checked because creator can invite them to become moderators
-    const existInAnyListsExcetJoinedUsers = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'joinedUsers');
-    if (existInAnyListsExcetJoinedUsers) {
-        next(new appError_1.default(400, `Invitation failed. User already found in ${existInLists[existInAnyListsExcetJoinedUsers].alias}.`));
+    const existInAnyListsExcetMembers = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'members');
+    if (existInAnyListsExcetMembers) {
+        next(new appError_1.default(400, `Invitation failed. User already found in ${existInLists[existInAnyListsExcetMembers].alias}.`));
         return;
     }
     const { targetUserId } = req.body;
-    // NOTE: if user is already in JoinedUsers, now he will be in 2 lists
+    const targetUserIdString = targetUserId.toString();
+    // NOTE: if user is already in members, now he will be in 2 lists
     // becuase he can decline moderator role and stay member
     // This need to be handled in user accept invite
-    community.pendingInvitedModerators.push(targetUserId);
-    const inviteUserNotification = yield communityService_1.default.createInviteUserNotification(targetUserId, req.userId, community._id.toString(), community.name, 'becomeCommunityModeratorRequest');
+    community.pendingInvitedModerators.push({
+        user: new mongoose_1.Types.ObjectId(targetUserIdString),
+        invitedBy: new mongoose_1.Types.ObjectId(req.userId)
+    });
+    const inviteUserNotification = yield communityService_1.default.createInviteUserNotification(targetUserIdString, req.userId, community._id.toString(), community.name, 'becomeCommunityModeratorRequest');
     yield community.save();
     return res.status(200).json({
         status: 'success',
@@ -187,7 +197,7 @@ exports.widthrawCommunityModeratorInvite = (0, catchAsync_1.default)((req, res, 
     }
     // user can be regular member while being invited as moderator
     const existInAnyLists = Object.keys(existInLists)
-        .find((list) => existInLists[list].exists && list !== 'pendingInvitedModerators' && list !== 'joinedUsers');
+        .find((list) => existInLists[list].exists && list !== 'pendingInvitedModerators' && list !== 'members');
     if (existInAnyLists) {
         next(new appError_1.default(400, `User also exists in ${existInLists[existInAnyLists]}. If this was not indented, remove user from that list before proceeding.`));
         return;
@@ -215,7 +225,7 @@ exports.moderatorAcceptUserJoinRequest = (0, catchAsync_1.default)((req, res, ne
     const targetUserIdString = targetUserId.toString();
     const community = req.community;
     communityService_1.default.removeUserFromLists(community, ['userJoinRequests'], targetUserIdString);
-    community.joinedUsers.push(new mongoose_1.Types.ObjectId(targetUserIdString));
+    community.members.push({ user: new mongoose_1.Types.ObjectId(targetUserIdString) });
     const userNotification = yield notificationModel_1.default.create({
         receiver: targetUserId,
         community: community._id,
@@ -254,7 +264,7 @@ exports.moderatorDeclineUserJoinRequest = (0, catchAsync_1.default)((req, res, n
     yield community.save();
     return res.status(200).json({
         status: 'success',
-        message: 'User join request approved successfully',
+        message: 'User join request declined successfully',
         declinedUser: targetUserId,
         userNotification
     });

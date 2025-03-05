@@ -2,6 +2,7 @@ import Chat from 'models/chatModel';
 import Community, { CommunitySchemaType } from 'models/communityModel';
 import Notification from 'models/notificationModel';
 import User from 'models/userModel';
+import { Types } from 'mongoose';
 import { CommunityListType } from 'types/controllers/community';
 import AppError from 'utils/appError';
 
@@ -105,12 +106,7 @@ class CommunityService {
 
   static removeUserFromLists (community: CommunitySchemaType, listNames: CommunityListType[], userId: string): void {
     for (const list of listNames) {
-      if (list !== 'moderators') {
-        community[list] = community[list].filter((user) => user.toString() !== userId);
-      } else {
-        community.moderators = community.moderators
-          .filter((moderator) => moderator.user.toString() !== userId) as typeof community.moderators;
-      }
+      community[list].pull({ user: userId });
     }
   }
 

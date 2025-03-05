@@ -10,8 +10,14 @@ const communitySchema = new Schema({
   },
   pendingInvitedModerators: [
     {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
+      invitedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }
     }
   ],
   moderators: [
@@ -105,26 +111,50 @@ const communitySchema = new Schema({
   ],
   pendingInvitedUsers: [
     {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
+      invitedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }
     }
   ],
-  joinedUsers: [
+  members: [
     {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
+      user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      joinDate: {
+        type: Date,
+        default: Date.now
+      }
     }
   ],
   bannedUsers: [
     {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
+      user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      bannedBy: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      }
     }
   ],
   userJoinRequests: [
     {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
+      user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+      },
+      requestDate: {
+        type: Date,
+        default: Date.now
+      }
     }
   ],
   availableChats: [

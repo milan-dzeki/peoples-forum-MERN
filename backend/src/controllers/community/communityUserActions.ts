@@ -9,12 +9,19 @@ import User from 'models/userModel';
 import Notification, { NotificationSchemaType } from 'models/notificationModel';
 import CommunitySettings from 'models/settings/communitySettingsModel';
 import CommunityService from 'services/communityService';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
 
 export const userRequestCommunityJoin = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
   next: NextFunction
 ) => {
+  const userId = req.userId!;
+  const community = req.community! as CommunitySchemaType;
+  if (userId.toString() === community.creator.toString()) {
+    next(new AppError(400, 'You cannot join - you are the creator of this community'));
+    return;
+  }
   const existInLists = req.existInLists! as UserExistInListsType;
 
   if (existInLists.userJoinRequests.exists) {
@@ -28,10 +35,7 @@ export const userRequestCommunityJoin = catchAsync (async (
     return;
   }
 
-  const community = req.community! as CommunitySchemaType;
-  const userId = req.userId!;
-
-  community.userJoinRequests.push(new Types.ObjectId(userId));
+  community.userJoinRequests.push({ user: new Types.ObjectId(userId) });
 
   const communityModeratorPermissions = await CommunitySettings.findOne({ community: community._id }).select('moderators_settings.moderatorPermissions -_id');
   const communityModeratorPermissionsList = communityModeratorPermissions.moderators_settings.moderatorPermissions.value;
@@ -43,9 +47,9 @@ export const userRequestCommunityJoin = catchAsync (async (
     user request to join are sent to all moderators + creator
     ELSE only to moderators that have this permission in their custom field
   */
-  if (!communityModeratorPermissionsList.includes('accept_join_requests')) {
+  if (!communityModeratorPermissionsList.includes(COMMUNITY_PERMISSION_NAMES.ACCEPT_JOIN_REQUESTS)) {
     moderatorsToGetNotified = community.moderators
-      .filter((moderator) => moderator.customPermissions.includes('accept_join_requests'))
+      .filter((moderator) => moderator.customPermissions.includes(COMMUNITY_PERMISSION_NAMES.ACCEPT_JOIN_REQUESTS))
       .map((moderator) => moderator.user);
   } else {
     moderatorsToGetNotified = community.moderators.map((moderator) => moderator.user);
@@ -91,6 +95,12 @@ export const userWithdrawRequestToJoinCommunity = catchAsync (async (
     next(new AppError(400, 'You are not in request list. Maybe moderators have approved or declined your request. Try refreshing the page and check whether you are already member of community'));
     return;
   }
+
+  const existInAnyList = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'userJoinRequests');
+  if (existInAnyList) {
+    next(new AppError(400, `You are already in ${existInLists[existInAnyList as keyof UserExistInListsType].alias}. If you dont want to be, remove yourself`));
+    return;
+  }
   
   CommunityService.removeUserFromLists(
     community,
@@ -128,7 +138,7 @@ export const userAcceptJoinCommunityInvite = catchAsync (async (
   }
 
   const existInAnyLists = Object.keys(existInLists)
-    .find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'pendingInvitedUsers' && list !== 'pendingInvitedModerators' && list !== 'joinedUsers');
+    .find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'pendingInvitedUsers' && list !== 'pendingInvitedModerators' && list !== 'members');
 
   if (existInAnyLists) {
     next(new AppError(400, `You are already in ${existInLists[existInAnyLists as keyof UserExistInListsType].alias}, so cannot accept request`));
@@ -146,7 +156,7 @@ export const userAcceptJoinCommunityInvite = catchAsync (async (
       ['pendingInvitedUsers'],
       userId.toString()
     );
-    community.joinedUsers.push(new Types.ObjectId(userId));
+    community.members.push({ user: new Types.ObjectId(userId) });
   }
 
   if (inviteType === 'moderator') {
@@ -157,7 +167,7 @@ export const userAcceptJoinCommunityInvite = catchAsync (async (
     
     CommunityService.removeUserFromLists(
       community,
-      existInLists.joinedUsers.exists ? ['pendingInvitedModerators', 'joinedUsers'] : ['pendingInvitedModerators'],
+      existInLists.members.exists ? ['pendingInvitedModerators', 'members'] : ['pendingInvitedModerators'],
       userId.toString()
     );
     community.moderators.push({ user: userId, customPermissions: [] });
@@ -207,13 +217,26 @@ export const userDeclineJoinCommunityInvite = catchAsync (async (
 
   const { inviteType } = req.params;
 
+  const userId = req.userId!;
+  const community = req.community! as CommunitySchemaType;
+
   if (!inviteType || (inviteType && inviteType !== 'member' && inviteType !== 'moderator')) {
     next(new AppError(400, 'User invitation type must be either "member" or "moderator"'));
     return;
   }
 
-  const userId = req.userId!;
-  const community = req.community! as CommunitySchemaType;
+  if (community.creator.toString() === userId.toString()) {
+    next(new AppError(400, `You are creator of "${community.name}", so if you have invites for it, we have a bug in application :).`));
+    return;
+  }
+
+  const existInAnyLists = Object.keys(existInLists)
+    .find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'pendingInvitedUsers' && list !== 'pendingInvitedModerators' && list !== 'members');
+
+  if (existInAnyLists) {
+    next(new AppError(400, `You are already in ${existInLists[existInAnyLists as keyof UserExistInListsType].alias}, so cannot accept request`));
+    return;
+  }
 
   if (inviteType === 'member') {
     if (!existInLists.pendingInvitedUsers.exists) {
@@ -249,6 +272,7 @@ export const userDeclineJoinCommunityInvite = catchAsync (async (
   });
 });
 
+// still needs some checking
 export const userLeaveCommunity = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
@@ -265,14 +289,18 @@ export const userLeaveCommunity = catchAsync (async (
   const community = req.community! as CommunitySchemaType;
 
   if (communityRole === 'member') {
-    const isMember = community.joinedUsers.find((user) => user.toString() === userId.toString());
+    const isMember = community.members.find((user) => user.toString() === userId.toString());
 
     if (!isMember) {
       next(new AppError(400, `You seem not to be member of "${community.name}" community. Maybe you have been kicked out already. Try refreshing the page.`));
       return;
     }
 
-    community.joinedUsers = community.joinedUsers.filter((user) => user.toString() !== userId.toString());
+    CommunityService.removeUserFromLists(
+      community,
+      ['members'],
+      req.userId!.toString()
+    );
   }
 
   if (communityRole === 'moderator') {

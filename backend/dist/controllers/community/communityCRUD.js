@@ -49,7 +49,7 @@ exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaite
         description: description,
         rules: parsedRules,
         pendingInvitedUsers: parsedPendingInvitedUsers,
-        joinedUsers: [],
+        members: [],
         bannedUsers: [],
         availableChats: []
     };

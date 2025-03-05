@@ -98,13 +98,7 @@ class CommunityService {
     }
     static removeUserFromLists(community, listNames, userId) {
         for (const list of listNames) {
-            if (list !== 'moderators') {
-                community[list] = community[list].filter((user) => user.toString() !== userId);
-            }
-            else {
-                community.moderators = community.moderators
-                    .filter((moderator) => moderator.user.toString() !== userId);
-            }
+            community[list].pull({ user: userId });
         }
     }
     static createInviteUserNotification(targetUserId, invitatorId, communityId, communityName, notificationType) {
