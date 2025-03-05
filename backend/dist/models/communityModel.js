@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const communityInputRules_1 = __importDefault(require("configs/validators/community/communityInputRules"));
+const community_1 = require("configs/community");
 const communitySchema = new mongoose_1.Schema({
     creator: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -28,28 +29,28 @@ const communitySchema = new mongoose_1.Schema({
                 type: [{
                         type: String,
                         enum: [
-                            'update_description',
-                            'update_profile_photo',
-                            'remove_profile_photo',
-                            'update_banner_photo',
-                            'remove_banner_photo',
-                            'update_rules',
-                            'update_community_access',
-                            'remove_posts',
-                            'remove_comments',
-                            'pin_posts',
-                            'ban_users',
-                            'undo_ban_users',
-                            'invite_users_as_members',
-                            'invite_users_as_moderators',
-                            'withdraw_invite_users_as_members',
-                            'withdraw_invite_users_as_meoderators',
-                            'ban_users_from_chats',
-                            "undo_ban_users_from_chats",
-                            "accept_join_requests",
-                            "decline_join_requests",
-                            "remove_chats",
-                            'remove_chat_messages'
+                            community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_DESCRIPTION,
+                            community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_PROFILE_PHOTO,
+                            community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_PROFILE_PHOTOO,
+                            community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_BANNER_PHOTO,
+                            community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_BANNER_PHOTO,
+                            community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_RULES,
+                            community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_COMMUNITY_ACCESS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_POSTS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_COMMENTS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.PIN_POSTS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.BAN_USERS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.UNDO_BAN_USERS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.INVITE_USERS_AS_MEMBERS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.INVITE_USERS_AS_MODERATORS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.WITHDRAW_INVITE_USERS_AS_MEMBERS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.WITHDRAW_INVITE_USERS_AS_MODERATORS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.BAN_USERS_FROM_CHATS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.UNDO_BAN_USERS_FROM_CHATS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.ACCEPT_JOIN_REQUESTS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.DECLINE_JOIN_REQUESTS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_CHATS,
+                            community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_CHAT_MESSAGES
                         ]
                     }],
                 default: []

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import formidable from 'express-formidable';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
 import isAuth from 'middleware/isAuthMiddleware';
 import { doesCommunityExist, checkIfTargetUserExist, isTargetUserLoggedInUser, havePermissionToPerformAction, isTargetUserAlreadyInLists } from 'middleware/communityMiddlewares';
 import {
@@ -50,89 +51,79 @@ router.use(isAuth);
 // COMMUNUTY CRUD --start
 router.post('/', formidable(), createCommunity);
 
+router.use(doesCommunityExist);
+
 router.delete(
-  '/:communityId',
-  doesCommunityExist,  
+  '/:communityId', 
   deleteCommunity
 );
 
 router.patch(
   '/:communityId/updateDescription',
-  doesCommunityExist, 
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_DESCRIPTION),
   updateCommunityDescription
 );
 
 router.patch(
   '/:communityId/updateProfileImage', 
-  doesCommunityExist, 
   formidable(), 
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_PROFILE_PHOTO),
   updateCommunityProfileImage
 );
 
 router.patch(
   '/:communityId/removeProfileImage', 
-  doesCommunityExist,  
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.REMOVE_PROFILE_PHOTOO),
   removeCommunityProfileImage
 );
 
 router.patch(
-  '/:communityId/updateBannerImage', 
-  doesCommunityExist, 
+  '/:communityId/updateBannerImage',
   formidable(), 
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_BANNER_PHOTO),
   updateCommunityBannerImage
 );
 
 router.patch(
   '/:communityId/removeBannerImage', 
-  doesCommunityExist, 
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.REMOVE_BANNER_PHOTO),
   removeCommunityBannerImage
 );
 
 // community rules --start
 router.post(
   '/:communityId/addNewRule',
-  doesCommunityExist,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
   addNewCommunityRule
 );
 
 router.patch(
   '/:communityId/updateSingleRule/',
-  doesCommunityExist, 
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
   updateSingleCommunityRule
 );
 
 router.put(
   '/:communityId/updateRules',
-  doesCommunityExist, 
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
   updateCommunityRules
 );
 
 router.patch(
   '/:communityId/deleteSingleRule/:ruleId',
-  doesCommunityExist, 
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
   deleteSingleCommunityRule
 );
 
 router.patch(
   '/:communityId/deleteMultipleRules',
-  doesCommunityExist,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
   deleteMultipleCommunityRules
 );
 
 router.patch(
   '/:communityId/deleteAllRules',
-  doesCommunityExist,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
   deleteAllCommunityRules
 );
 // community rules --end
@@ -142,29 +133,26 @@ router.patch(
 // COMMUNITY MEMBER MANAGEMENT --start
 router.patch(
   '/:communityId/banUserFromCommunity',
-  doesCommunityExist, 
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.BAN_USERS),
   isTargetUserAlreadyInLists,
   banUserFromCommunity
 );
 
 router.patch(
   '/:communityId/undoUserCommunityBan',
-  doesCommunityExist, 
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UNDO_BAN_USERS),
   isTargetUserAlreadyInLists,
   undoBanUserFromCommunity
 );
 
 router.patch(
   '/:communityId/inviteToJoinAsMember',
-  doesCommunityExist,
   checkIfTargetUserExist,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.INVITE_USERS_AS_MEMBERS),
   isTargetUserLoggedInUser,
   isTargetUserAlreadyInLists,
   inviteUserToJoinAsMember
@@ -172,7 +160,6 @@ router.patch(
 
 router.patch(
   '/:communityId/inviteToJoinAsModerator',
-  doesCommunityExist,
   checkIfTargetUserExist,
   isTargetUserAlreadyInLists,
   inviteUserToJoinAsModerator
@@ -180,17 +167,15 @@ router.patch(
 
 router.patch(
   '/:communityId/withdrawMemberJoinInvite',
-  doesCommunityExist, 
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
   isTargetUserAlreadyInLists,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.WITHDRAW_INVITE_USERS_AS_MEMBERS),
   withdrawCommunityInviteForUser
 );
 
 router.patch(
   '/:communityId/withdrawModeratorJoinInvite',
-  doesCommunityExist, 
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
   isTargetUserAlreadyInLists,
@@ -199,21 +184,19 @@ router.patch(
 
 router.patch(
   '/:communityId/acceptUserJoinRequest',
-  doesCommunityExist, 
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
   isTargetUserAlreadyInLists,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.ACCEPT_JOIN_REQUESTS),
   moderatorAcceptUserJoinRequest
 );
 
 router.patch(
   '/:communityId/declineUserJoinRequest',
-  doesCommunityExist, 
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
   isTargetUserAlreadyInLists,
-  havePermissionToPerformAction,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.DECLINE_JOIN_REQUESTS),
   moderatorDeclineUserJoinRequest,
 );
 
@@ -222,34 +205,29 @@ router.patch(
 // COMMUNITY USER ACTIONS --start
 router.patch(
   '/:communityId/requestToJoin',
-  doesCommunityExist,
   isTargetUserAlreadyInLists,
   userRequestCommunityJoin
 );
 
 router.patch(
   '/:communityId/userWithdrawRequestToJoin',
-  doesCommunityExist,
   isTargetUserAlreadyInLists,
   userWithdrawRequestToJoinCommunity
 );
 
 router.patch(
   '/:communityId/userAcceptInviteJoinCommunity/:inviteType',
-  doesCommunityExist,
   isTargetUserAlreadyInLists,
   userAcceptJoinCommunityInvite
 );
 
 router.patch(
   '/:communityId/userDeclineInviteJoinCommunity/:inviteType',
-  doesCommunityExist,
   userDeclineJoinCommunityInvite
 );
 
 router.patch(
   '/:communityId/userLeaveCommunity/:communityRole',
-  doesCommunityExist,
   userLeaveCommunity
 );
 // COMMUNITY USER ACTIONS --end

@@ -1,4 +1,5 @@
 import { Schema, models, model } from 'mongoose';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
 
 const communitySettingsSchema = new Schema({
   community: {
@@ -25,29 +26,28 @@ const communitySettingsSchema = new Schema({
         type: [{
           type: String,
           enum: [
-            'update_description', 
-            'update_profile_photo', 
-            'remove_profile_photo', 
-            'update_banner_photo', 
-            'remove_banner_photo', 
-            'update_rules',
-            'update_community_access',
-            'remove_posts', 
-            'approve_or_decline_publish_posts',
-            'remove_comments',
-            'pin_posts',
-            'ban_users',
-            'undo_ban_users',
-            'invite_users_as_members',
-            'invite_users_as_moderators',
-            'withdraw_invite_users_as_members',
-            'withdraw_invite_users_as_moderators',
-            'ban_users_from_chats',
-            "undo_ban_users_from_chats",
-            "accept_join_requests",
-            "decline_join_requests",
-            "remove_chats",
-            'remove_chat_messages'
+            COMMUNITY_PERMISSION_NAMES.UPDATE_DESCRIPTION,
+            COMMUNITY_PERMISSION_NAMES.UPDATE_PROFILE_PHOTO,
+            COMMUNITY_PERMISSION_NAMES.REMOVE_PROFILE_PHOTOO,
+            COMMUNITY_PERMISSION_NAMES.UPDATE_BANNER_PHOTO,
+            COMMUNITY_PERMISSION_NAMES.REMOVE_BANNER_PHOTO,
+            COMMUNITY_PERMISSION_NAMES.UPDATE_RULES,
+            COMMUNITY_PERMISSION_NAMES.UPDATE_COMMUNITY_ACCESS,
+            COMMUNITY_PERMISSION_NAMES.REMOVE_POSTS,
+            COMMUNITY_PERMISSION_NAMES.REMOVE_COMMENTS,
+            COMMUNITY_PERMISSION_NAMES.PIN_POSTS,
+            COMMUNITY_PERMISSION_NAMES.BAN_USERS,
+            COMMUNITY_PERMISSION_NAMES.UNDO_BAN_USERS,
+            COMMUNITY_PERMISSION_NAMES.INVITE_USERS_AS_MEMBERS,
+            COMMUNITY_PERMISSION_NAMES.INVITE_USERS_AS_MODERATORS,
+            COMMUNITY_PERMISSION_NAMES.WITHDRAW_INVITE_USERS_AS_MEMBERS,
+            COMMUNITY_PERMISSION_NAMES.WITHDRAW_INVITE_USERS_AS_MODERATORS,
+            COMMUNITY_PERMISSION_NAMES.BAN_USERS_FROM_CHATS,
+            COMMUNITY_PERMISSION_NAMES.UNDO_BAN_USERS_FROM_CHATS,
+            COMMUNITY_PERMISSION_NAMES.ACCEPT_JOIN_REQUESTS,
+            COMMUNITY_PERMISSION_NAMES.DECLINE_JOIN_REQUESTS,
+            COMMUNITY_PERMISSION_NAMES.REMOVE_CHATS,
+            COMMUNITY_PERMISSION_NAMES.REMOVE_CHAT_MESSAGES
           ]
         }],
         default: []
