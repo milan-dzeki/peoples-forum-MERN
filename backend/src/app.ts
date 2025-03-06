@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import globalErrorHandler from 'controllers/errorContoller';
 import authRoutes from 'routes/authRouter';
 import communitiesRoutes from 'routes/communitiesRouter';
+import communitySettingsRoutes from 'routes/communitySettingsRouter';
 
 const app: Express = express();
 
@@ -13,6 +14,7 @@ app.use(morgan('dev'))
 
 app.use('/api/v0/auth', authRoutes);
 app.use('/api/v0/communities', communitiesRoutes);
+app.use('/api/v0/communitySettings', communitySettingsRoutes);
 
 app.use(globalErrorHandler);
 

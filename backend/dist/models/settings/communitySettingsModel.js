@@ -16,6 +16,12 @@ const communitySettingsSchema = new mongoose_1.Schema({
         }
     },
     moderators_settings: {
+        notifyModeratorAboutSettingsChanges: {
+            value: {
+                type: Boolean,
+                default: false
+            }
+        },
         changesByModeratorRequireApproval: {
             value: {
                 type: Boolean,
@@ -97,6 +103,18 @@ const communitySettingsSchema = new mongoose_1.Schema({
                     type: Boolean,
                     default: false
                 }
+            },
+            allowPostCommentsVotes: {
+                value: {
+                    type: Boolean,
+                    default: false
+                }
+            },
+            allowPostCommentsSharing: {
+                value: {
+                    type: Boolean,
+                    default: false
+                }
             }
         },
         chats_settings: {
@@ -133,6 +151,12 @@ const communitySettingsSchema = new mongoose_1.Schema({
         }
     },
     non_members_permissions: {
+        canCreatePosts: {
+            value: {
+                type: Boolean,
+                default: false
+            }
+        },
         canViewPosts: {
             value: {
                 type: Boolean,
@@ -146,6 +170,12 @@ const communitySettingsSchema = new mongoose_1.Schema({
             }
         },
         canSharePosts: {
+            value: {
+                type: Boolean,
+                default: false
+            }
+        },
+        canPostComments: {
             value: {
                 type: Boolean,
                 default: false
@@ -244,6 +274,18 @@ communitySettingsSchema.virtual('joined_members_permissions.posts_settings.allow
         description: 'Decides whether members can write comments on posts'
     };
 });
+communitySettingsSchema.virtual('joined_members_permissions.posts_settings.allowPostCommentsSharing.metadata').get(function () {
+    return {
+        displayName: 'Allow post comments sharing',
+        description: 'Decides whether members can share comments (automatically disabled if "Allow post comments" is disabled)'
+    };
+});
+communitySettingsSchema.virtual('joined_members_permissions.posts_settings.allowPostCommentsVotes.metadata').get(function () {
+    return {
+        displayName: 'Allow post comments votes',
+        description: 'Decides whether members can vote comments (automatically disabled if "Allow post comments" is disabled)'
+    };
+});
 communitySettingsSchema.virtual('joined_members_permissions.chats_settings.allowChats.metadata').get(function () {
     return {
         displayName: 'Allow chats',
@@ -253,19 +295,19 @@ communitySettingsSchema.virtual('joined_members_permissions.chats_settings.allow
 communitySettingsSchema.virtual('joined_members_permissions.chats_settings.membersCanCreateChats.metadata').get(function () {
     return {
         displayName: 'Allow members chats',
-        description: 'Decide whether members can create custom chats'
+        description: 'Decide whether members can create custom chats (automatically disabled is "Allow chats" is disabled)'
     };
 });
 communitySettingsSchema.virtual('joined_members_permissions.chats_settings.membersChatsRequireApprovalBeforeCreate.metadata').get(function () {
     return {
         displayName: 'Member chat required approval',
-        description: 'Decide whether member chat must be approved before creation'
+        description: 'Decide whether member chat must be approved before creation (meaningless if "Allow chats" is disabled)'
     };
 });
 communitySettingsSchema.virtual('joined_members_permissions.chats_settings.membersCanManageTheirChats.metadata').get(function () {
     return {
         displayName: 'Members can manage their chats',
-        description: 'Decide whether members can manage their own chats (edit, ban, delete, messages)'
+        description: 'Decide whether members can manage their own chats (edit, ban, delete, messages) (automatically disabled is "Allow chats" is disabled)'
     };
 });
 communitySettingsSchema.virtual('joined_members_permissions.can_view_memberss.metadata').get(function () {
@@ -322,6 +364,5 @@ communitySettingsSchema.virtual('non_members_permissions.canSeeJoinedMembers.met
         description: ''
     };
 });
-// communitySettingsSchema.set('toJSON', { virtuals: true });
 const CommunitySettings = mongoose_1.models.CommunitySettings || (0, mongoose_1.model)('CommunitySettings', communitySettingsSchema);
 exports.default = CommunitySettings;

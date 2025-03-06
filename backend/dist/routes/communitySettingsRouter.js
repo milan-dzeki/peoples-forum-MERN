@@ -1,0 +1,24 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const isAuthMiddleware_1 = __importDefault(require("middleware/isAuthMiddleware"));
+const communitySettingsMiddleware_1 = require("middleware/communitySettingsMiddleware");
+const communitySettingsController_1 = require("controllers/communitySettingsController");
+const router = (0, express_1.Router)();
+router.use(isAuthMiddleware_1.default);
+router.get('/:communityId', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.getCommunitySettings);
+router.post('/:communityId/updateAccess', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateCommunityAccess);
+router.post('/:communityId/updateModeratorActionsRequireApproval', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateChangesByModeratorRequireCreatorApproval);
+router.patch('/:communityId/updateModeratorPermissions', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateModeratorPermissions);
+router.post('/:communityId/updateNotifyModeratorForSettingsChanges', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateNotifyModeratorsForSettingChangesSetting);
+router.patch('/:communityId/updateSinglePostsSetting', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateMembersSinglePostsSetting);
+router.post('/:communityId/updateAllPostsSettings', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateMembersAllPostsSettings);
+router.patch('/:communityId/updateSingleChatsSetting', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateMembersSingleChatsSetting);
+router.post('/:communityId/updateAllChatsSettings', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateMembersAllChatsSettings);
+router.post('/:communityId/updateCanMemberViewMemberListSettng', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateMembersCanViewOtherMembersSetting);
+router.patch('/:communityId/updateSingleNonMembersPermission', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateSingleNonMembersPermission);
+router.post('/:communityId/updateAllNonMembersPermissions', communitySettingsMiddleware_1.doesCommunityExistAndIsUserCreator, communitySettingsMiddleware_1.doesCommunitySettingExist, communitySettingsController_1.updateAllNonMemberPermissions);
+exports.default = router;

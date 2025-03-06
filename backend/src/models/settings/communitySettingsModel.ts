@@ -1,5 +1,6 @@
-import { Schema, models, model } from 'mongoose';
+import { Schema, models, model, InferSchemaType } from 'mongoose';
 import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
+import { HydratedDocument } from 'mongoose';
 
 const communitySettingsSchema = new Schema({
   community: {
@@ -15,6 +16,12 @@ const communitySettingsSchema = new Schema({
     }
   },
   moderators_settings: {
+    notifyModeratorAboutSettingsChanges: {
+      value: {
+        type: Boolean,
+        default: false
+      }
+    },
     changesByModeratorRequireApproval: {
       value: {
         type: Boolean,
@@ -96,6 +103,18 @@ const communitySettingsSchema = new Schema({
           type: Boolean,
           default: false
         }
+      },
+      allowPostCommentsVotes: {
+        value: {
+          type: Boolean,
+          default: false
+        }
+      },
+      allowPostCommentsSharing: {
+        value: {
+          type: Boolean,
+          default: false
+        }
       }
     },
     chats_settings: {
@@ -126,12 +145,18 @@ const communitySettingsSchema = new Schema({
     },
     can_view_members: {
       value: {
-          type: Boolean,
-          default: false
-        }
+        type: Boolean,
+        default: false
+      }
     }
   },
   non_members_permissions: {
+    canCreatePosts: {
+      value: {
+        type: Boolean,
+        default: false
+      }
+    },
     canViewPosts: {
       value: {
         type: Boolean,
@@ -145,6 +170,12 @@ const communitySettingsSchema = new Schema({
       }
     },
     canSharePosts: {
+      value: {
+        type: Boolean,
+        default: false
+      }
+    },
+    canPostComments: {
       value: {
         type: Boolean,
         default: false
@@ -254,6 +285,20 @@ communitySettingsSchema.virtual('joined_members_permissions.posts_settings.allow
   };
 });
 
+communitySettingsSchema.virtual('joined_members_permissions.posts_settings.allowPostCommentsSharing.metadata').get(function () {
+  return {
+    displayName: 'Allow post comments sharing',
+    description: 'Decides whether members can share comments (automatically disabled if "Allow post comments" is disabled)'
+  };
+});
+
+communitySettingsSchema.virtual('joined_members_permissions.posts_settings.allowPostCommentsVotes.metadata').get(function () {
+  return {
+    displayName: 'Allow post comments votes',
+    description: 'Decides whether members can vote comments (automatically disabled if "Allow post comments" is disabled)'
+  };
+});
+
 communitySettingsSchema.virtual('joined_members_permissions.chats_settings.allowChats.metadata').get(function () {
   return {
     displayName: 'Allow chats',
@@ -264,21 +309,21 @@ communitySettingsSchema.virtual('joined_members_permissions.chats_settings.allow
 communitySettingsSchema.virtual('joined_members_permissions.chats_settings.membersCanCreateChats.metadata').get(function () {
   return {
     displayName: 'Allow members chats',
-    description: 'Decide whether members can create custom chats'
+    description: 'Decide whether members can create custom chats (automatically disabled is "Allow chats" is disabled)'
   };
 });
 
 communitySettingsSchema.virtual('joined_members_permissions.chats_settings.membersChatsRequireApprovalBeforeCreate.metadata').get(function () {
   return {
     displayName: 'Member chat required approval',
-    description: 'Decide whether member chat must be approved before creation'
+    description: 'Decide whether member chat must be approved before creation (meaningless if "Allow chats" is disabled)'
   };
 });
 
 communitySettingsSchema.virtual('joined_members_permissions.chats_settings.membersCanManageTheirChats.metadata').get(function () {
   return {
     displayName: 'Members can manage their chats',
-    description: 'Decide whether members can manage their own chats (edit, ban, delete, messages)'
+    description: 'Decide whether members can manage their own chats (edit, ban, delete, messages) (automatically disabled is "Allow chats" is disabled)'
   };
 });
 
@@ -346,6 +391,7 @@ communitySettingsSchema.virtual('non_members_permissions.canSeeJoinedMembers.met
 });
 
 // communitySettingsSchema.set('toJSON', { virtuals: true });
+export type CommunitySettingsSchemaType = HydratedDocument<InferSchemaType<typeof communitySettingsSchema>>;
 
 const CommunitySettings = models.CommunitySettings || model('CommunitySettings', communitySettingsSchema);
 
