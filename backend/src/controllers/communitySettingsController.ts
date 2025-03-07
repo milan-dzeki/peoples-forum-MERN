@@ -11,6 +11,7 @@ import AppError from 'utils/appError';
 import CommunitySettingsService from 'services/communitySettingsService';
 import { ChatsSettings, NonMembersPermissions, PostsSettings } from 'types/controllers/communitySettings';
 import CommunitySettingsValidator from 'configs/validators/communitySettings/CommunitySettingsValidator';
+import CommunityActivityLog from 'models/communityActivityLogs';
 
 export const getCommunitySettings = catchAsync (async (
   req: RequestWithCommunitySettingsType,
@@ -45,6 +46,12 @@ export const updateCommunityAccess = catchAsync (async (
     ? 'Now even non-members will be able to see community content, if other settings allow it.'
     : 'Now non-members will not be able to view community content.'
 
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    `changed community access to "${communitySettings.access!.value}"`
+  );
+
   return res.status(200).json({
     status: 'success',
     message: `Community access changed to "${communitySettings.access!.value}". ${additionalReqMessage}`,
@@ -70,7 +77,13 @@ export const updateNotifyModeratorsForSettingChangesSetting = catchAsync (async 
   const additionalReqMessage = 
     communitySettings.moderators_settings!.notifyModeratorAboutSettingsChanges!.value
     ? 'Now moderators will receive notifications for every setting change you make.'
-    : 'Moderators will not be notified when settings are changed.'
+    : 'Moderators will not be notified when settings are changed.';
+
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    `${communitySettings.moderators_settings!.notifyModeratorAboutSettingsChanges!.value ? 'enabled' : 'disabled'} moderator notifications for settings changes`
+  );
 
   return res.status(200).json({
     status: 'success',
@@ -99,6 +112,13 @@ export const updateChangesByModeratorRequireCreatorApproval = catchAsync (async 
     ? 'Now you will receive notificatons when moderators want to do something they have permision for (remove post, ban users etc)'
     : 'Now you will not be notified about moderator actions. However, you will still be able to see them in community settings logs.'
 
+  await CommunityActivityLog.create({
+    community: communitySettings.community,
+    user: req.userId!,
+    logType: 'changedSettings',
+    text: `Turned ${communitySettings.moderators_settings!.changesByModeratorRequireApproval!.value ? 'on' : 'off'} "moderator actions require admin approval" setting`
+  });
+
   return res.status(200).json({
     status: 'success',
     message: `Successfully changed should moderator actions require your approval to "${communitySettings.moderators_settings!.changesByModeratorRequireApproval!.value}". ${additionalReqMessage}`,
@@ -126,6 +146,11 @@ export const updateModeratorPermissions = catchAsync (async (
   if (updatedPermissions.length === 0) {
     communitySettings.moderators_settings!.moderatorPermissions!.value = [];
     await communitySettings.save();
+    await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    'updated modertor permissions. Allowed permissions: none'
+  );
 
     return res.status(200).json({
       status: 'success',
@@ -156,6 +181,12 @@ export const updateModeratorPermissions = catchAsync (async (
 
   communitySettings.moderators_settings!.moderatorPermissions!.value = updatedPermissions;
   await communitySettings.save();
+
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    `updated modertor permissions. Allowed permissions: ${communitySettings.moderators_settings!.moderatorPermissions!.value.toString()}`
+  );
 
   return res.status(200).json({
     status: 'success',
@@ -208,6 +239,12 @@ export const updateMembersSinglePostsSetting = catchAsync (async (
 
   await communitySettings.save();
 
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    'updated members post settings'
+  );
+
   return res.status(200).json({
     status: 'success',
     message: 'Post settings updated successfully',
@@ -257,6 +294,12 @@ export const updateMembersAllPostsSettings = catchAsync (async (
 
   await communitySettings.save();
 
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    'updated members post settings'
+  );
+
   return res.status(200).json({
     status: 'success',
     message: 'Community memebrs posts settings updated successfully',
@@ -299,6 +342,12 @@ export const updateMembersSingleChatsSetting = catchAsync (async (
 
   await communitySettings.save();
 
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    'updated members chats settings'
+  );
+
   const responseMessage = `
     Chat settings updated successfully. 
     ${allowChatsDisabled ? 'Because you disabled "allow chats" setting, all other chat settings are also disabled.' : ''}
@@ -337,6 +386,12 @@ export const updateMembersAllChatsSettings = catchAsync (async (
 
   await communitySettings.save();
 
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    'updated members chats settings'
+  );
+
   const additionalReqMessage =
     !communitySettings.joined_members_permissions!.chats_settings!.allowChats!.value
     ? 'Since you disabled chats all other chat setting will be ignored, so they are also disabled. If you want any of the other settings turned on, enable chats.'
@@ -363,6 +418,12 @@ export const updateMembersCanViewOtherMembersSetting = catchAsync (async (
   const communitySettings = req.communitySettings!;
   communitySettings.joined_members_permissions!.can_view_members!.value = canViewMembers;
   await communitySettings.save();
+
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    `${communitySettings.joined_members_permissions!.can_view_members!.value ? 'enabled' : 'disabled'} viewing of members list by other members`
+  );
 
   return res.status(200).json({
     status: 'success',
@@ -418,6 +479,12 @@ export const updateSingleNonMembersPermission = catchAsync (async (
 
   await communitySettings.save();
 
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    'updated non-member permissions'
+  );
+
   return res.status(200).json({
     status: 'success',
     message: 'Successfully updated non-members settings',
@@ -469,6 +536,12 @@ export const updateAllNonMemberPermissions = catchAsync (async (
   }
 
   await communitySettings.save();
+
+  await CommunitySettingsService.createCommunitySettingsChangedLog(
+    communitySettings.community,
+    req.userId!,
+    'updated non-member permissions'
+  );
 
   return res.status(200).json({
     status: 'success',

@@ -1,4 +1,6 @@
 import { CommunitySettingsSchemaType } from 'models/settings/communitySettingsModel';
+import CommunityActivityLog from 'models/communityActivityLogs';
+import { Types } from 'mongoose';
 
 class CommunitySettingsService {
   // for joined_members_permissions_settings
@@ -29,6 +31,19 @@ class CommunitySettingsService {
     communitySettings.non_members_permissions!.canSharePosts!.value = false;
     
     this.setAllNonMemberCommentSettingsToFalseIfCommentsNotAllowed(communitySettings);
+  }
+
+  static async createCommunitySettingsChangedLog (
+    comunityId: Types.ObjectId | string,
+    actor: Types.ObjectId | string,
+    logText: string
+  ) {
+    await CommunityActivityLog.create({
+      community: comunityId,
+      user: actor,
+      logType: 'changedSettings',
+      text: logText
+    });
   }
 }
 
