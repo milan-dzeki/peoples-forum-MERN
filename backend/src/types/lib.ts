@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { CommunitySchemaType } from 'models/communityModel';
 import { CommunitySettingsSchemaType } from 'models/settings/communitySettingsModel';
 
 export interface RequestWithBodyType extends Request {
@@ -20,7 +21,7 @@ export interface RequestWithCommunityType extends Request {
 
 export interface RequestWithCommunitySettingsType extends Request {
   userId?: string;
-  communityId?: string;
+  community?: CommunitySchemaType;
   isCreator?: boolean;
   communitySettings?: CommunitySettingsSchemaType;
 }

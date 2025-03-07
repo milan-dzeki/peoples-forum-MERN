@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
+const notifications_1 = require("configs/notifications");
 const notificationsSchema = new mongoose_1.Schema({
     receiver: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -10,15 +11,18 @@ const notificationsSchema = new mongoose_1.Schema({
     notificationType: {
         type: String,
         enum: [
-            'becomeCommunityModeratorRequest',
-            'becomeCommunityMemberRequest',
-            'bannedFromCommunity',
-            'removeCommunityBan',
-            'userRequestedToJoinCommunity',
-            'userAcceptedCommunityMemberInvite',
-            'userAcceptedCommunityModeratorInvite',
-            'requestToJoinCommunityAccepted',
-            'requestToJoinCommunityDeclined'
+            notifications_1.NOTIFICATION_TYPES.BECOME_COMMUNITY_MODERATOR_INVITATION,
+            notifications_1.NOTIFICATION_TYPES.BECOME_COMMUNITY_MEMBER_INVITATION,
+            notifications_1.NOTIFICATION_TYPES.BANNED_FROM_COMMUNITY,
+            notifications_1.NOTIFICATION_TYPES.REMOVED_COMMUNITY_BAN,
+            notifications_1.NOTIFICATION_TYPES.USER_REQUESTED_TO_JOIN_COMMUNITY,
+            notifications_1.NOTIFICATION_TYPES.USER_ACCEPTED_COMMUNITY_MEMBER_INVITE,
+            notifications_1.NOTIFICATION_TYPES.USER_ACCEPTED_COMMUNITY_MODERATOR_INVITE,
+            notifications_1.NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MODERATOR_ACCEPTED,
+            notifications_1.NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MEMBER_ACCEPTED,
+            notifications_1.NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MODERATOR_DECLINED,
+            notifications_1.NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MEMBER_DECLINED,
+            notifications_1.NOTIFICATION_TYPES.COMMUNITY_SETTINGS_CHANGED
         ]
     },
     text: {

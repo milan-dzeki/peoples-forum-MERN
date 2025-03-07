@@ -38,11 +38,14 @@ exports.updateCommunityAccess = (0, catchAsync_1.default)((req, res, _) => __awa
         ? 'Now even non-members will be able to see community content, if other settings allow it.'
         : 'Now non-members will not be able to view community content.';
     yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, `changed community access to "${communitySettings.access.value}"`);
-    return res.status(200).json({
+    const responseJson = {
         status: 'success',
         message: `Community access changed to "${communitySettings.access.value}". ${additionalReqMessage}`,
-        updatedSetting: communitySettings.access.value
-    });
+        updatedSettings: communitySettings.access.value
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `Admin changed "${community.name}" community access to "${communitySettings.access.value}"`, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));
 exports.updateNotifyModeratorsForSettingChangesSetting = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { data } = req.body;
@@ -53,14 +56,14 @@ exports.updateNotifyModeratorsForSettingChangesSetting = (0, catchAsync_1.defaul
     const communitySettings = req.communitySettings;
     communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value = data;
     yield communitySettings.save();
+    yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, `${communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value ? 'enabled' : 'disabled'} moderator notifications for settings changes`);
     const additionalReqMessage = communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value
         ? 'Now moderators will receive notifications for every setting change you make.'
         : 'Moderators will not be notified when settings are changed.';
-    yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, `${communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value ? 'enabled' : 'disabled'} moderator notifications for settings changes`);
     return res.status(200).json({
         status: 'success',
         message: `Successfully changed setting to "${communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value}". ${additionalReqMessage}`,
-        updatedSetting: communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value
+        updatedSettings: communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value
     });
 }));
 exports.updateChangesByModeratorRequireCreatorApproval = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -72,20 +75,28 @@ exports.updateChangesByModeratorRequireCreatorApproval = (0, catchAsync_1.defaul
     const communitySettings = req.communitySettings;
     communitySettings.moderators_settings.changesByModeratorRequireApproval.value = data;
     yield communitySettings.save();
-    const additionalReqMessage = communitySettings.moderators_settings.changesByModeratorRequireApproval.value
-        ? 'Now you will receive notificatons when moderators want to do something they have permision for (remove post, ban users etc)'
-        : 'Now you will not be notified about moderator actions. However, you will still be able to see them in community settings logs.';
     yield communityActivityLogs_1.default.create({
         community: communitySettings.community,
         user: req.userId,
         logType: 'changedSettings',
         text: `Turned ${communitySettings.moderators_settings.changesByModeratorRequireApproval.value ? 'on' : 'off'} "moderator actions require admin approval" setting`
     });
-    return res.status(200).json({
+    const additionalReqMessage = communitySettings.moderators_settings.changesByModeratorRequireApproval.value
+        ? 'Now you will receive notificatons when moderators want to do something they have permision for (remove post, ban users etc)'
+        : 'Now you will not be notified about moderator actions. However, you will still be able to see them in community settings logs.';
+    const responseJson = {
         status: 'success',
         message: `Successfully changed should moderator actions require your approval to "${communitySettings.moderators_settings.changesByModeratorRequireApproval.value}". ${additionalReqMessage}`,
-        updatedSetting: communitySettings.moderators_settings.changesByModeratorRequireApproval.value
-    });
+        updatedSettings: communitySettings.moderators_settings.changesByModeratorRequireApproval.value
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `
+      Admin turned ${communitySettings.moderators_settings.changesByModeratorRequireApproval.value ? 'on' : 'off'} requied approval for moderator actions for "${community.name}" community. 
+      ${communitySettings.moderators_settings.changesByModeratorRequireApproval.value
+        ? 'Now you, as moderator, will not be able to perform your alowed actions directly. For every action, approval request will be sent to admin.'
+        : 'Now you will not require admin approval for you actions so they will take place immediatelly.'}  
+    `, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));
 exports.updateModeratorPermissions = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { updatedPermissions } = req.body;
@@ -95,15 +106,18 @@ exports.updateModeratorPermissions = (0, catchAsync_1.default)((req, res, next) 
         return;
     }
     const communitySettings = req.communitySettings;
+    const community = req.community;
     if (updatedPermissions.length === 0) {
         communitySettings.moderators_settings.moderatorPermissions.value = [];
         yield communitySettings.save();
         yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, 'updated modertor permissions. Allowed permissions: none');
-        return res.status(200).json({
+        const permissionsNoneRespnseJson = {
             status: 'success',
             message: 'You have removed all permissions for moderators successfully. Now they have normal member permissions.',
-            updatedPermissions: []
-        });
+            updatedSettings: []
+        };
+        const updatedPermissionsNoneResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, 'Admin disabled all moderator permissions. Now you are only allowed to perform actions for which you are given custom permissions.', permissionsNoneRespnseJson);
+        return res.status(200).json(updatedPermissionsNoneResponseJson);
     }
     let invalidPermissions = [];
     const allowedPermissionValues = Object.values(community_1.COMMUNITY_PERMISSION_NAMES).map((value) => value);
@@ -124,11 +138,16 @@ exports.updateModeratorPermissions = (0, catchAsync_1.default)((req, res, next) 
     communitySettings.moderators_settings.moderatorPermissions.value = updatedPermissions;
     yield communitySettings.save();
     yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, `updated modertor permissions. Allowed permissions: ${communitySettings.moderators_settings.moderatorPermissions.value.toString()}`);
-    return res.status(200).json({
+    const responseJosn = {
         status: 'success',
         message: 'Moderator permissions updated successfully',
-        updatedPermissions: communitySettings.moderators_settings.moderatorPermissions.value
-    });
+        updatedSettings: communitySettings.moderators_settings.moderatorPermissions.value
+    };
+    const updatedResponseJosn = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `
+      Admin updated moderator permissions for "${community.name}" community. New allowed permissions: ${communitySettings.moderators_settings.moderatorPermissions.value.toString()}. 
+      On top of these you will always be able to perform custom permissions given to you.
+    `, responseJosn);
+    return res.status(200).json(updatedResponseJosn);
 }));
 exports.updateMembersSinglePostsSetting = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { settingName, settingValue } = req.body;
@@ -157,11 +176,14 @@ exports.updateMembersSinglePostsSetting = (0, catchAsync_1.default)((req, res, n
     }
     yield communitySettings.save();
     yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, 'updated members post settings');
-    return res.status(200).json({
+    const responseJson = {
         status: 'success',
-        message: 'Post settings updated successfully',
+        message: 'Community memebrs posts settings updated successfully',
         updatedSettings: communitySettings.joined_members_permissions.posts_settings
-    });
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `Admin updated members post settings for "${community.name}" community. Go to settings page to see updates.`, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));
 exports.updateMembersAllPostsSettings = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { updatedSettings } = req.body;
@@ -189,11 +211,14 @@ exports.updateMembersAllPostsSettings = (0, catchAsync_1.default)((req, res, nex
     }
     yield communitySettings.save();
     yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, 'updated members post settings');
-    return res.status(200).json({
+    const responseJson = {
         status: 'success',
         message: 'Community memebrs posts settings updated successfully',
         updatedSettings: communitySettings.joined_members_permissions.posts_settings
-    });
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `Admin updated members post settings for "${community.name}" community. Go to settings page to see updates.`, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));
 exports.updateMembersSingleChatsSetting = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { settingName, settingValue } = req.body;
@@ -218,11 +243,14 @@ exports.updateMembersSingleChatsSetting = (0, catchAsync_1.default)((req, res, n
     Chat settings updated successfully. 
     ${allowChatsDisabled ? 'Because you disabled "allow chats" setting, all other chat settings are also disabled.' : ''}
   `;
-    return res.status(200).json({
+    const responseJson = {
         status: 'success',
         message: responseMessage,
         updatedSettings: communitySettings.joined_members_permissions.chats_settings
-    });
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `Admin updated members chats settings for "${community.name}" community. Go to settings page to see updates.`, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));
 exports.updateMembersAllChatsSettings = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const { updatedSettings } = req.body;
@@ -241,11 +269,14 @@ exports.updateMembersAllChatsSettings = (0, catchAsync_1.default)((req, res, _) 
     const additionalReqMessage = !communitySettings.joined_members_permissions.chats_settings.allowChats.value
         ? 'Since you disabled chats all other chat setting will be ignored, so they are also disabled. If you want any of the other settings turned on, enable chats.'
         : '';
-    return res.status(200).json({
+    const responseJson = {
         status: 'success',
         message: `Community members chat settings updated successfully. ${additionalReqMessage}`,
         updatedSettings: communitySettings.joined_members_permissions.chats_settings
-    });
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `Admin updated members chats settings for "${community.name}" community. Go to settings page to see updates.`, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));
 exports.updateMembersCanViewOtherMembersSetting = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { canViewMembers } = req.body;
@@ -257,11 +288,14 @@ exports.updateMembersCanViewOtherMembersSetting = (0, catchAsync_1.default)((req
     communitySettings.joined_members_permissions.can_view_members.value = canViewMembers;
     yield communitySettings.save();
     yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, `${communitySettings.joined_members_permissions.can_view_members.value ? 'enabled' : 'disabled'} viewing of members list by other members`);
-    return res.status(200).json({
+    const responseJson = {
         status: 'success',
-        message: `${canViewMembers === true ? 'Enabled' : 'Disabled'} to see member list`,
-        updatedSetting: communitySettings.joined_members_permissions.can_view_members.value
-    });
+        message: `${canViewMembers === true ? 'Enabled' : 'Disabled'} non-embers to see member list`,
+        updatedSettings: communitySettings.joined_members_permissions.can_view_members.value
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `Admin ${canViewMembers === true ? 'enabled' : 'disabled'} viewing member list for non-members for "${community.name}" community.`, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));
 exports.updateSingleNonMembersPermission = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { settingName, settingValue } = req.body;
@@ -297,11 +331,14 @@ exports.updateSingleNonMembersPermission = (0, catchAsync_1.default)((req, res, 
     }
     yield communitySettings.save();
     yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, 'updated non-member permissions');
-    return res.status(200).json({
+    const responseJson = {
         status: 'success',
-        message: 'Successfully updated non-members settings',
-        updatedNonMembersPermissions: communitySettings.non_members_permissions
-    });
+        message: 'Successfully updated non-members permissions',
+        updatedSettings: communitySettings.non_members_permissions
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `Admin updated members non-member permissions for "${community.name}" community. Go to settings page to see updates.`, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));
 exports.updateAllNonMemberPermissions = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const { updatedSettings } = req.body;
@@ -333,9 +370,12 @@ exports.updateAllNonMemberPermissions = (0, catchAsync_1.default)((req, res, _) 
     }
     yield communitySettings.save();
     yield communitySettingsService_1.default.createCommunitySettingsChangedLog(communitySettings.community, req.userId, 'updated non-member permissions');
-    return res.status(200).json({
+    const responseJson = {
         status: 'success',
-        message: 'Non-members permissions updated successfully',
-        updatedNonMembersPermissions: communitySettings.non_members_permissions
-    });
+        message: 'Successfully updated non-members permissions',
+        updatedSettings: communitySettings.non_members_permissions
+    };
+    const community = req.community;
+    const updatedResponseJson = yield communitySettingsService_1.default.createModeratorNotifictaionsForSettingChanges(communitySettings.moderators_settings.notifyModeratorAboutSettingsChanges.value, community, `Admin updated members non-member permissions for "${community.name}" community. Go to settings page to see updates.`, responseJson);
+    return res.status(200).json(updatedResponseJson);
 }));

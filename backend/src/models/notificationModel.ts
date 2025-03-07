@@ -1,4 +1,5 @@
 import { Schema, models, model, HydratedDocument, InferSchemaType } from 'mongoose';
+import { NOTIFICATION_TYPES } from 'configs/notifications';
 
 const notificationsSchema = new Schema({
   receiver: {
@@ -9,15 +10,18 @@ const notificationsSchema = new Schema({
   notificationType: {
     type: String,
     enum: [
-      'becomeCommunityModeratorRequest',
-      'becomeCommunityMemberRequest',
-      'bannedFromCommunity',
-      'removeCommunityBan',
-      'userRequestedToJoinCommunity',
-      'userAcceptedCommunityMemberInvite',
-      'userAcceptedCommunityModeratorInvite',
-      'requestToJoinCommunityAccepted',
-      'requestToJoinCommunityDeclined'
+      NOTIFICATION_TYPES.BECOME_COMMUNITY_MODERATOR_INVITATION,
+      NOTIFICATION_TYPES.BECOME_COMMUNITY_MEMBER_INVITATION,
+      NOTIFICATION_TYPES.BANNED_FROM_COMMUNITY,
+      NOTIFICATION_TYPES.REMOVED_COMMUNITY_BAN,
+      NOTIFICATION_TYPES.USER_REQUESTED_TO_JOIN_COMMUNITY,
+      NOTIFICATION_TYPES.USER_ACCEPTED_COMMUNITY_MEMBER_INVITE,
+      NOTIFICATION_TYPES.USER_ACCEPTED_COMMUNITY_MODERATOR_INVITE,
+      NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MODERATOR_ACCEPTED,
+      NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MEMBER_ACCEPTED,
+      NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MODERATOR_DECLINED,
+      NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MEMBER_DECLINED,
+      NOTIFICATION_TYPES.COMMUNITY_SETTINGS_CHANGED
     ]
   },
   text: {

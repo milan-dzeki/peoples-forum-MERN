@@ -1,6 +1,10 @@
-import { CommunitySettingsSchemaType } from 'models/settings/communitySettingsModel';
-import CommunityActivityLog from 'models/communityActivityLogs';
 import { Types } from 'mongoose';
+import { CommunitySettingsSchemaType } from 'models/settings/communitySettingsModel';
+import { CommunitySchemaType } from 'models/communityModel';
+import { NOTIFICATION_TYPES } from 'configs/notifications';
+import { CommunitySettingsResponseType, ModeratorCommunitySettingsChangedNotificationType } from 'types/models/communitySettings';
+import CommunityActivityLog from 'models/communityActivityLogs';
+import Notification from 'models/notificationModel';
 
 class CommunitySettingsService {
   // for joined_members_permissions_settings
@@ -44,6 +48,39 @@ class CommunitySettingsService {
       logType: 'changedSettings',
       text: logText
     });
+  }
+
+  static async createModeratorNotifictaionsForSettingChanges (
+    shouldSendNotifications: boolean,
+    community: CommunitySchemaType,
+    notificationMessage: string,
+    responseJson: CommunitySettingsResponseType
+  ): Promise<CommunitySettingsResponseType> {
+    console.log(shouldSendNotifications, community, notificationMessage)
+    if (
+      !shouldSendNotifications ||
+      !community.moderators || 
+      (community.moderators && community.moderators.length === 0)
+    ) {
+      return responseJson;
+    }
+
+    const notifications: ModeratorCommunitySettingsChangedNotificationType[] = [];
+
+    for (const moderator of community.moderators) {
+      notifications.push({
+        receiver: moderator.user,
+        notificationType: NOTIFICATION_TYPES.COMMUNITY_SETTINGS_CHANGED,
+        text: notificationMessage,
+        community: community._id
+      });
+    }
+
+    const createdNotifications = await Notification.insertMany(notifications);
+
+    responseJson.moderatorNotifications = createdNotifications;
+
+    return responseJson;
   }
 }
 

@@ -17,7 +17,7 @@ export const doesCommunityExistAndIsUserCreator = async (
       return;
     }
 
-    const community = await Community.findById(communityId).select('creator');
+    const community = await Community.findById(communityId).select('name creator moderators');
 
     if (!community) {
       next(new AppError(404, 'Community not found.'));
@@ -29,7 +29,7 @@ export const doesCommunityExistAndIsUserCreator = async (
       return;
     }
 
-    req.communityId = community._id;
+    req.community = community;
     next();
   } catch (error: unknown) {
     next(error);
@@ -43,7 +43,7 @@ export const doesCommunitySettingExist = async (
   next: NextFunction
 ) => {
   try {
-    const communityId = req.communityId;
+    const communityId = req.community!._id;
 
     const communitySettings = await CommunitySettings.findOne({ community: communityId });
     if (!communitySettings) {

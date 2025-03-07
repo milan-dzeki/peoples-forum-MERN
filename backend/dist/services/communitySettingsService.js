@@ -12,7 +12,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const notifications_1 = require("configs/notifications");
 const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
+const notificationModel_1 = __importDefault(require("models/notificationModel"));
 class CommunitySettingsService {
     // for joined_members_permissions_settings
     static setAllPostCommentSettingsToFalseIfCommentsAreNotAllowed(communitySettings) {
@@ -48,6 +50,28 @@ class CommunitySettingsService {
                 logType: 'changedSettings',
                 text: logText
             });
+        });
+    }
+    static createModeratorNotifictaionsForSettingChanges(shouldSendNotifications, community, notificationMessage, responseJson) {
+        return __awaiter(this, void 0, void 0, function* () {
+            console.log(shouldSendNotifications, community, notificationMessage);
+            if (!shouldSendNotifications ||
+                !community.moderators ||
+                (community.moderators && community.moderators.length === 0)) {
+                return responseJson;
+            }
+            const notifications = [];
+            for (const moderator of community.moderators) {
+                notifications.push({
+                    receiver: moderator.user,
+                    notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_SETTINGS_CHANGED,
+                    text: notificationMessage,
+                    community: community._id
+                });
+            }
+            const createdNotifications = yield notificationModel_1.default.insertMany(notifications);
+            responseJson.moderatorNotifications = createdNotifications;
+            return responseJson;
         });
     }
 }

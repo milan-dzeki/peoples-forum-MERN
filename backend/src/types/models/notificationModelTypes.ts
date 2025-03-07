@@ -1,11 +1,5 @@
-export type NotificationType = (
-  'becomeCommunityModeratorRequest' |
-  'becomeCommunityMemberRequest' |
-  'bannedFromCommunity' |
-  'removeCommunityBan' |
-  'userRequestedToJoinCommunity' |
-  'userAcceptedCommunityMemberInvite' |
-  'userAcceptedCommunityModeratorInvite' |
-  'requestToJoinCommunityAccepted' |
-  'requestToJoinCommunityDeclined'
-)
+import { NOTIFICATION_TYPES } from 'configs/notifications';
+
+type NotificationTypeValues = typeof NOTIFICATION_TYPES;
+
+export type NotificationType = NotificationTypeValues;

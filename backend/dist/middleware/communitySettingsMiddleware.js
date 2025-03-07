@@ -23,7 +23,7 @@ const doesCommunityExistAndIsUserCreator = (req, _, next) => __awaiter(void 0, v
             next(new appError_1.default(400, 'Community ID is missing'));
             return;
         }
-        const community = yield communityModel_1.default.findById(communityId).select('creator');
+        const community = yield communityModel_1.default.findById(communityId).select('name creator moderators');
         if (!community) {
             next(new appError_1.default(404, 'Community not found.'));
             return;
@@ -32,7 +32,7 @@ const doesCommunityExistAndIsUserCreator = (req, _, next) => __awaiter(void 0, v
             next(new appError_1.default(403, 'You have no access to community settings'));
             return;
         }
-        req.communityId = community._id;
+        req.community = community;
         next();
     }
     catch (error) {
@@ -43,7 +43,7 @@ const doesCommunityExistAndIsUserCreator = (req, _, next) => __awaiter(void 0, v
 exports.doesCommunityExistAndIsUserCreator = doesCommunityExistAndIsUserCreator;
 const doesCommunitySettingExist = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const communityId = req.communityId;
+        const communityId = req.community._id;
         const communitySettings = yield communitySettingsModel_1.default.findOne({ community: communityId });
         if (!communitySettings) {
             next(new appError_1.default(404, 'Community setting not found. You should create one'));
