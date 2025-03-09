@@ -13,9 +13,9 @@ import CommunitySettings from 'models/settings/communitySettingsModel';
 import Chat from 'models/chatModel';
 import Message from 'models/messageModel';
 import CommunityActivityLog from 'models/communityActivityLogs';
-import CommunityModeratorChangeRequest from 'models/communityModeratorChangeRequestModel';
 import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
 import CommunityModeratorChangeRequestService from 'services/communityModeratorChangeRequestsSerivce';
+import CommunityActivityLogsService from 'services/communityActivityLogsService';
 
 export const createCommunity = catchAsync (async (
   req: RequestWithUserIdType,
@@ -132,10 +132,10 @@ export const updateCommunityDescription = catchAsync (async (
       moderator: req.userId!,
       requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
       updateValues: { newDescriptionValue: description }
-  });
+    });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to update community description to "${description}"`,
@@ -200,8 +200,8 @@ export const updateCommunityProfileImage = catchAsync(async (
       } }
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to update community profile photo`,
@@ -264,8 +264,8 @@ export const removeCommunityProfileImage = catchAsync(async (
       requestText: `*user* (moderator) wants to remove "${community.name}" community profile image.`
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to remove community profile photo`,
@@ -333,8 +333,8 @@ export const updateCommunityBannerImage = catchAsync(async (
       }}
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to change community banner photo`,
@@ -396,8 +396,8 @@ export const removeCommunityBannerImage = catchAsync(async (
       requestText: `*user* (moderator) wants to remove "${community.name}" community banner image.`
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to remove community banner photo`,
@@ -466,8 +466,8 @@ export const addNewCommunityRule = catchAsync (async (
       }
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to add new community rule`,
@@ -541,8 +541,8 @@ export const updateSingleCommunityRule = catchAsync(async (
       }
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to update community rule`,
@@ -604,8 +604,8 @@ export const updateCommunityRules = catchAsync(async (
       }
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to update community rules`,
@@ -663,8 +663,8 @@ export const deleteSingleCommunityRule = catchAsync (async (
       }
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to delete community rule`,
@@ -716,8 +716,8 @@ export const deleteMultipleCommunityRules = catchAsync (async (
       }
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to delete multiple community rules`,
@@ -759,8 +759,8 @@ export const deleteAllCommunityRules = catchAsync (async (
       requestText: `*user* (moderator) wants to delete all comunity rules for "${community.name}" community.`
     });
 
-    await CommunityActivityLog.create({
-      community: community._id,
+    await CommunityActivityLogsService.createNewCommunityActivityLog({
+      communityId: community._id,
       logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
       moderator: req.userId!,
       text: `Moderator *user* made request to all multiple community rules`,

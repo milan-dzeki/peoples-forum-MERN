@@ -27,6 +27,7 @@ const messageModel_1 = __importDefault(require("models/messageModel"));
 const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
 const communityActivityLogs_2 = require("configs/communityActivityLogs");
 const communityModeratorChangeRequestsSerivce_1 = __importDefault(require("services/communityModeratorChangeRequestsSerivce"));
+const communityActivityLogsService_1 = __importDefault(require("services/communityActivityLogsService"));
 exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { pendingInvitedModerators, name, description, rules, pendingInvitedUsers, chatNames } = req.fields;
     const parsedPendingInvitedModerators = pendingInvitedModerators ? JSON.parse(pendingInvitedModerators) : [];
@@ -107,8 +108,8 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, next) 
             requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
             updateValues: { newDescriptionValue: description }
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to update community description to "${description}"`,
@@ -158,8 +159,8 @@ exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
                     public_id: uploadedPhotoData.public_id
                 } }
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to update community profile photo`,
@@ -207,8 +208,8 @@ exports.removeCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
             moderator: req.userId,
             requestText: `*user* (moderator) wants to remove "${community.name}" community profile image.`
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to remove community profile photo`,
@@ -259,8 +260,8 @@ exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
                     public_id: uploadedPhotoData.public_id
                 } }
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to change community banner photo`,
@@ -307,8 +308,8 @@ exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
             moderator: req.userId,
             requestText: `*user* (moderator) wants to remove "${community.name}" community banner image.`
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to remove community banner photo`,
@@ -361,8 +362,8 @@ exports.addNewCommunityRule = (0, catchAsync_1.default)((req, res, next) => __aw
                 newRules: [rule]
             }
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to add new community rule`,
@@ -418,8 +419,8 @@ exports.updateSingleCommunityRule = (0, catchAsync_1.default)((req, res, next) =
                 newRules: [Object.assign({ _id: rule.id }, rule.data)]
             }
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to update community rule`,
@@ -464,8 +465,8 @@ exports.updateCommunityRules = (0, catchAsync_1.default)((req, res, next) => __a
                 newRules: [...rules]
             }
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to update community rules`,
@@ -510,8 +511,8 @@ exports.deleteSingleCommunityRule = (0, catchAsync_1.default)((req, res, next) =
                 deleteRuleIds: [ruleId]
             }
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to delete community rule`,
@@ -551,8 +552,8 @@ exports.deleteMultipleCommunityRules = (0, catchAsync_1.default)((req, res, next
                 deleteRuleIds: [ruleIds]
             }
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to delete multiple community rules`,
@@ -584,8 +585,8 @@ exports.deleteAllCommunityRules = (0, catchAsync_1.default)((req, res, _) => __a
             moderator: req.userId,
             requestText: `*user* (moderator) wants to delete all comunity rules for "${community.name}" community.`
         });
-        yield communityActivityLogs_1.default.create({
-            community: community._id,
+        yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+            communityId: community._id,
             logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             moderator: req.userId,
             text: `Moderator *user* made request to all multiple community rules`,
