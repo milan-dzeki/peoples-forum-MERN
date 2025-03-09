@@ -17,6 +17,7 @@ const mongoose_1 = require("mongoose");
 const userModel_1 = __importDefault(require("models/userModel"));
 const communityInputRules_1 = __importDefault(require("./communityInputRules"));
 const parentValidator_1 = __importDefault(require("configs/validators/parentValidator"));
+const appError_1 = __importDefault(require("utils/appError"));
 class CommunityValidator extends parentValidator_1.default {
     static areUsersValid(users, list) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -151,17 +152,26 @@ class CommunityValidator extends parentValidator_1.default {
     }
 }
 _a = CommunityValidator;
-CommunityValidator.validateStringValues = (value, key) => {
+CommunityValidator.validateStringValues = (value, key, shouldThrowError) => {
     const invalidName = _a.isValidNonEmptyString(value, communityInputRules_1.default[key].requiredErrorMessage);
     if (invalidName) {
+        if (shouldThrowError) {
+            throw new appError_1.default(422, invalidName);
+        }
         return invalidName;
     }
     const smallerLengthThanRequired = _a.isSmallerThanMinLength(value, communityInputRules_1.default[key].minLength.value, communityInputRules_1.default[key].minLength.errorMessage);
     if (smallerLengthThanRequired) {
+        if (shouldThrowError) {
+            throw new appError_1.default(422, smallerLengthThanRequired);
+        }
         return smallerLengthThanRequired;
     }
     const higherLengthThanRequired = _a.isHigherThanMaxLength(value, communityInputRules_1.default[key].maxLength.value, communityInputRules_1.default[key].maxLength.errorMessage);
     if (higherLengthThanRequired) {
+        if (shouldThrowError) {
+            throw new appError_1.default(422, higherLengthThanRequired);
+        }
         return higherLengthThanRequired;
     }
     return null;

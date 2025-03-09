@@ -1,6 +1,8 @@
-import { COMMUNITY_MODERATOR_REQUEST_TYPES } from "configs/communityModeratorChangeRequests";
-import { NotificationSchemaType } from "models/notificationModel";
-import { Types } from "mongoose";
+import { Response } from 'express';
+import { Types } from 'mongoose';
+import { COMMUNITY_MODERATOR_REQUEST_TYPES } from 'configs/communityModeratorChangeRequests';
+import { NotificationSchemaType } from 'models/notificationModel';
+import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 
 export interface CommunityModeratorRequestResponseType {
   status: string;
@@ -46,4 +48,10 @@ export interface PrepareNewModeratorRequestType {
     description?: string;
   }[];
   deleteRuleIds?: (Types.ObjectId | string)[];
+}
+
+export interface SendModeratorRequestResponseParametersType {
+  res: Response;
+  message: string;
+  moderatorRequest: CommunityModeratorChangeRequestSchemaType;
 }

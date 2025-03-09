@@ -139,16 +139,21 @@ class CommunityModeratorChangeRequestService {
             }
         });
     }
+    static sendModeratorRequestResponse(parameters) {
+        const { res, message, moderatorRequest } = parameters;
+        return res.status(200).json({
+            status: 'success',
+            message,
+            moderatorRequest
+        });
+    }
 }
 _a = CommunityModeratorChangeRequestService;
 CommunityModeratorChangeRequestService.acceptUpdateCommunityField = {
-    update_description: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
+    update_description: (community, moderatorRequest) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const updatedDescription = moderatorRequest.newDescriptionValue;
-            const descriptionError = communityValidator_1.default.validateStringValues(updatedDescription, 'description');
-            if (descriptionError) {
-                throw new appError_1.default(422, descriptionError);
-            }
+            communityValidator_1.default.validateStringValues(updatedDescription, 'description', true);
             community.description = updatedDescription;
             yield community.save();
             moderatorRequest.status = 'approved';
@@ -160,16 +165,13 @@ CommunityModeratorChangeRequestService.acceptUpdateCommunityField = {
                 text: `approved request to update community description to "${community.description}" made by moderator`,
                 moderatorRequest: moderatorRequest._id
             });
-            if (shouldNotifyModerator) {
-                const moderatorNotification = yield notificationModel_1.default.create({
-                    receiver: moderatorRequest.moderator,
-                    notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-                    text: `Your request to ${moderatorRequest.requestType} to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`,
-                    community: community._id
-                });
-                return moderatorNotification;
-            }
-            return null;
+            const moderatorNotification = yield notificationModel_1.default.create({
+                receiver: moderatorRequest.moderator,
+                notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
+                text: `Your request to ${moderatorRequest.requestType} to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`,
+                community: community._id
+            });
+            return moderatorNotification;
         }
         catch (error) {
             throw error;

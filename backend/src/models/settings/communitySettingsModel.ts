@@ -16,6 +16,12 @@ const communitySettingsSchema = new Schema({
     }
   },
   moderators_settings: {
+    notifiModeratorAboutInfoChanges: {
+      value: {
+        type: Boolean,
+        default: false
+      }
+    },
     notifyModeratorAboutSettingsChanges: {
       value: {
         type: Boolean,
@@ -221,11 +227,25 @@ communitySettingsSchema.virtual('moderators_settings.metadata').get(function () 
     description: 'Allow what moderators are allowed to do in this community'
   };
 });
-// changesByModeratorRequireApproval
+
 communitySettingsSchema.virtual('moderators_settings.changesByModeratorRequireApproval.metadata').get(function () {
   return {
     displayName: 'Approve moderator action before it passes',
     description: 'You will receive request about what moderators want to do and will be able to approve or decline. E.g. if moderator want to pin a post or ban user, you will be notified and decide to approve or decline'
+  };
+});
+
+communitySettingsSchema.virtual('moderators_settings.notifiModeratorAboutInfoChanges.metadata').get(function () {
+  return {
+    displayName: 'Notify moderator when community info is changed',
+    description: 'Send notifications to moderators when changes are made for descriptin, rules or images'
+  };
+});
+
+communitySettingsSchema.virtual('moderators_settings.notifyModeratorAboutSettingsChanges.metadata').get(function () {
+  return {
+    displayName: 'Notify moderator when community settings are changed',
+    description: 'Send notifications to moderators when changes are made for community settings'
   };
 });
 

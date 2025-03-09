@@ -8,7 +8,7 @@ import { CommunitySchemaType } from 'models/communityModel';
 import CommunityModeratorChangeRequest, { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 import Notification from 'models/notificationModel';
 import { Types } from 'mongoose';
-import { CreateModeratorRequestParameteresType, ModeratorRequestType, PrepareNewModeratorRequestType } from 'types/controllers/communityModeratorRequests';
+import { CreateModeratorRequestParameteresType, PrepareNewModeratorRequestType, SendModeratorRequestResponseParametersType } from 'types/controllers/communityModeratorRequests';
 import AppError from 'utils/appError';
 
 
@@ -17,14 +17,10 @@ class CommunityModeratorChangeRequestService {
     update_description: async(
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
     ) => {
       try {
         const updatedDescription = moderatorRequest.newDescriptionValue as any;
-        const descriptionError = CommunityValidator.validateStringValues(updatedDescription, 'description');
-        if (descriptionError) {
-          throw new AppError(422, descriptionError);
-        }
+        CommunityValidator.validateStringValues(updatedDescription, 'description', true);
 
         community.description = updatedDescription;
         await community.save();
@@ -40,18 +36,14 @@ class CommunityModeratorChangeRequestService {
           moderatorRequest: moderatorRequest._id
         });
 
-        if (shouldNotifyModerator) {
-          const moderatorNotification = await Notification.create({
-            receiver: moderatorRequest.moderator,
-            notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-            text: `Your request to ${moderatorRequest.requestType} to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`,
-            community: community._id
-          });
+        const moderatorNotification = await Notification.create({
+          receiver: moderatorRequest.moderator,
+          notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
+          text: `Your request to ${moderatorRequest.requestType} to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`,
+          community: community._id
+        });
 
-          return moderatorNotification;
-        }
-
-        return null;
+        return moderatorNotification;
       } catch (error: unknown) {
         throw error;
       }
@@ -547,6 +539,20 @@ class CommunityModeratorChangeRequestService {
     } catch (error: unknown) {
       throw error;
     }
+  }
+
+  static sendModeratorRequestResponse (parameters: SendModeratorRequestResponseParametersType) {
+    const {
+      res,
+      message,
+      moderatorRequest
+    } = parameters;
+
+    return res.status(200).json({
+      status: 'success',
+      message,
+      moderatorRequest
+    });
   }
 }
 

@@ -64,16 +64,6 @@ class CommunityService {
             }
         });
     }
-    static isUserInLists(community, listNames, userId) {
-        const existInLists = {};
-        for (const list of listNames) {
-            const isInList = community[list].find((user) => user.toString() === userId);
-            if (isInList) {
-                existInLists[list] = true;
-            }
-        }
-        return existInLists;
-    }
     static removeUserFromLists(community, listNames, userId) {
         for (const list of listNames) {
             community[list].pull({ user: userId });

@@ -3,11 +3,15 @@ import User from 'models/userModel';
 import type { ComunityInputs, CommunityRuleType, CommunityRulesErrorsType, CommunityValidationErrors, CommunityErrorsType } from 'types/validators/communityValidatorTypes';
 import communityInputRules from './communityInputRules';
 import ParentValidator from 'configs/validators/parentValidator';
+import AppError from 'utils/appError';
 
 class CommunityValidator extends ParentValidator {
-  static validateStringValues = (value: string | undefined, key: 'name' | 'description'): string | null => {
+  static validateStringValues = (value: string | undefined, key: 'name' | 'description', shouldThrowError?: boolean): string | null => {
     const invalidName = this.isValidNonEmptyString(value, communityInputRules[key].requiredErrorMessage);
     if (invalidName) {
+      if (shouldThrowError) {
+        throw new AppError(422, invalidName);
+      }
       return invalidName;
     }
     
@@ -17,6 +21,9 @@ class CommunityValidator extends ParentValidator {
       communityInputRules[key].minLength.errorMessage
     );
     if (smallerLengthThanRequired) {
+      if (shouldThrowError) {
+        throw new AppError(422, smallerLengthThanRequired);
+      }
       return smallerLengthThanRequired;
     }
 
@@ -26,6 +33,9 @@ class CommunityValidator extends ParentValidator {
       communityInputRules[key].maxLength.errorMessage
     );
     if (higherLengthThanRequired) {
+      if (shouldThrowError) {
+        throw new AppError(422, higherLengthThanRequired);
+      }
       return higherLengthThanRequired;
     }
 
