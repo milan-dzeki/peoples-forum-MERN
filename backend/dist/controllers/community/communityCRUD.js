@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCommunity = exports.deleteAllCommunityRules = exports.deleteMultipleCommunityRules = exports.deleteSingleCommunityRule = exports.updateCommunityRules = exports.updateSingleCommunityRule = exports.addNewCommunityRule = exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.updateCommunityDescription = exports.createCommunity = void 0;
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
+const communityModeratorChangeRequests_1 = require("configs/communityModeratorChangeRequests");
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 const communityService_1 = __importDefault(require("services/communityService"));
@@ -23,6 +24,9 @@ const communityModel_1 = __importDefault(require("models/communityModel"));
 const communitySettingsModel_1 = __importDefault(require("models/settings/communitySettingsModel"));
 const chatModel_1 = __importDefault(require("models/chatModel"));
 const messageModel_1 = __importDefault(require("models/messageModel"));
+const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
+const communityModeratorChangeRequestModel_1 = __importDefault(require("models/communityModeratorChangeRequestModel"));
+const communityActivityLogs_2 = require("configs/communityActivityLogs");
 exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { pendingInvitedModerators, name, description, rules, pendingInvitedUsers, chatNames } = req.fields;
     const parsedPendingInvitedModerators = pendingInvitedModerators ? JSON.parse(pendingInvitedModerators) : [];
@@ -71,6 +75,12 @@ exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaite
     const chatIds = yield communityService_1.default.createCommunityChatsUponCommunityCreation(req.userId, newCommunity._id, parsedChatNames);
     newCommunity.availableChats = chatIds;
     yield newCommunity.save();
+    yield communityActivityLogs_1.default.create({
+        community: newCommunity._id,
+        logType: 'communityCreated',
+        text: 'created community',
+        user: req.userId
+    });
     return res.status(201).json({
         status: 'success',
         message: 'Community created successfully',
@@ -86,8 +96,38 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, next) 
         return;
     }
     const community = req.community;
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
+            newDescriptionValue: description
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to update community description to "${description}"`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: `Request to update community description to "${description}" is sent to admin`,
+            moderatorChangeRequest
+        });
+    }
     community.description = description;
     yield community.save();
+    yield communityActivityLogs_1.default.create({
+        community: community._id,
+        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        moderator: req.userId,
+        text: `Moderator *user* updated community description to "${community.description}"`
+    });
     return res.status(200).json({
         status: 'success',
         message: 'Community description updated successfully',
@@ -103,13 +143,47 @@ exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
         return;
     }
     const community = req.community;
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    const uploadedPhotoData = yield cloudinaryManagementService_1.default.uploadSinglePhotoToCloudinary(reqFiles.profileImage);
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_PROFILE_PHOTO,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to change "${community.name}" community profile image.`,
+            photo: {
+                secure_url: uploadedPhotoData.secure_url,
+                public_id: uploadedPhotoData.public_id
+            }
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to update community profile photo`,
+            moderatorRequest: moderatorChangeRequest._id,
+            photoUrl: uploadedPhotoData.secure_url
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to update community profile image is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     if (community.profileImageUrl && community.profileImagePublicId) {
         yield cloudinary_1.default.uploader.destroy(community.profileImagePublicId);
     }
-    const uploadedPhotoData = yield cloudinaryManagementService_1.default.uploadSinglePhotoToCloudinary(reqFiles.profileImage);
     community.profileImageUrl = uploadedPhotoData.secure_url;
     community.profileImagePublicId = uploadedPhotoData.public_id;
     yield community.save();
+    yield communityActivityLogs_1.default.create({
+        community: community._id,
+        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        moderator: req.userId,
+        text: 'Moderator *user* updated community profile photo'
+    });
     return res.status(200).json({
         status: 'success',
         message: 'Community profile image updated successfully',
@@ -123,17 +197,45 @@ exports.removeCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
         next(new appError_1.default(404, 'Community doesnt have profile image, so there is nothing to remove'));
         return;
     }
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.REMOVE_PROFILE_PHOTO,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to remove "${community.name}" community profile image.`
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to remove community profile photo`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to remove community profile image is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     community.profileImageUrl = null;
     community.profileImagePublicId = null;
     yield community.save();
     yield cloudinary_1.default.uploader.destroy(profileImagePublicId);
+    yield communityActivityLogs_1.default.create({
+        community: community._id,
+        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        moderator: req.userId,
+        text: 'Moderator *user* removed community profile photo'
+    });
     return res.status(200).json({
         status: 'success',
         message: 'Community profile image removed successfully'
     });
 }));
 exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const community = req.community;
     const reqFiles = req.files;
     if (!reqFiles ||
         (reqFiles && !reqFiles.bannerImage) ||
@@ -141,13 +243,47 @@ exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
         next(new appError_1.default(400, 'No new photo is provided'));
         return;
     }
+    const community = req.community;
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    const uploadedPhotoData = yield cloudinaryManagementService_1.default.uploadSinglePhotoToCloudinary(reqFiles.bannerImage);
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_BANNER_PHOTO,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to change "${community.name}" community banner image.`,
+            photo: {
+                secure_url: uploadedPhotoData.secure_url,
+                public_id: uploadedPhotoData.public_id
+            },
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to change community banner photo`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to update community banner image is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     if (community.bannerImageUrl && community.bannerImagePublicId) {
         yield cloudinary_1.default.uploader.destroy(community.bannerImagePublicId);
     }
-    const uploadedPhotoData = yield cloudinaryManagementService_1.default.uploadSinglePhotoToCloudinary(reqFiles.bannerImage);
     community.bannerImageUrl = uploadedPhotoData.secure_url;
     community.bannerImagePublicId = uploadedPhotoData.public_id;
     yield community.save();
+    yield communityActivityLogs_1.default.create({
+        community: community._id,
+        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        moderator: req.userId,
+        text: 'Moderator *user* changed community banner photo'
+    });
     return res.status(200).json({
         status: 'success',
         message: 'Community banner image updated successfully',
@@ -161,17 +297,46 @@ exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
         next(new appError_1.default(404, 'Community doesnt have banner image so there is nothing to remove'));
         return;
     }
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.REMOVE_BANNER_PHOTO,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to remove "${community.name}" community banner image.`
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to remove community banner photo`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to remove community banner image is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     community.bannerImageUrl = null;
     community.bannerImagePublicId = null;
     yield community.save();
     yield cloudinary_1.default.uploader.destroy(bannerImagePublicId);
+    yield communityActivityLogs_1.default.create({
+        community: community._id,
+        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        moderator: req.userId,
+        text: 'Moderator *user* removed community banner photo'
+    });
     return res.status(200).json({
         status: 'success',
         message: 'Community banner image removed successfully'
     });
 }));
+/* COMMUNITY RULES CRUD --start */
 exports.addNewCommunityRule = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const community = req.community;
     const { rule } = req.body;
     if (!rule || (rule && !rule.title)) {
         next(new appError_1.default(400, 'Rule to add not provided'));
@@ -182,8 +347,39 @@ exports.addNewCommunityRule = (0, catchAsync_1.default)((req, res, next) => __aw
         next(new appError_1.default(422, 'Rule data invalid', { rule: ruleInvalidError }));
         return;
     }
+    const community = req.community;
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.ADD_RULE,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to add new comunity rule for "${community.name}" community.`,
+            newRules: [rule]
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to add new community rule`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to add new community rule is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     community.rules.push(rule);
     yield community.save();
+    yield communityActivityLogs_1.default.create({
+        community: community._id,
+        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        moderator: req.userId,
+        text: 'Moderator *user* added new community rule'
+    });
     return res.status(200).json({
         status: 'success',
         message: 'New Rule added successfully',
@@ -197,14 +393,39 @@ exports.updateSingleCommunityRule = (0, catchAsync_1.default)((req, res, next) =
         next(new appError_1.default(422, 'Invalid rule data provided'));
         return;
     }
-    const targetRuleIndex = community.rules.findIndex((rule) => rule._id.toString() === rule.id.toString());
+    const targetRuleIndex = community.rules.findIndex((oldRule) => oldRule._id.toString() === rule.id.toString());
     if (targetRuleIndex === -1) {
         next(new appError_1.default(400, 'Rule at provided position is not found'));
+        return;
     }
     const rulesInvalidError = communityValidator_1.default.areRulesValid([rule.data]);
     if (rulesInvalidError) {
         next(new appError_1.default(422, 'Invalid rules data provided', { rules: rulesInvalidError }));
         return;
+    }
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_SINGLE_RULE,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to update comunity rule for "${community.name}" community.`,
+            newRules: [Object.assign({ _id: rule.id }, rule.data)]
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to update community rule`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to update community rule is sent to admin.',
+            moderatorChangeRequest
+        });
     }
     community.rules[targetRuleIndex] = Object.assign({ _id: rule.id }, rule.data);
     yield community.save();
@@ -226,6 +447,30 @@ exports.updateCommunityRules = (0, catchAsync_1.default)((req, res, next) => __a
         next(new appError_1.default(422, 'Invalid rules data provided', { rules: rulesInvalidError }));
         return;
     }
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_RULES,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to update comunity rules for "${community.name}" community.`,
+            newRules: [...rules]
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to update community rules`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to update community rules is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     community.rules = rules;
     yield community.save();
     return res.status(200).json({
@@ -246,6 +491,30 @@ exports.deleteSingleCommunityRule = (0, catchAsync_1.default)((req, res, next) =
         next(new appError_1.default(404, 'Rule for provided id is not found'));
         return;
     }
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_SINGLE_RULE,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to delete comunity rule for "${community.name}" community.`,
+            deleteRuleIds: [ruleId]
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to delete community rule`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to delete community rule is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     community.rules = community.rules.filter((rule) => rule._id.toString() !== ruleId.toString());
     yield community.save();
     return res.status(200).json({
@@ -261,6 +530,30 @@ exports.deleteMultipleCommunityRules = (0, catchAsync_1.default)((req, res, next
         next(new appError_1.default(422, 'No rule ids are provided'));
         return;
     }
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_MULTIPLE_RULES,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to delete multiple comunity rules for "${community.name}" community.`,
+            deleteRuleIds: [ruleIds]
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to delete multiple community rules`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to delete community multiple rules is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     community.rules = community.rules.filter((rule) => !ruleIds.includes(rule._id.toString()));
     yield community.save();
     return res.status(200).json({
@@ -271,6 +564,29 @@ exports.deleteMultipleCommunityRules = (0, catchAsync_1.default)((req, res, next
 }));
 exports.deleteAllCommunityRules = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const community = req.community;
+    const isCreator = req.isCreator;
+    const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
+    if (!isCreator && moderatorActionRequirePermission) {
+        const moderatorChangeRequest = yield communityModeratorChangeRequestModel_1.default.create({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_ALL_RULES,
+            community: community._id,
+            communityCreator: community.creator,
+            moderator: req.userId,
+            requestText: `<sender></sender> (moderator) wants to delete all comunity rules for "${community.name}" community.`
+        });
+        yield communityActivityLogs_1.default.create({
+            community: community._id,
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            moderator: req.userId,
+            text: `Moderator *user* made request to all multiple community rules`,
+            moderatorRequest: moderatorChangeRequest._id
+        });
+        return res.status(200).json({
+            status: 'success',
+            message: 'Request to delete community all rules is sent to admin.',
+            moderatorChangeRequest
+        });
+    }
     community.set('rules', []);
     yield community.save();
     return res.status(200).json({
@@ -278,6 +594,7 @@ exports.deleteAllCommunityRules = (0, catchAsync_1.default)((req, res, _) => __a
         message: 'All community rules successfully deleted'
     });
 }));
+/* COMMUNITY RULES CRUD --end */
 exports.deleteCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const communityToDelete = req.community;
     if (communityToDelete.creator.toString() !== req.userId.toString()) {

@@ -2,7 +2,15 @@ import { Router } from 'express';
 import formidable from 'express-formidable';
 import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
 import isAuth from 'middleware/isAuthMiddleware';
-import { doesCommunityExist, checkIfTargetUserExist, isTargetUserLoggedInUser, havePermissionToPerformAction, isTargetUserAlreadyInLists, isRequestUserAlreadyInLists } from 'middleware/communityMiddlewares';
+import { 
+  doesCommunityExist, 
+  checkIfTargetUserExist, 
+  isTargetUserLoggedInUser, 
+  havePermissionToPerformAction, 
+  isTargetUserAlreadyInLists, 
+  isRequestUserAlreadyInLists, 
+  changesByModeratorRequireAdminApproval 
+} from 'middleware/communityMiddlewares';
 import {
   communityCRUD,
   communityMembersManagement,
@@ -61,6 +69,7 @@ router.patch(
   '/:communityId/updateDescription',
   doesCommunityExist, 
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_DESCRIPTION),
+  changesByModeratorRequireAdminApproval,
   updateCommunityDescription
 );
 
@@ -69,13 +78,15 @@ router.patch(
   doesCommunityExist, 
   formidable(), 
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_PROFILE_PHOTO),
+  changesByModeratorRequireAdminApproval,
   updateCommunityProfileImage
 );
 
 router.patch(
   '/:communityId/removeProfileImage', 
   doesCommunityExist,  
-  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.REMOVE_PROFILE_PHOTOO),
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.REMOVE_PROFILE_PHOTO),
+  changesByModeratorRequireAdminApproval,
   removeCommunityProfileImage
 );
 
@@ -84,6 +95,7 @@ router.patch(
   doesCommunityExist, 
   formidable(), 
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_BANNER_PHOTO),
+  changesByModeratorRequireAdminApproval,
   updateCommunityBannerImage
 );
 
@@ -91,6 +103,7 @@ router.patch(
   '/:communityId/removeBannerImage', 
   doesCommunityExist, 
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.REMOVE_BANNER_PHOTO),
+  changesByModeratorRequireAdminApproval,
   removeCommunityBannerImage
 );
 
@@ -99,6 +112,7 @@ router.post(
   '/:communityId/addNewRule',
   doesCommunityExist,
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
+  changesByModeratorRequireAdminApproval,
   addNewCommunityRule
 );
 
@@ -106,6 +120,7 @@ router.patch(
   '/:communityId/updateSingleRule/',
   doesCommunityExist, 
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
+  changesByModeratorRequireAdminApproval,
   updateSingleCommunityRule
 );
 
@@ -113,6 +128,7 @@ router.put(
   '/:communityId/updateRules',
   doesCommunityExist, 
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
+  changesByModeratorRequireAdminApproval,
   updateCommunityRules
 );
 
@@ -120,6 +136,7 @@ router.patch(
   '/:communityId/deleteSingleRule/:ruleId',
   doesCommunityExist, 
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
+  changesByModeratorRequireAdminApproval,
   deleteSingleCommunityRule
 );
 
@@ -127,6 +144,7 @@ router.patch(
   '/:communityId/deleteMultipleRules',
   doesCommunityExist,
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
+  changesByModeratorRequireAdminApproval,
   deleteMultipleCommunityRules
 );
 
@@ -134,6 +152,7 @@ router.patch(
   '/:communityId/deleteAllRules',
   doesCommunityExist,
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.UPDATE_RULES),
+  changesByModeratorRequireAdminApproval,
   deleteAllCommunityRules
 );
 // community rules --end

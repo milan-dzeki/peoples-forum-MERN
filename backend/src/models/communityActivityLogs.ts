@@ -1,4 +1,5 @@
 import { Schema, models, model } from 'mongoose';
+import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
 
 const communityActivityLogsSchema = new Schema({
   community: {
@@ -9,7 +10,10 @@ const communityActivityLogsSchema = new Schema({
   logType: {
     type: String,
     enum: [
-      'changedSettings'
+      COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+      COMMUNITY_LOG_TYPE.SETTING_CHANGED,
+      COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+      COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS
     ],
     required: true
   },
@@ -35,6 +39,15 @@ const communityActivityLogsSchema = new Schema({
   comment: {
     type: Schema.Types.ObjectId,
     ref: 'Comment',
+    default: null
+  },
+  moderatorRequest: {
+    type: Schema.Types.ObjectId,
+    ref: 'CommunityModeratorChangeRequest',
+    default: null
+  },
+  photoUrl: {
+    type: String,
     default: null
   }
 }, {

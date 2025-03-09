@@ -1,12 +1,36 @@
+import CommunityValidator from 'configs/validators/community/communityValidator';
 import Chat from 'models/chatModel';
 import Community, { CommunitySchemaType } from 'models/communityModel';
+import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 import Notification from 'models/notificationModel';
 import User from 'models/userModel';
-import { Types } from 'mongoose';
 import { CommunityListType } from 'types/controllers/community';
 import AppError from 'utils/appError';
 
 class CommunityService {
+  static updateCommunityField = {
+    update_description: async(
+      community: CommunitySchemaType,
+      newDescriptionValue: any
+    ) => {
+      try {
+        const descriptionError = CommunityValidator.validateStringValues(newDescriptionValue, 'description');
+        if (descriptionError) {
+          throw new AppError(422, descriptionError);
+        }
+
+        community.description = newDescriptionValue;
+        await community.save();
+      } catch (error: unknown) {
+        throw error;
+      }
+    }
+  }
+
+  static consoleLog() {
+    console.log('radi this');
+  }
+
   static async createCommunityChatsUponCommunityCreation (
     creatorId: string, 
     communityId: string, 

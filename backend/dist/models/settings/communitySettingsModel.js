@@ -35,7 +35,7 @@ const communitySettingsSchema = new mongoose_1.Schema({
                         enum: [
                             community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_DESCRIPTION,
                             community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_PROFILE_PHOTO,
-                            community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_PROFILE_PHOTOO,
+                            community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_PROFILE_PHOTO,
                             community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_BANNER_PHOTO,
                             community_1.COMMUNITY_PERMISSION_NAMES.REMOVE_BANNER_PHOTO,
                             community_1.COMMUNITY_PERMISSION_NAMES.UPDATE_RULES,

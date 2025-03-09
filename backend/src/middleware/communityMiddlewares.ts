@@ -34,12 +34,31 @@ export const doesCommunityExist = async (
   }
 };
 
+export const isUserCommunityCreator = async (
+  req: RequestWithCommunityType,
+  _: Response,
+  next: NextFunction
+) => {
+  try {
+    if (req.userId!.toString() !== req.community!.creator.toString()) {
+      next(new AppError(403, 'Only community creator is permitted to perform this action.'));
+      return;
+    }
+
+    next();
+  } catch (error: unknown) {
+    next(error);
+    return;
+  }
+};
+
 export const havePermissionToPerformAction = (permissionName: CommunityPermissionNameType) => {
   return async (
     req: RequestWithCommunityType,
     _: Response,
     next: NextFunction
   ) => {
+    console.log(req.params, req.originalUrl, req.url.split('/'), req.baseUrl);
     try {
       const community = req.community! as CommunitySchemaType;
       const isCreator = community.creator.toString() == req.userId!.toString();
@@ -61,15 +80,15 @@ export const havePermissionToPerformAction = (permissionName: CommunityPermissio
       const moderators: string[] = community.moderators.map((moderator) => moderator.user.toString());
       
       if (!isCreator && !moderators.includes(req.userId!.toString())) {
-        next(new AppError(401, 'Only moderators and crator can update community data'));
+        next(new AppError(401, 'Only moderators and creator can update community data'));
         return;
       }
 
       // if fails to find settings throw error
-      const communitySettingsModeratorPermissions = await CommunitySettings.findOne({ community: community._id }).select('moderators_settings.moderatorPermissions -_id');
+      const communitySettingsModeratorPermissions = await CommunitySettings.findOne({ community: community._id }).select('moderators_settings -_id');
       
       if (!communitySettingsModeratorPermissions || !communitySettingsModeratorPermissions.moderators_settings?.moderatorPermissions?.value) {
-        next(new AppError(404, 'Cannoot access community settings. Try updating settings and save changes.'));
+        next(new AppError(404, 'Cannot access community settings. Try updating settings and save changes.'));
         return;
       }
 
@@ -79,10 +98,10 @@ export const havePermissionToPerformAction = (permissionName: CommunityPermissio
         allowedToProceed = true;
       }
       
-      // f permission exists for current user / moderator, allow action
+      // if permission exists for current user / moderator, allow action
       const targetModeratorPermissions = community.moderators.find((moderator) => moderator.user.toString() === req.userId!.toString())!.customPermissions;
       const permissionGrantedForTargetModerator = targetModeratorPermissions.includes(permissionName);
-      console.log('mod', targetModeratorPermissions, permissionGrantedForTargetModerator);
+      
       if (permissionGrantedForTargetModerator) {
         allowedToProceed = true;
       }
@@ -92,6 +111,7 @@ export const havePermissionToPerformAction = (permissionName: CommunityPermissio
         return;
       }
 
+      req.communitySettings = communitySettingsModeratorPermissions;
       req.isCreator = isCreator;
       next();
     } catch (error: unknown) {
@@ -230,5 +250,26 @@ export const isRequestUserAlreadyInLists = async (
   } catch (error: unknown) {
     next(error);
     return
+  }
+};
+
+export const changesByModeratorRequireAdminApproval = async (
+  req: RequestWithCommunityType,
+  _: Response,
+  next: NextFunction
+) => {
+  try {
+    const communitySettings = req.communitySettings!;
+
+    if (!communitySettings) {
+      req.moderatorActionRequirePermission = false;
+    } else {
+      req.moderatorActionRequirePermission = communitySettings.moderators_settings!.changesByModeratorRequireApproval!.value;
+    }
+    
+    next();
+  } catch (error: unknown) {
+    next(error);
+    return;
   }
 };

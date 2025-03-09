@@ -2,7 +2,7 @@ import { Types } from 'mongoose';
 import { CommunitySettingsSchemaType } from 'models/settings/communitySettingsModel';
 import { CommunitySchemaType } from 'models/communityModel';
 import { NOTIFICATION_TYPES } from 'configs/notifications';
-import { CommunitySettingsResponseType, ModeratorCommunitySettingsChangedNotificationType } from 'types/models/communitySettings';
+import { CommunitySettingsResponseType, ModeratorCommunitySettingsChangedNotificationType } from 'types/controllers/communitySettings';
 import CommunityActivityLog from 'models/communityActivityLogs';
 import Notification from 'models/notificationModel';
 

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isRequestUserAlreadyInLists = exports.isTargetUserAlreadyInLists = exports.isTargetUserLoggedInUser = exports.checkIfTargetUserExist = exports.havePermissionToPerformAction = exports.doesCommunityExist = void 0;
+exports.changesByModeratorRequireAdminApproval = exports.isRequestUserAlreadyInLists = exports.isTargetUserAlreadyInLists = exports.isTargetUserLoggedInUser = exports.checkIfTargetUserExist = exports.havePermissionToPerformAction = exports.isUserCommunityCreator = exports.doesCommunityExist = void 0;
 const communityModel_1 = __importDefault(require("models/communityModel"));
 const appError_1 = __importDefault(require("utils/appError"));
 const userModel_1 = __importDefault(require("models/userModel"));
@@ -38,9 +38,24 @@ const doesCommunityExist = (req, _, next) => __awaiter(void 0, void 0, void 0, f
     }
 });
 exports.doesCommunityExist = doesCommunityExist;
+const isUserCommunityCreator = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (req.userId.toString() !== req.community.creator.toString()) {
+            next(new appError_1.default(403, 'Only community creator is permitted to perform this action.'));
+            return;
+        }
+        next();
+    }
+    catch (error) {
+        next(error);
+        return;
+    }
+});
+exports.isUserCommunityCreator = isUserCommunityCreator;
 const havePermissionToPerformAction = (permissionName) => {
     return (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
         var _a, _b;
+        console.log(req.params, req.originalUrl, req.url.split('/'), req.baseUrl);
         try {
             const community = req.community;
             const isCreator = community.creator.toString() == req.userId.toString();
@@ -58,13 +73,13 @@ const havePermissionToPerformAction = (permissionName) => {
             // if user is not creator or moderator denny access
             const moderators = community.moderators.map((moderator) => moderator.user.toString());
             if (!isCreator && !moderators.includes(req.userId.toString())) {
-                next(new appError_1.default(401, 'Only moderators and crator can update community data'));
+                next(new appError_1.default(401, 'Only moderators and creator can update community data'));
                 return;
             }
             // if fails to find settings throw error
-            const communitySettingsModeratorPermissions = yield communitySettingsModel_1.default.findOne({ community: community._id }).select('moderators_settings.moderatorPermissions -_id');
+            const communitySettingsModeratorPermissions = yield communitySettingsModel_1.default.findOne({ community: community._id }).select('moderators_settings -_id');
             if (!communitySettingsModeratorPermissions || !((_b = (_a = communitySettingsModeratorPermissions.moderators_settings) === null || _a === void 0 ? void 0 : _a.moderatorPermissions) === null || _b === void 0 ? void 0 : _b.value)) {
-                next(new appError_1.default(404, 'Cannoot access community settings. Try updating settings and save changes.'));
+                next(new appError_1.default(404, 'Cannot access community settings. Try updating settings and save changes.'));
                 return;
             }
             // if permission exists for all moderators in community schema, allow action
@@ -72,10 +87,9 @@ const havePermissionToPerformAction = (permissionName) => {
             if (permissionGratnedForAllModerators) {
                 allowedToProceed = true;
             }
-            // f permission exists for current user / moderator, allow action
+            // if permission exists for current user / moderator, allow action
             const targetModeratorPermissions = community.moderators.find((moderator) => moderator.user.toString() === req.userId.toString()).customPermissions;
             const permissionGrantedForTargetModerator = targetModeratorPermissions.includes(permissionName);
-            console.log('mod', targetModeratorPermissions, permissionGrantedForTargetModerator);
             if (permissionGrantedForTargetModerator) {
                 allowedToProceed = true;
             }
@@ -83,6 +97,7 @@ const havePermissionToPerformAction = (permissionName) => {
                 next(new appError_1.default(401, 'You dont have permission to perform this action'));
                 return;
             }
+            req.communitySettings = communitySettingsModeratorPermissions;
             req.isCreator = isCreator;
             next();
         }
@@ -199,3 +214,20 @@ const isRequestUserAlreadyInLists = (req, _, next) => __awaiter(void 0, void 0, 
     }
 });
 exports.isRequestUserAlreadyInLists = isRequestUserAlreadyInLists;
+const changesByModeratorRequireAdminApproval = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const communitySettings = req.communitySettings;
+        if (!communitySettings) {
+            req.moderatorActionRequirePermission = false;
+        }
+        else {
+            req.moderatorActionRequirePermission = communitySettings.moderators_settings.changesByModeratorRequireApproval.value;
+        }
+        next();
+    }
+    catch (error) {
+        next(error);
+        return;
+    }
+});
+exports.changesByModeratorRequireAdminApproval = changesByModeratorRequireAdminApproval;

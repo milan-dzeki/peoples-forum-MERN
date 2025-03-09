@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { CommunitySchemaType } from 'models/communityModel';
+import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 import { CommunitySettingsSchemaType } from 'models/settings/communitySettingsModel';
+
+export type ControllerType = (req: RequestWithBodyType, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;
 
 export interface RequestWithBodyType extends Request {
   body: {
@@ -14,9 +17,19 @@ export interface RequestWithUserIdType extends Request {
 
 export interface RequestWithCommunityType extends Request {
   userId?: string;
-  community?: any;
+  community?: CommunitySchemaType;
   existInLists?: any;
   isCreator?: boolean;
+  communitySettings?: CommunitySettingsSchemaType;
+  moderatorActionRequirePermission?: boolean;
+}
+
+export interface RequestWithModeratorRequestType extends Request {
+  userId?: string;
+  community?: CommunitySchemaType;
+  isCreator?: boolean;
+  moderatorRequest?: CommunityModeratorChangeRequestSchemaType;
+  shouldNotifyModerator?: boolean;
 }
 
 export interface RequestWithCommunitySettingsType extends Request {
@@ -25,5 +38,3 @@ export interface RequestWithCommunitySettingsType extends Request {
   isCreator?: boolean;
   communitySettings?: CommunitySettingsSchemaType;
 }
-
-export type ControllerType = (req: RequestWithBodyType, res: Response, next: NextFunction) => Promise<Response<any, Record<string, any>> | undefined>;

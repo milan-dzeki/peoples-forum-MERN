@@ -11,13 +11,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
+const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 const chatModel_1 = __importDefault(require("models/chatModel"));
 const communityModel_1 = __importDefault(require("models/communityModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 const userModel_1 = __importDefault(require("models/userModel"));
 const appError_1 = __importDefault(require("utils/appError"));
 class CommunityService {
+    static consoleLog() {
+        console.log('radi this');
+    }
     static createCommunityChatsUponCommunityCreation(creatorId, communityId, chatNames) {
         return __awaiter(this, void 0, void 0, function* () {
             if (chatNames.length === 0) {
@@ -121,4 +126,20 @@ class CommunityService {
         });
     }
 }
+_a = CommunityService;
+CommunityService.updateCommunityField = {
+    update_description: (community, newDescriptionValue) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const descriptionError = communityValidator_1.default.validateStringValues(newDescriptionValue, 'description');
+            if (descriptionError) {
+                throw new appError_1.default(422, descriptionError);
+            }
+            community.description = newDescriptionValue;
+            yield community.save();
+        }
+        catch (error) {
+            throw error;
+        }
+    })
+};
 exports.default = CommunityService;

@@ -12,7 +12,7 @@ import CommunitySettingsService from 'services/communitySettingsService';
 import { ChatsSettings, NonMembersPermissions, PostsSettings } from 'types/controllers/communitySettings';
 import CommunitySettingsValidator from 'configs/validators/communitySettings/CommunitySettingsValidator';
 import CommunityActivityLog from 'models/communityActivityLogs';
-import { CommunitySettingsResponseType } from 'types/models/communitySettings';
+import { CommunitySettingsResponseType } from 'types/controllers/communitySettings';
 
 export const getCommunitySettings = catchAsync (async (
   req: RequestWithCommunitySettingsType,

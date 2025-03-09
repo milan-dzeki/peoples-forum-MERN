@@ -1,4 +1,5 @@
-import { NotificationSchemaType } from "models/notificationModel";
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
+import { NotificationSchemaType } from 'models/notificationModel';
 
 export interface CommunityRuleType {
   title: string;
@@ -45,27 +46,4 @@ export type UserExistInListsType = {
   }
 }
 
-export type CommunityPermissionNameType = (
-  'update_description' |
-  'update_profile_photo' |
-  'remove_profile_photo' |
-  'update_banner_photo' |
-  'remove_banner_photo' |
-  'update_rules' |
-  'update_community_access' |
-  'remove_posts' | 
-  'remove_comments' |
-  'pin_posts' |
-  'ban_users' |
-  'undo_ban_users' |
-  'invite_users_as_members' |
-  'invite_users_as_moderators' |
-  'withdraw_invite_users_as_members' |
-  'withdraw_invite_users_as_meoderators' |
-  'ban_users_from_chats' |
-  'undo_ban_users_from_chats' |
-  'accept_join_requests' |
-  'decline_join_requests' |
-  'remove_chats' |
-  'remove_chat_messages'
-);
+export type CommunityPermissionNameType = typeof COMMUNITY_PERMISSION_NAMES[keyof typeof COMMUNITY_PERMISSION_NAMES];

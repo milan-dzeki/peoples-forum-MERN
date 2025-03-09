@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
+const communityActivityLogs_1 = require("configs/communityActivityLogs");
 const communityActivityLogsSchema = new mongoose_1.Schema({
     community: {
         type: mongoose_1.Schema.Types.ObjectId,
@@ -10,7 +11,10 @@ const communityActivityLogsSchema = new mongoose_1.Schema({
     logType: {
         type: String,
         enum: [
-            'changedSettings'
+            communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+            communityActivityLogs_1.COMMUNITY_LOG_TYPE.SETTING_CHANGED,
+            communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS
         ],
         required: true
     },
@@ -36,6 +40,15 @@ const communityActivityLogsSchema = new mongoose_1.Schema({
     comment: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Comment',
+        default: null
+    },
+    moderatorRequest: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'CommunityModeratorChangeRequest',
+        default: null
+    },
+    photoUrl: {
+        type: String,
         default: null
     }
 }, {

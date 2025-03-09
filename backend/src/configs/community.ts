@@ -1,11 +1,7 @@
-import { CommunityPermissionNameType } from "types/controllers/community";
-
-export const COMMUNITY_PERMISSION_NAMES: {
-  [key: string]: CommunityPermissionNameType
-} = {
+export const COMMUNITY_PERMISSION_NAMES = {
   UPDATE_DESCRIPTION: 'update_description', 
   UPDATE_PROFILE_PHOTO: 'update_profile_photo', 
-  REMOVE_PROFILE_PHOTOO: 'remove_profile_photo', 
+  REMOVE_PROFILE_PHOTO: 'remove_profile_photo', 
   UPDATE_BANNER_PHOTO: 'update_banner_photo', 
   REMOVE_BANNER_PHOTO: 'remove_banner_photo', 
   UPDATE_RULES: 'update_rules',
@@ -25,5 +21,5 @@ export const COMMUNITY_PERMISSION_NAMES: {
   DECLINE_JOIN_REQUESTS: 'decline_join_requests',
   REMOVE_CHATS: 'remove_chats',
   REMOVE_CHAT_MESSAGES: 'remove_chat_messages'
-};
+} as const;
 

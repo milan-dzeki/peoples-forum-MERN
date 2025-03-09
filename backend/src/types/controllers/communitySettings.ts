@@ -1,3 +1,14 @@
+import { NotificationSchemaType } from 'models/notificationModel';
+import { Types } from 'mongoose';
+import { NotificationType } from 'types/models/notificationModelTypes';
+
+export interface ModeratorCommunitySettingsChangedNotificationType {
+  receiver: Types.ObjectId | string;
+  notificationType: NotificationType['COMMUNITY_SETTINGS_CHANGED'];
+  text: string;
+  community: Types.ObjectId | string;
+}
+
 export type AllowedPostDataTypes = 'text' | 'photos' | 'videos';
 
 export type PostsSettings = {
@@ -29,3 +40,10 @@ export type NonMembersPermissions = {
   canShareComments: { value: boolean },
   canSeeJoinedMembers: { value: boolean },
 };
+
+export interface CommunitySettingsResponseType {
+  status: string;
+  message: string;
+  updatedSettings: any;
+  moderatorNotifications?: NotificationSchemaType[];
+}

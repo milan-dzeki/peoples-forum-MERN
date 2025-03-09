@@ -4,7 +4,7 @@ exports.COMMUNITY_PERMISSION_NAMES = void 0;
 exports.COMMUNITY_PERMISSION_NAMES = {
     UPDATE_DESCRIPTION: 'update_description',
     UPDATE_PROFILE_PHOTO: 'update_profile_photo',
-    REMOVE_PROFILE_PHOTOO: 'remove_profile_photo',
+    REMOVE_PROFILE_PHOTO: 'remove_profile_photo',
     UPDATE_BANNER_PHOTO: 'update_banner_photo',
     REMOVE_BANNER_PHOTO: 'remove_banner_photo',
     UPDATE_RULES: 'update_rules',
