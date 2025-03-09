@@ -15,6 +15,7 @@ var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const communityActivityLogs_1 = require("configs/communityActivityLogs");
+const communityModeratorChangeRequests_1 = require("configs/communityModeratorChangeRequests");
 const notifications_1 = require("configs/notifications");
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 const communityActivityLogs_2 = __importDefault(require("models/communityActivityLogs"));
@@ -110,16 +111,27 @@ class CommunityModeratorChangeRequestService {
             yield cloudinary_1.default.uploader.destroy(photo.public_id);
         });
     }
-    static createNewModeratorRequest(requestType, communityId, communityCreator, moderator, requestText) {
+    static createNewModeratorRequest(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const moderatorRequest = yield communityModeratorChangeRequestModel_1.default.create({
+                const { requestType, communityId, communityCreator, moderator, requestText, updateValues } = parameters;
+                const prepareModeratorRequest = {
                     requestType,
                     community: communityId,
                     communityCreator,
                     moderator,
                     requestText
-                });
+                };
+                if (updateValues) {
+                    for (const value in updateValues) {
+                        // make sure that value is valid for schema (newDescriptionValue, newRules etc)
+                        if (!communityModeratorChangeRequests_1.ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES.includes(value)) {
+                            throw new appError_1.default(400, `"${value}" is not valid request value for community info data.`);
+                        }
+                        prepareModeratorRequest[value] = updateValues[value];
+                    }
+                }
+                const moderatorRequest = yield communityModeratorChangeRequestModel_1.default.create(prepareModeratorRequest);
                 return moderatorRequest;
             }
             catch (error) {

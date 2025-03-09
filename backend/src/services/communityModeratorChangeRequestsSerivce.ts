@@ -1,5 +1,6 @@
 import cloudinary from 'configs/cloudinary';
 import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
+import { ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES } from 'configs/communityModeratorChangeRequests';
 import { NOTIFICATION_TYPES } from 'configs/notifications';
 import CommunityValidator from 'configs/validators/community/communityValidator';
 import CommunityActivityLog from 'models/communityActivityLogs';
@@ -7,7 +8,7 @@ import { CommunitySchemaType } from 'models/communityModel';
 import CommunityModeratorChangeRequest, { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 import Notification from 'models/notificationModel';
 import { Types } from 'mongoose';
-import { ModeratorRequestType } from 'types/controllers/communityModeratorRequests';
+import { CreateModeratorRequestParameteresType, ModeratorRequestType, PrepareNewModeratorRequestType } from 'types/controllers/communityModeratorRequests';
 import AppError from 'utils/appError';
 
 
@@ -512,21 +513,35 @@ class CommunityModeratorChangeRequestService {
     await cloudinary.uploader.destroy(photo.public_id);
   }
 
-  static async createNewModeratorRequest (
-    requestType: ModeratorRequestType,
-    communityId: Types.ObjectId,
-    communityCreator: Types.ObjectId,
-    moderator: Types.ObjectId,
-    requestText: string,
-  ): Promise<CommunityModeratorChangeRequestSchemaType> {
+  static async createNewModeratorRequest (parameters: CreateModeratorRequestParameteresType): Promise<CommunityModeratorChangeRequestSchemaType> {
     try {
-      const moderatorRequest = await CommunityModeratorChangeRequest.create({
+      const {
+        requestType,
+        communityId,
+        communityCreator,
+        moderator,
+        requestText,
+        updateValues
+      } = parameters;
+
+      const prepareModeratorRequest: PrepareNewModeratorRequestType = {
         requestType,
         community: communityId,
         communityCreator,
         moderator,
         requestText
-      });
+      };
+
+      if (updateValues) {
+        for (const value in updateValues) {
+          // make sure that value is valid for schema (newDescriptionValue, newRules etc)
+          if (!ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES.includes(value)) {
+            throw new AppError(400, `"${value}" is not valid request value for community info data.`);
+          }
+          prepareModeratorRequest[value as keyof typeof prepareModeratorRequest] = updateValues[value as keyof typeof updateValues]! as never;
+        }
+      }
+      const moderatorRequest = await CommunityModeratorChangeRequest.create(prepareModeratorRequest);
 
       return moderatorRequest;
     } catch (error: unknown) {

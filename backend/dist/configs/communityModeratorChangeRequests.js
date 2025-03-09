@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.COMMUNITY_MODERATOR_REQUEST_TYPES = void 0;
+exports.ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES = exports.COMMUNITY_MODERATOR_REQUEST_TYPES = void 0;
 exports.COMMUNITY_MODERATOR_REQUEST_TYPES = {
     UPDATE_DESCRIPTION: 'update_description',
     UPDATE_PROFILE_PHOTO: 'update_profile_photo',
@@ -14,3 +14,9 @@ exports.COMMUNITY_MODERATOR_REQUEST_TYPES = {
     DELETE_MULTIPLE_RULES: 'delete_multiple_rules',
     DELETE_ALL_RULES: 'delete_all_rules'
 };
+exports.ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES = [
+    'newDescriptionValue',
+    'photo',
+    'newRules',
+    'deleteRuleIds'
+];

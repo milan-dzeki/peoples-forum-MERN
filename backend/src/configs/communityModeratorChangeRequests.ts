@@ -11,3 +11,10 @@ export const COMMUNITY_MODERATOR_REQUEST_TYPES = {
   DELETE_MULTIPLE_RULES: 'delete_multiple_rules',
   DELETE_ALL_RULES: 'delete_all_rules'
 };
+
+export const ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES = [
+  'newDescriptionValue',
+  'photo',
+  'newRules',
+  'deleteRuleIds'
+];

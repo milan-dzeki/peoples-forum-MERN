@@ -15,6 +15,7 @@ import Message from 'models/messageModel';
 import CommunityActivityLog from 'models/communityActivityLogs';
 import CommunityModeratorChangeRequest from 'models/communityModeratorChangeRequestModel';
 import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
+import CommunityModeratorChangeRequestService from 'services/communityModeratorChangeRequestsSerivce';
 
 export const createCommunity = catchAsync (async (
   req: RequestWithUserIdType,
@@ -124,14 +125,14 @@ export const updateCommunityDescription = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
       requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
-      newDescriptionValue: description
-    });
+      updateValues: { newDescriptionValue: description }
+  });
 
     await CommunityActivityLog.create({
       community: community._id,
@@ -187,16 +188,16 @@ export const updateCommunityProfileImage = catchAsync(async (
   const uploadedPhotoData = await CloudinaryManagementService.uploadSinglePhotoToCloudinary(reqFiles.profileImage);
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_PROFILE_PHOTO,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to change "${community.name}" community profile image.`,
-      photo: {
+      requestText: `*user* (moderator) wants to change "${community.name}" community profile image.`,
+      updateValues: { photo: {
         secure_url: uploadedPhotoData.secure_url,
         public_id: uploadedPhotoData.public_id
-      }
+      } }
     });
 
     await CommunityActivityLog.create({
@@ -255,12 +256,12 @@ export const removeCommunityProfileImage = catchAsync(async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.REMOVE_PROFILE_PHOTO,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to remove "${community.name}" community profile image.`
+      requestText: `*user* (moderator) wants to remove "${community.name}" community profile image.`
     });
 
     await CommunityActivityLog.create({
@@ -320,16 +321,16 @@ export const updateCommunityBannerImage = catchAsync(async (
   const uploadedPhotoData = await CloudinaryManagementService.uploadSinglePhotoToCloudinary(reqFiles.bannerImage);
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_BANNER_PHOTO,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to change "${community.name}" community banner image.`,
-      photo: {
+      requestText: `*user* (moderator) wants to change "${community.name}" community banner image.`,
+      updateValues: {photo: {
         secure_url: uploadedPhotoData.secure_url,
         public_id: uploadedPhotoData.public_id
-      },
+      }}
     });
 
     await CommunityActivityLog.create({
@@ -387,12 +388,12 @@ export const removeCommunityBannerImage = catchAsync(async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.REMOVE_BANNER_PHOTO,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to remove "${community.name}" community banner image.`
+      requestText: `*user* (moderator) wants to remove "${community.name}" community banner image.`
     });
 
     await CommunityActivityLog.create({
@@ -454,13 +455,15 @@ export const addNewCommunityRule = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.ADD_RULE,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to add new comunity rule for "${community.name}" community.`,
-      newRules: [rule]
+      requestText: `*user* (moderator) wants to add new comunity rule for "${community.name}" community.`,
+      updateValues: {
+        newRules: [rule]
+      }
     });
 
     await CommunityActivityLog.create({
@@ -524,16 +527,18 @@ export const updateSingleCommunityRule = catchAsync(async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_SINGLE_RULE,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to update comunity rule for "${community.name}" community.`,
-      newRules: [{
-        _id: rule.id,
-        ...rule.data
-      }]
+      requestText: `*user* (moderator) wants to update comunity rule for "${community.name}" community.`,
+      updateValues: {
+        newRules: [{
+          _id: rule.id,
+          ...rule.data
+        }]
+      }
     });
 
     await CommunityActivityLog.create({
@@ -588,13 +593,15 @@ export const updateCommunityRules = catchAsync(async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_RULES,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to update comunity rules for "${community.name}" community.`,
-      newRules: [...rules]
+      requestText: `*user* (moderator) wants to update comunity rules for "${community.name}" community.`,
+      updateValues: {
+        newRules: [...rules]
+      }
     });
 
     await CommunityActivityLog.create({
@@ -645,13 +652,15 @@ export const deleteSingleCommunityRule = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_SINGLE_RULE,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to delete comunity rule for "${community.name}" community.`,
-      deleteRuleIds: [ruleId]
+      requestText: `*user* (moderator) wants to delete comunity rule for "${community.name}" community.`,
+      updateValues: {
+        deleteRuleIds: [ruleId]
+      }
     });
 
     await CommunityActivityLog.create({
@@ -696,13 +705,15 @@ export const deleteMultipleCommunityRules = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_MULTIPLE_RULES,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to delete multiple comunity rules for "${community.name}" community.`,
-      deleteRuleIds: [ruleIds]
+      requestText: `*user* (moderator) wants to delete multiple comunity rules for "${community.name}" community.`,
+      updateValues: {
+        deleteRuleIds: [ruleIds]
+      }
     });
 
     await CommunityActivityLog.create({
@@ -740,12 +751,12 @@ export const deleteAllCommunityRules = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorChangeRequest = await CommunityModeratorChangeRequest.create({
+    const moderatorChangeRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_ALL_RULES,
-      community: community._id,
+      communityId: community._id,
       communityCreator: community.creator,
       moderator: req.userId!,
-      requestText: `<sender></sender> (moderator) wants to delete all comunity rules for "${community.name}" community.`
+      requestText: `*user* (moderator) wants to delete all comunity rules for "${community.name}" community.`
     });
 
     await CommunityActivityLog.create({

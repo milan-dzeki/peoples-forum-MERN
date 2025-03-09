@@ -1,5 +1,6 @@
 import { COMMUNITY_MODERATOR_REQUEST_TYPES } from "configs/communityModeratorChangeRequests";
 import { NotificationSchemaType } from "models/notificationModel";
+import { Types } from "mongoose";
 
 export interface CommunityModeratorRequestResponseType {
   status: string;
@@ -9,3 +10,40 @@ export interface CommunityModeratorRequestResponseType {
 }
 
 export type ModeratorRequestType = typeof COMMUNITY_MODERATOR_REQUEST_TYPES[keyof typeof COMMUNITY_MODERATOR_REQUEST_TYPES];
+
+export interface CreateModeratorRequestParameteresType {
+  requestType: ModeratorRequestType;
+  communityId: Types.ObjectId | string;
+  communityCreator: Types.ObjectId | string;
+  moderator: Types.ObjectId | string;
+  requestText: string;
+  updateValues?: {
+    newDescriptionValue?: string;
+    photo?: { secure_url: string, public_id: string };
+    newRules?: {
+      _id?: Types.ObjectId | string;
+      title: string;
+      description?: string;
+    }[];
+    deleteRuleIds?: (Types.ObjectId | string)[];
+  }
+}
+
+export interface PrepareNewModeratorRequestType {
+  requestType: ModeratorRequestType;
+  community: Types.ObjectId | string;
+  communityCreator: Types.ObjectId | string;
+  moderator: Types.ObjectId | string;
+  requestText: string;
+  newDescriptionValue?: string;
+  photo?: {
+    secure_url: string;
+    public_id: string;
+  };
+  newRules?: {
+    _id?: Types.ObjectId | string;
+    title: string;
+    description?: string;
+  }[];
+  deleteRuleIds?: (Types.ObjectId | string)[];
+}
