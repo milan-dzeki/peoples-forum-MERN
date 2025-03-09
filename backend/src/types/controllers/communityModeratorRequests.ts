@@ -28,7 +28,7 @@ export interface CreateModeratorRequestParameteresType {
       description?: string;
     }[];
     deleteRuleIds?: (Types.ObjectId | string)[];
-  }
+  };
 }
 
 export interface PrepareNewModeratorRequestType {

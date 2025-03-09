@@ -2,8 +2,10 @@ import Chat from 'models/chatModel';
 import Community, { CommunitySchemaType } from 'models/communityModel';
 import Notification from 'models/notificationModel';
 import User from 'models/userModel';
-import { CommunityListType } from 'types/controllers/community';
+import { CommunityListType, HandleSendModeratorRequestResponseActionParameters } from 'types/controllers/community';
 import AppError from 'utils/appError';
+import CommunityModeratorChangeRequestService from './communityModeratorChangeRequestsSerivce';
+import CommunityActivityLogsService from './communityActivityLogsService';
 
 class CommunityService {
   static async createCommunityChatsUponCommunityCreation (
@@ -92,6 +94,58 @@ class CommunityService {
       const populatedInviteNotification = await inviteUserNotification.populate({ path: 'sender', select: 'fullName profilePhotoUrl' });
 
       return populatedInviteNotification;
+    } catch (error: unknown) {
+      throw error;
+    }
+  }
+
+  static async handleSendModeratorRequestResponseAction (parameters: HandleSendModeratorRequestResponseActionParameters) {
+    try {
+      const {
+        commons: {
+          communityId,
+          moderator
+        },
+        moderatorRequestData: {
+          requestType,
+          communityCreator,
+          requestText,
+          updateValues
+        },
+        communityActivityLogData: {
+          logType,
+          text,
+          photoUrl
+        },
+        resJson: {
+          res, 
+          message
+        }
+      } = parameters;
+
+      const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
+        requestType,
+        communityId,
+        communityCreator,
+        moderator,
+        requestText,
+        updateValues: updateValues || {}
+      });
+
+      await CommunityActivityLogsService.createNewCommunityActivityLog({
+        communityId,
+        logType,
+        moderator,
+        text,
+        moderatorRequest: moderatorRequest._id,
+        photoUrl: photoUrl || undefined
+      });
+
+      return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
+        res,
+        message,
+        moderatorRequest
+      });
     } catch (error: unknown) {
       throw error;
     }

@@ -1,5 +1,8 @@
+import { Response } from 'express';import { Types } from 'mongoose';
 import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
 import { NotificationSchemaType } from 'models/notificationModel';
+import { ModeratorRequestType } from './communityModeratorRequests';
+import { CommunityActivityLogType } from './communityActivityLogs';
 
 export interface CommunityRuleType {
   title: string;
@@ -47,3 +50,34 @@ export type UserExistInListsType = {
 }
 
 export type CommunityPermissionNameType = typeof COMMUNITY_PERMISSION_NAMES[keyof typeof COMMUNITY_PERMISSION_NAMES];
+
+export interface HandleSendModeratorRequestResponseActionParameters {
+  commons: {
+    communityId: Types.ObjectId | string;
+    moderator: Types.ObjectId | string;
+  };
+  moderatorRequestData: {
+    requestType: ModeratorRequestType;
+    communityCreator: Types.ObjectId | string;
+    requestText: string;
+    updateValues?: {
+      newDescriptionValue?: string;
+      photo?: { secure_url: string, public_id: string };
+      newRules?: {
+        _id?: Types.ObjectId | string;
+        title: string;
+        description?: string;
+      }[];
+      deleteRuleIds?: (Types.ObjectId | string)[];
+    };
+  };
+  communityActivityLogData: {
+    logType: CommunityActivityLogType;
+    text: string;
+    photoUrl?: string;
+  };
+  resJson: {
+    res: Response;
+    message: string;
+  }
+}

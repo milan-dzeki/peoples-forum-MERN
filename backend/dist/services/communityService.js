@@ -17,6 +17,8 @@ const communityModel_1 = __importDefault(require("models/communityModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 const userModel_1 = __importDefault(require("models/userModel"));
 const appError_1 = __importDefault(require("utils/appError"));
+const communityModeratorChangeRequestsSerivce_1 = __importDefault(require("./communityModeratorChangeRequestsSerivce"));
+const communityActivityLogsService_1 = __importDefault(require("./communityActivityLogsService"));
 class CommunityService {
     static createCommunityChatsUponCommunityCreation(creatorId, communityId, chatNames) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -82,6 +84,37 @@ class CommunityService {
                 });
                 const populatedInviteNotification = yield inviteUserNotification.populate({ path: 'sender', select: 'fullName profilePhotoUrl' });
                 return populatedInviteNotification;
+            }
+            catch (error) {
+                throw error;
+            }
+        });
+    }
+    static handleSendModeratorRequestResponseAction(parameters) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { commons: { communityId, moderator }, moderatorRequestData: { requestType, communityCreator, requestText, updateValues }, communityActivityLogData: { logType, text, photoUrl }, resJson: { res, message } } = parameters;
+                const moderatorRequest = yield communityModeratorChangeRequestsSerivce_1.default.createNewModeratorRequest({
+                    requestType,
+                    communityId,
+                    communityCreator,
+                    moderator,
+                    requestText,
+                    updateValues: updateValues || {}
+                });
+                yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+                    communityId,
+                    logType,
+                    moderator,
+                    text,
+                    moderatorRequest: moderatorRequest._id,
+                    photoUrl: photoUrl || undefined
+                });
+                return communityModeratorChangeRequestsSerivce_1.default.sendModeratorRequestResponse({
+                    res,
+                    message,
+                    moderatorRequest
+                });
             }
             catch (error) {
                 throw error;

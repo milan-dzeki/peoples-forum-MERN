@@ -121,27 +121,22 @@ export const updateCommunityDescription = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
-      updateValues: { newDescriptionValue: description }
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to update community description to "${description}"`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: `Request to update community description to "${description}" is sent to admin`,
-      moderatorRequest
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
+        updateValues: { newDescriptionValue: description }
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: `Moderator *user* made request to update community description to "${description}"`
+      },
+      resJson: {
+        res,
+        message: `Request to update community description to "${description}" is sent to admin`
+      }
     });
   }
 
@@ -184,31 +179,26 @@ export const updateCommunityProfileImage = catchAsync(async (
   const uploadedPhotoData = await CloudinaryManagementService.uploadSinglePhotoToCloudinary(reqFiles.profileImage);
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_PROFILE_PHOTO,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to change "${community.name}" community profile image.`,
-      updateValues: { photo: {
-        secure_url: uploadedPhotoData.secure_url,
-        public_id: uploadedPhotoData.public_id
-      } }
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to update community profile photo`,
-      moderatorRequest: moderatorRequest._id,
-      photoUrl: uploadedPhotoData.secure_url
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to update community profile image is sent to admin.',
-      moderatorRequest
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_PROFILE_PHOTO,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to change "${community.name}" community profile image.`,
+        updateValues: { photo: {
+          secure_url: uploadedPhotoData.secure_url,
+          public_id: uploadedPhotoData.public_id
+        } }
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to update community profile photo',
+        photoUrl: uploadedPhotoData.secure_url
+      },
+      resJson: {
+        res,
+        message: 'Request to update community profile image is sent to admin'
+      }
     });
   }
 
@@ -252,26 +242,21 @@ export const removeCommunityProfileImage = catchAsync(async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.REMOVE_PROFILE_PHOTO,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to remove "${community.name}" community profile image.`
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to remove community profile photo`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to remove community profile image is sent to admin.',
-      moderatorRequest
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.REMOVE_PROFILE_PHOTO,
+        communityCreator: community.creator,
+        requestText: 'Moderator *user* made request to remove community profile photo'
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to update community profile photo'
+      },
+      resJson: {
+        res,
+        message: 'Request to remove community profile image is sent to admin.'
+      }
     });
   }
 
@@ -317,30 +302,26 @@ export const updateCommunityBannerImage = catchAsync(async (
   const uploadedPhotoData = await CloudinaryManagementService.uploadSinglePhotoToCloudinary(reqFiles.bannerImage);
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_BANNER_PHOTO,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to change "${community.name}" community banner image.`,
-      updateValues: {photo: {
-        secure_url: uploadedPhotoData.secure_url,
-        public_id: uploadedPhotoData.public_id
-      }}
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to change community banner photo`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to update community banner image is sent to admin.',
-      moderatorRequest
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_BANNER_PHOTO,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to change "${community.name}" community banner image.`,
+        updateValues: { photo: {
+          secure_url: uploadedPhotoData.secure_url,
+          public_id: uploadedPhotoData.public_id
+        } }
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to change community banner photo',
+        photoUrl: uploadedPhotoData.secure_url
+      },
+      resJson: {
+        res,
+        message: 'Request to update community banner image is sent to admin'
+      }
     });
   }
 
@@ -384,26 +365,21 @@ export const removeCommunityBannerImage = catchAsync(async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.REMOVE_BANNER_PHOTO,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to remove "${community.name}" community banner image.`
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to remove community banner photo`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to remove community banner image is sent to admin.',
-      moderatorRequest
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.REMOVE_BANNER_PHOTO,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to remove "${community.name}" community banner image.`
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to remove community banner photo'
+      },
+      resJson: {
+        res,
+        message: 'Request to remove community banner image is sent to admin'
+      }
     });
   }
 
@@ -451,29 +427,24 @@ export const addNewCommunityRule = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.ADD_RULE,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to add new comunity rule for "${community.name}" community.`,
-      updateValues: {
-        newRules: [rule]
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.ADD_RULE,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to add new comunity rule for "${community.name}" community.`,
+        updateValues: {
+          newRules: [rule]
+        }
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to add new community rule'
+      },
+      resJson: {
+        res,
+        message: 'Request to add new community rule is sent to admin.'
       }
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to add new community rule`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to add new community rule is sent to admin.',
-      moderatorRequest
     });
   }
 
@@ -523,32 +494,27 @@ export const updateSingleCommunityRule = catchAsync(async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_SINGLE_RULE,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to update comunity rule for "${community.name}" community.`,
-      updateValues: {
-        newRules: [{
-          _id: rule.id,
-          ...rule.data
-        }]
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_SINGLE_RULE,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to update comunity rule for "${community.name}" community.`,
+        updateValues: {
+          newRules: [{
+            _id: rule.id,
+            ...rule.data
+          }]
+        }
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to update community rule'
+      },
+      resJson: {
+        res,
+        message: 'Request to update community rule is sent to admin.'
       }
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to update community rule`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to update community rule is sent to admin.',
-      moderatorRequest
     });
   }
 
@@ -589,29 +555,24 @@ export const updateCommunityRules = catchAsync(async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
   
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_RULES,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to update comunity rules for "${community.name}" community.`,
-      updateValues: {
-        newRules: [...rules]
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_RULES,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to update comunity rules for "${community.name}" community.`,
+        updateValues: {
+          newRules: [...rules]
+        }
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to update community rules'
+      },
+      resJson: {
+        res,
+        message: 'Request to update community rules is sent to admin.'
       }
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to update community rules`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to update community rules is sent to admin.',
-      moderatorRequest
     });
   }
 
@@ -648,29 +609,24 @@ export const deleteSingleCommunityRule = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_SINGLE_RULE,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to delete comunity rule for "${community.name}" community.`,
-      updateValues: {
-        deleteRuleIds: [ruleId]
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_SINGLE_RULE,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to delete comunity rule for "${community.name}" community.`,
+        updateValues: {
+          deleteRuleIds: [ruleId]
+        }
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to delete community rule'
+      },
+      resJson: {
+        res,
+        message: 'Request to delete community rule is sent to admin.'
       }
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to delete community rule`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to delete community rule is sent to admin.',
-      moderatorRequest
     });
   }
 
@@ -701,29 +657,24 @@ export const deleteMultipleCommunityRules = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_MULTIPLE_RULES,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to delete multiple comunity rules for "${community.name}" community.`,
-      updateValues: {
-        deleteRuleIds: [ruleIds]
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_MULTIPLE_RULES,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to delete multiple comunity rules for "${community.name}" community.`,
+        updateValues: {
+          deleteRuleIds: [ruleIds]
+        }
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to delete multiple community rules'
+      },
+      resJson: {
+        res,
+        message: 'Request to delete multiple community rules is sent to admin.'
       }
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to delete multiple community rules`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to delete multiple community rules is sent to admin.',
-      moderatorRequest
     });
   }
 
@@ -747,26 +698,21 @@ export const deleteAllCommunityRules = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-      requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_ALL_RULES,
-      communityId: community._id,
-      communityCreator: community.creator,
-      moderator: req.userId!,
-      requestText: `*user* (moderator) wants to delete all comunity rules for "${community.name}" community.`
-    });
-
-    await CommunityActivityLogsService.createNewCommunityActivityLog({
-      communityId: community._id,
-      logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-      moderator: req.userId!,
-      text: `Moderator *user* made request to all multiple community rules`,
-      moderatorRequest: moderatorRequest._id
-    });
-
-    return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-      res,
-      message: 'Request to delete all community rules is sent to admin.',
-      moderatorRequest
+    return CommunityService.handleSendModeratorRequestResponseAction({
+      commons: { communityId: community._id, moderator: req.userId! },
+      moderatorRequestData: {
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.DELETE_ALL_RULES,
+        communityCreator: community.creator,
+        requestText: `*user* (moderator) wants to delete all comunity rules for "${community.name}" community.`
+      },
+      communityActivityLogData: {
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: 'Moderator *user* made request to all multiple community rules'
+      },
+      resJson: {
+        res,
+        message: 'Request to delete all community rules is sent to admin.'
+      }
     });
   }
 
