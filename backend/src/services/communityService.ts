@@ -1,36 +1,11 @@
-import CommunityValidator from 'configs/validators/community/communityValidator';
 import Chat from 'models/chatModel';
 import Community, { CommunitySchemaType } from 'models/communityModel';
-import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 import Notification from 'models/notificationModel';
 import User from 'models/userModel';
 import { CommunityListType } from 'types/controllers/community';
 import AppError from 'utils/appError';
 
 class CommunityService {
-  static updateCommunityField = {
-    update_description: async(
-      community: CommunitySchemaType,
-      newDescriptionValue: any
-    ) => {
-      try {
-        const descriptionError = CommunityValidator.validateStringValues(newDescriptionValue, 'description');
-        if (descriptionError) {
-          throw new AppError(422, descriptionError);
-        }
-
-        community.description = newDescriptionValue;
-        await community.save();
-      } catch (error: unknown) {
-        throw error;
-      }
-    }
-  }
-
-  static consoleLog() {
-    console.log('radi this');
-  }
-
   static async createCommunityChatsUponCommunityCreation (
     creatorId: string, 
     communityId: string, 
@@ -88,44 +63,6 @@ class CommunityService {
     } catch (error: unknown) {
       throw new AppError(500, actionFailMsg);
     }
-  }
-
-  /*
-    - runs before sending join invite
-    - doesn't check if user is member for moderator invite because member can be invited to become moderator
-  */
-  static checkUserExistsInListsBeforeInvite (targetUserId: string, community: CommunitySchemaType) {
-    const userBanned = community.bannedUsers.find((user) => user.toString() === targetUserId);
-    if (userBanned) {
-      throw new AppError(400, 'You are trying to invite BANNED user to join. Remove ban first and then proceed.');
-    }
-
-    const userAlreadyInvitedAsMember = community.pendingInvitedUsers.find((user) => user.toString() === targetUserId);
-    if (userAlreadyInvitedAsMember) {
-      throw new AppError(400, 'You have already invitied this user to join as member. Only 1 invitation is allowed per user.');
-    }
-    
-    const userAlreadyInvitedAsModerator = community.pendingInvitedModerators.find((user) => user.toString() === targetUserId);
-    if (userAlreadyInvitedAsModerator) {
-      throw new AppError(400, 'You have already invitied this user to join as moderator. Only 1 invitation is allowed per user.');
-    }
-
-    const userAlreadyModerator = community.moderators.find((user) => user.toString() === targetUserId);
-    if (userAlreadyModerator) {
-      throw new AppError(400, 'This user is already a moderator of this community.');
-    }
-  }
-
-  static isUserInLists (community: CommunitySchemaType, listNames: CommunityListType[], userId: string): { [list: string]: boolean } {
-    const existInLists: { [list: string]: boolean } = {};
-    for (const list of listNames) {
-      const isInList = community[list].find((user) => user.toString() === userId);
-      if (isInList) {
-        existInLists[list] = true;
-      }
-    }
-
-    return existInLists;
   }
 
   static removeUserFromLists (community: CommunitySchemaType, listNames: CommunityListType[], userId: string): void {
