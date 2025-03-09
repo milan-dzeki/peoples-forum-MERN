@@ -27,6 +27,8 @@ const messageModel_1 = __importDefault(require("models/messageModel"));
 const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
 const communityActivityLogs_2 = require("configs/communityActivityLogs");
 const notifications_1 = require("configs/notifications");
+const handleSendModeratorRequestResponseAction_1 = __importDefault(require("utils/builders/community/handleSendModeratorRequestResponseAction"));
+const handleSendUpdateCommunityFieldRequestResponseAction_1 = __importDefault(require("utils/builders/community/handleSendUpdateCommunityFieldRequestResponseAction"));
 exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { pendingInvitedModerators, name, description, rules, pendingInvitedUsers, chatNames } = req.fields;
     const parsedPendingInvitedModerators = pendingInvitedModerators ? JSON.parse(pendingInvitedModerators) : [];
@@ -95,44 +97,47 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, _) => 
     const isCreator = req.isCreator;
     const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
     if (!isCreator && moderatorActionRequirePermission) {
-        return communityService_1.default.handleSendModeratorRequestResponseAction({
-            commons: { communityId: community._id, moderator: req.userId },
-            moderatorRequestData: {
-                requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
-                communityCreator: community.creator,
-                requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
-                updateValues: { newDescriptionValue: description }
-            },
-            communityActivityLogData: {
-                logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
-                text: `Moderator *user* made request to update community description to "${description}"`
-            },
-            resJson: {
-                res,
-                message: `Request to update community description to "${description}" is sent to admin`
-            }
+        const buildResponse = new handleSendModeratorRequestResponseAction_1.default()
+            .setCommons({ communityId: community._id, moderator: req.userId })
+            .setModeratorRequestData({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
+            communityCreator: community.creator,
+            requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
+            updateValues: { newDescriptionValue: description }
+        })
+            .setCommunityActivityLogData({
+            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            text: `Moderator *user* made request to update community description to "${description}"`
+        })
+            .setResJson({
+            res,
+            message: `Request to update community description to "${description}" is sent to admin`
         });
+        const response = yield buildResponse.execute();
+        return response;
     }
-    const moderatorNotifications = yield communityService_1.default.createCreatorAndModeratorNotifications(community.moderators, community.creator, req.userId, {
+    const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+        .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleUpdateDescription.bind(null, community, description))
+        .setCommunityId(community._id)
+        .setCommunityActivityLogData({
+        moderator: req.userId,
+        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        text: `Moderator *user* updated community description to "${description}"`
+    })
+        .setModeratorsNotificationsData({
+        moderators: community.moderators,
+        communityCreator: community.creator,
         notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
         text: `"${community.name}" community description was changed`,
-        communityId: community._id,
-        sender: req.userId
+        sender: req.userId,
+        doNotIncludeIds: [req.userId]
+    })
+        .setResJson({
+        res,
+        message: 'Community description updated successfully'
     });
-    community.description = description;
-    yield community.save();
-    yield communityActivityLogs_1.default.create({
-        community: community._id,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-        moderator: req.userId,
-        text: `Moderator *user* updated community description to "${community.description}"`
-    });
-    return res.status(200).json({
-        status: 'success',
-        message: 'Community description updated successfully',
-        newDescription: community.description,
-        moderatorNotifications
-    });
+    const updateResponse = yield prepareUpdateResponse.execute();
+    return updateResponse;
 }));
 exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const reqFiles = req.files;

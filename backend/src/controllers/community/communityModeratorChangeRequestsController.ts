@@ -79,17 +79,14 @@ export const acceptModeratorRequest = catchAsync (async (
     return;
   }
   
-  const moderatorNotification = await CommunityModeratorChangeRequestService
+  const response = await CommunityModeratorChangeRequestService
     .acceptUpdateCommunityField[
       moderatorRequest.requestType! as keyof typeof CommunityModeratorChangeRequestService.acceptUpdateCommunityField
     ](
       community,
-      moderatorRequest
+      moderatorRequest,
+      res
     );
 
-  return res.status(200).json({
-    status: 'success',
-    message: 'Moderator request approved',
-    moderatorNotification
-  });
+    return response;
 });

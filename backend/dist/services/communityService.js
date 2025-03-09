@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
+var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const chatModel_1 = __importDefault(require("models/chatModel"));
 const communityModel_1 = __importDefault(require("models/communityModel"));
@@ -19,6 +20,7 @@ const userModel_1 = __importDefault(require("models/userModel"));
 const appError_1 = __importDefault(require("utils/appError"));
 const communityModeratorChangeRequestsSerivce_1 = __importDefault(require("./communityModeratorChangeRequestsSerivce"));
 const communityActivityLogsService_1 = __importDefault(require("./communityActivityLogsService"));
+const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 class CommunityService {
     static createCommunityChatsUponCommunityCreation(creatorId, communityId, chatNames) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -90,14 +92,18 @@ class CommunityService {
             }
         });
     }
-    static extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeId) {
-        const ids = [...moderators.map((moderator) => moderator.user), communityCreatorId].filter((user) => user.toString() !== doNotIncludeId.toString());
+    static extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeIds) {
+        let ids = [...moderators.map((moderator) => moderator.user), communityCreatorId];
+        if (doNotIncludeIds) {
+            const doNotIncludeIdsString = doNotIncludeIds.map((user) => user.toString());
+            ids = ids.filter((user) => !doNotIncludeIdsString.includes(user.toString()));
+        }
         return ids;
     }
-    static createCreatorAndModeratorNotifications(moderators, communityCreatorId, doNotIncludeId, notificationInput) {
+    static createCreatorAndModeratorNotifications(moderators, communityCreatorId, notificationInput, doNotIncludeIds) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const moderatorIds = this.extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeId);
+                const moderatorIds = this.extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeIds);
                 const { notificationType, text, sender, communityId } = notificationInput;
                 const preparedNotifications = [];
                 for (const moderatorId of moderatorIds) {
@@ -116,6 +122,21 @@ class CommunityService {
                 throw error;
             }
         });
+    }
+    static createUpdateFieldRequestResponse(parameters) {
+        const { res, message, moderatorNotifications, approvedRequestModeratorNotification, newDescription } = parameters;
+        const responseJson = {
+            status: 'success',
+            message,
+            moderatorNotifications
+        };
+        if (approvedRequestModeratorNotification) {
+            responseJson.approvedRequestModeratorNotification = approvedRequestModeratorNotification;
+        }
+        if (newDescription) {
+            responseJson.newDescription = newDescription;
+        }
+        return res.status(200).json(responseJson);
     }
     static handleSendModeratorRequestResponseAction(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -148,5 +169,56 @@ class CommunityService {
             }
         });
     }
+    static handleSendUpdateCommunityFieldRequestResponseAction(parameters) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { fieldUpdateHandler, communityId, communityActivityLogData: { logType, moderator, text: notificationText, photoUrl }, approvedRequestModeratorNotification, moderatorsNotificationsData: { moderators, communityCreator, notificationType, text, sender, doNotIncludeIds }, resJson: { res, message } } = parameters;
+                const newDescription = yield fieldUpdateHandler();
+                yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
+                    communityId,
+                    logType,
+                    text: notificationText,
+                    moderator,
+                    photoUrl: photoUrl || undefined
+                });
+                const moderatorNotifications = yield this.createCreatorAndModeratorNotifications(moderators, communityCreator, {
+                    communityId,
+                    notificationType,
+                    sender,
+                    text
+                }, doNotIncludeIds);
+                return this.createUpdateFieldRequestResponse({
+                    res,
+                    message,
+                    moderatorNotifications,
+                    approvedRequestModeratorNotification,
+                    newDescription
+                });
+            }
+            catch (error) {
+                throw error;
+            }
+        });
+    }
 }
+_a = CommunityService;
+CommunityService.updateFieldHandlers = {
+    handleUpdateDescription: (community, newDescription, shouldValidate, moderatorRequest) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            if (shouldValidate) {
+                communityValidator_1.default.validateStringValues(newDescription, 'description', true);
+            }
+            community.description = newDescription;
+            yield community.save();
+            if (moderatorRequest) {
+                moderatorRequest.status = 'approved';
+                yield moderatorRequest.save();
+            }
+            return community.description;
+        }
+        catch (error) {
+            throw error;
+        }
+    })
+};
 exports.default = CommunityService;

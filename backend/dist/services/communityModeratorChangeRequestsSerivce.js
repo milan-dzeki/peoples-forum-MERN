@@ -22,6 +22,7 @@ const communityActivityLogs_2 = __importDefault(require("models/communityActivit
 const communityModeratorChangeRequestModel_1 = __importDefault(require("models/communityModeratorChangeRequestModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 const appError_1 = __importDefault(require("utils/appError"));
+const communityService_1 = __importDefault(require("./communityService"));
 class CommunityModeratorChangeRequestService {
     static updateCommunityPhoto(community, moderatorRequest, photoName, shouldNotifyModerator) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -150,28 +151,38 @@ class CommunityModeratorChangeRequestService {
 }
 _a = CommunityModeratorChangeRequestService;
 CommunityModeratorChangeRequestService.acceptUpdateCommunityField = {
-    update_description: (community, moderatorRequest) => __awaiter(void 0, void 0, void 0, function* () {
+    update_description: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const updatedDescription = moderatorRequest.newDescriptionValue;
-            communityValidator_1.default.validateStringValues(updatedDescription, 'description', true);
-            community.description = updatedDescription;
-            yield community.save();
-            moderatorRequest.status = 'approved';
-            yield moderatorRequest.save();
-            yield communityActivityLogs_2.default.create({
-                community: community._id,
-                logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
-                moderator: moderatorRequest.moderator,
-                text: `approved request to update community description to "${community.description}" made by moderator`,
-                moderatorRequest: moderatorRequest._id
-            });
-            const moderatorNotification = yield notificationModel_1.default.create({
+            const approvedRequestModeratorNotification = yield notificationModel_1.default.create({
                 receiver: moderatorRequest.moderator,
                 notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
                 text: `Your request to ${moderatorRequest.requestType} to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`,
                 community: community._id
             });
-            return moderatorNotification;
+            const response = yield communityService_1.default.handleSendUpdateCommunityFieldRequestResponseAction({
+                fieldUpdateHandler: communityService_1.default.updateFieldHandlers.handleUpdateDescription.bind(null, community, updatedDescription, true, moderatorRequest),
+                communityId: community._id,
+                communityActivityLogData: {
+                    moderator: moderatorRequest.moderator,
+                    logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+                    text: `Moderator *user* updated community description to "${updatedDescription}"`,
+                },
+                moderatorsNotificationsData: {
+                    moderators: community.moderators,
+                    communityCreator: community.creator,
+                    notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+                    text: `"${community.name}" community description was changed`,
+                    sender: community.creator,
+                    doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+                },
+                approvedRequestModeratorNotification,
+                resJson: {
+                    res,
+                    message: 'Community description updated successfully'
+                }
+            });
+            return response;
         }
         catch (error) {
             throw error;

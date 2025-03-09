@@ -69,11 +69,7 @@ exports.acceptModeratorRequest = (0, catchAsync_1.default)((req, res, next) => _
         next(new appError_1.default(400, 'You have already approved this request in the past. If you wnat to revert changes doen tby it, do it manually.'));
         return;
     }
-    const moderatorNotification = yield communityModeratorChangeRequestsSerivce_1.default
-        .acceptUpdateCommunityField[moderatorRequest.requestType](community, moderatorRequest);
-    return res.status(200).json({
-        status: 'success',
-        message: 'Moderator request approved',
-        moderatorNotification
-    });
+    const response = yield communityModeratorChangeRequestsSerivce_1.default
+        .acceptUpdateCommunityField[moderatorRequest.requestType](community, moderatorRequest, res);
+    return response;
 }));

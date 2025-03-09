@@ -3,13 +3,48 @@ import Chat from 'models/chatModel';
 import Community, { CommunitySchemaType } from 'models/communityModel';
 import Notification from 'models/notificationModel';
 import User from 'models/userModel';
-import { CommunityListType, HandleSendModeratorRequestResponseActionParameters, ModeratorNotificationType } from 'types/controllers/community';
+import { 
+  CommunityListType, 
+  HandleSendModeratorRequestResponseActionParameters, 
+  HandleSendUpdateCommunityFieldRequestResponseActionType, 
+  ModeratorNotificationType, 
+  SendUpdateFieldRequestResponseType, 
+  UpdateFieldResponseJsonType
+} from 'types/controllers/community';
 import AppError from 'utils/appError';
 import CommunityModeratorChangeRequestService from './communityModeratorChangeRequestsSerivce';
 import CommunityActivityLogsService from './communityActivityLogsService';
 import { PreparedNotificationType } from 'types/models/notificationModelTypes';
+import CommunityValidator from 'configs/validators/community/communityValidator';
+import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 
 class CommunityService {
+  static updateFieldHandlers = {
+    handleUpdateDescription: async (
+      community: CommunitySchemaType, 
+      newDescription: any, 
+      shouldValidate?: boolean,
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType
+    ) => {
+      try {
+        if (shouldValidate) {
+          CommunityValidator.validateStringValues(newDescription, 'description', true);
+        }
+
+        community.description = newDescription;
+        await community.save();
+
+        if (moderatorRequest) {
+          moderatorRequest.status = 'approved';
+          await moderatorRequest.save();
+        }
+
+        return community.description;
+      } catch (error: unknown) {
+        throw error;
+      }
+    }
+  };
   static async createCommunityChatsUponCommunityCreation (
     creatorId: string, 
     communityId: string, 
@@ -104,20 +139,25 @@ class CommunityService {
   static extractCreatorAndModeratorIds (
     moderators: CommunitySchemaType['moderators'],
     communityCreatorId: Types.ObjectId | string,
-    doNotIncludeId: Types.ObjectId | string
+    doNotIncludeIds?: (Types.ObjectId | string)[]
   ): (Types.ObjectId | string)[] {
-    const ids = [...moderators.map((moderator) => moderator.user), communityCreatorId].filter((user) => user.toString() !== doNotIncludeId.toString());
+    let ids = [...moderators.map((moderator) => moderator.user), communityCreatorId];
+
+    if (doNotIncludeIds) {
+      const doNotIncludeIdsString = doNotIncludeIds.map((user) => user.toString());
+      ids = ids.filter((user) => !doNotIncludeIdsString.includes(user.toString()))
+    }
     return ids;
   }
 
   static async createCreatorAndModeratorNotifications (
     moderators: CommunitySchemaType['moderators'],
     communityCreatorId: Types.ObjectId | string,
-    doNotIncludeId: Types.ObjectId | string,
-    notificationInput: ModeratorNotificationType
+    notificationInput: ModeratorNotificationType,
+    doNotIncludeIds?: (Types.ObjectId | string)[],
   ) {
     try {
-      const moderatorIds = this.extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeId);
+      const moderatorIds = this.extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeIds);
 
       const {
         notificationType,
@@ -144,6 +184,32 @@ class CommunityService {
     } catch (error: unknown) {
       throw error;
     }
+  }
+
+  static createUpdateFieldRequestResponse (parameters: SendUpdateFieldRequestResponseType) {
+    const {
+      res,
+      message,
+      moderatorNotifications,
+      approvedRequestModeratorNotification,
+      newDescription
+    } = parameters;
+
+    const responseJson: UpdateFieldResponseJsonType = {
+      status: 'success',
+      message,
+      moderatorNotifications
+    };
+
+    if (approvedRequestModeratorNotification) {
+      responseJson.approvedRequestModeratorNotification = approvedRequestModeratorNotification;
+    }
+
+    if (newDescription) {
+      responseJson.newDescription = newDescription;
+    }
+
+    return res.status(200).json(responseJson);
   }
 
   static async handleSendModeratorRequestResponseAction (parameters: HandleSendModeratorRequestResponseActionParameters) {
@@ -192,6 +258,66 @@ class CommunityService {
         res,
         message,
         moderatorRequest
+      });
+    } catch (error: unknown) {
+      throw error;
+    }
+  }
+
+  static async handleSendUpdateCommunityFieldRequestResponseAction (parameters: HandleSendUpdateCommunityFieldRequestResponseActionType) {
+    try {
+      const {
+        fieldUpdateHandler,
+        communityId,
+        communityActivityLogData: {
+          logType,
+          moderator,
+          text: notificationText,
+          photoUrl
+        },
+        approvedRequestModeratorNotification,
+        moderatorsNotificationsData: {
+          moderators,
+          communityCreator,
+          notificationType,
+          text,
+          sender,
+          doNotIncludeIds
+        },
+        resJson: {
+          res,
+          message
+        }
+      } = parameters;
+
+      const newDescription =  await fieldUpdateHandler();
+
+      await CommunityActivityLogsService.createNewCommunityActivityLog({
+        communityId,
+        logType,
+        text: notificationText,
+        moderator,
+        photoUrl: photoUrl || undefined
+      });
+
+      const moderatorNotifications = await this.createCreatorAndModeratorNotifications(
+        moderators,
+        communityCreator,
+        {
+          communityId,
+          notificationType,
+          sender,
+          text
+        },
+        doNotIncludeIds
+      );
+
+      return this.createUpdateFieldRequestResponse({
+        res,
+        message,
+        moderatorNotifications,
+        approvedRequestModeratorNotification,
+        newDescription
       });
     } catch (error: unknown) {
       throw error;

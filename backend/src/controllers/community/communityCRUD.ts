@@ -15,6 +15,8 @@ import Message from 'models/messageModel';
 import CommunityActivityLog from 'models/communityActivityLogs';
 import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
 import { NOTIFICATION_TYPES } from 'configs/notifications';
+import HandleSendModeratorRequestResponseActionBuilder from 'utils/builders/community/handleSendModeratorRequestResponseAction';
+import HandleSendUpdateCommunityFieldRequestResponseActionBuilder from 'utils/builders/community/handleSendUpdateCommunityFieldRequestResponseAction';
 
 export const createCommunity = catchAsync (async (
   req: RequestWithUserIdType,
@@ -120,53 +122,58 @@ export const updateCommunityDescription = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    return CommunityService.handleSendModeratorRequestResponseAction({
-      commons: { communityId: community._id, moderator: req.userId! },
-      moderatorRequestData: {
+    const buildResponse = new HandleSendModeratorRequestResponseActionBuilder()
+      .setCommons({ communityId: community._id, moderator: req.userId! })
+      .setModeratorRequestData({
         requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
         communityCreator: community.creator,
         requestText: `*user* (moderator) wants to change "${community.name}" community description to: "${description}"`,
         updateValues: { newDescriptionValue: description }
-      },
-      communityActivityLogData: {
+      })
+      .setCommunityActivityLogData({
         logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
         text: `Moderator *user* made request to update community description to "${description}"`
-      },
-      resJson: {
+      })
+      .setResJson({
         res,
         message: `Request to update community description to "${description}" is sent to admin`
-      }
-    });
+      });
+
+    const response = await buildResponse.execute();
+
+    return response;
   }
 
-  const moderatorNotifications = await CommunityService.createCreatorAndModeratorNotifications(
-    community.moderators,
-    community.creator,
-    req.userId!,
-    {
+  const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+    .setFieldUpdateHandler(
+      CommunityService.updateFieldHandlers.handleUpdateDescription.bind(
+        null,
+        community,
+        description 
+      )
+    )
+    .setCommunityId(community._id)
+    .setCommunityActivityLogData({
+      moderator: req.userId!,
+      logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+      text: `Moderator *user* updated community description to "${description}"`
+    })
+    .setModeratorsNotificationsData({
+      moderators: community.moderators,
+      communityCreator: community.creator,
       notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
       text: `"${community.name}" community description was changed`,
-      communityId: community._id,
-      sender: req.userId!
-    }
-  );
+      sender: req.userId!,
+      doNotIncludeIds: [req.userId!]
+    })
+    .setResJson({
+      res,
+      message: 'Community description updated successfully'
+    });
 
-  community.description = description;
-  await community.save();
+  const updateResponse = await prepareUpdateResponse.execute();
 
-  await CommunityActivityLog.create({
-    community: community._id,
-    logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-    moderator: req.userId!,
-    text: `Moderator *user* updated community description to "${community.description}"`
-  });
-
-  return res.status(200).json({
-    status: 'success',
-    message: 'Community description updated successfully',
-    newDescription: community.description,
-    moderatorNotifications
-  });
+  return updateResponse;
 });
 
 export const updateCommunityProfileImage = catchAsync(async (

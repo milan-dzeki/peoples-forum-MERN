@@ -1,9 +1,11 @@
-import { Response } from 'express';import { Types } from 'mongoose';
+import { Response } from 'express';
+import { Types } from 'mongoose';
 import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
 import { NotificationSchemaType } from 'models/notificationModel';
 import { ModeratorRequestType } from './communityModeratorRequests';
 import { CommunityActivityLogType } from './communityActivityLogs';
 import { NotificationType } from 'types/models/notificationModelTypes';
+import { CommunitySchemaType } from 'models/communityModel';
 
 export interface CommunityRuleType {
   title: string;
@@ -59,6 +61,22 @@ export interface ModeratorNotificationType {
 
 export type CommunityPermissionNameType = typeof COMMUNITY_PERMISSION_NAMES[keyof typeof COMMUNITY_PERMISSION_NAMES];
 
+export interface UpdateFieldResponseJsonType {
+  status: string;
+  message: string;
+  moderatorNotifications: NotificationSchemaType[];
+  approvedRequestModeratorNotification?: NotificationSchemaType;
+  newDescription?: string;
+}
+
+export interface SendUpdateFieldRequestResponseType {
+  res: Response;
+  message: string;
+  moderatorNotifications: NotificationSchemaType[];
+  approvedRequestModeratorNotification?: NotificationSchemaType;
+  newDescription?: string;
+}
+
 export interface HandleSendModeratorRequestResponseActionParameters {
   commons: {
     communityId: Types.ObjectId | string;
@@ -84,6 +102,30 @@ export interface HandleSendModeratorRequestResponseActionParameters {
     text: string;
     photoUrl?: string;
   };
+  resJson: {
+    res: Response;
+    message: string;
+  }
+}
+
+export interface HandleSendUpdateCommunityFieldRequestResponseActionType {
+  fieldUpdateHandler: () => Promise<any>;
+  communityId: Types.ObjectId | string;
+  communityActivityLogData: {
+    logType: CommunityActivityLogType;
+    moderator: Types.ObjectId | string;
+    text: string;
+    photoUrl?: string;
+  };
+  moderatorsNotificationsData: {
+    moderators: CommunitySchemaType['moderators'];
+    communityCreator: Types.ObjectId | string;
+    notificationType: NotificationType;
+    text: string;
+    sender: Types.ObjectId | string;
+    doNotIncludeIds?:( Types.ObjectId | string)[];
+  };
+  approvedRequestModeratorNotification?: NotificationSchemaType;
   resJson: {
     res: Response;
     message: string;

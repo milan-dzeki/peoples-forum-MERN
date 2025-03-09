@@ -1,3 +1,4 @@
+import { Response } from 'express';
 import cloudinary from 'configs/cloudinary';
 import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
 import { ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES } from 'configs/communityModeratorChangeRequests';
@@ -10,40 +11,55 @@ import Notification from 'models/notificationModel';
 import { Types } from 'mongoose';
 import { CreateModeratorRequestParameteresType, PrepareNewModeratorRequestType, SendModeratorRequestResponseParametersType } from 'types/controllers/communityModeratorRequests';
 import AppError from 'utils/appError';
-
+import CommunityService from './communityService';
 
 class CommunityModeratorChangeRequestService {
   static acceptUpdateCommunityField = {
     update_description: async(
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
+      res: Response
     ) => {
       try {
         const updatedDescription = moderatorRequest.newDescriptionValue as any;
-        CommunityValidator.validateStringValues(updatedDescription, 'description', true);
 
-        community.description = updatedDescription;
-        await community.save();
-
-        moderatorRequest.status = 'approved';
-        await moderatorRequest.save();
-
-        await CommunityActivityLog.create({
-          community: community._id,
-          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
-          moderator: moderatorRequest.moderator,
-          text: `approved request to update community description to "${community.description}" made by moderator`,
-          moderatorRequest: moderatorRequest._id
-        });
-
-        const moderatorNotification = await Notification.create({
+        const approvedRequestModeratorNotification = await Notification.create({
           receiver: moderatorRequest.moderator,
           notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
           text: `Your request to ${moderatorRequest.requestType} to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`,
           community: community._id
         });
 
-        return moderatorNotification;
+        const response = await CommunityService.handleSendUpdateCommunityFieldRequestResponseAction({
+          fieldUpdateHandler: CommunityService.updateFieldHandlers.handleUpdateDescription.bind(
+            null,
+            community,
+            updatedDescription,
+            true,
+            moderatorRequest
+          ),
+          communityId: community._id,
+          communityActivityLogData: {
+            moderator: moderatorRequest.moderator,
+            logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: `Moderator *user* updated community description to "${updatedDescription}"`,
+          },
+          moderatorsNotificationsData: {
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            text: `"${community.name}" community description was changed`,
+            sender: community.creator,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+          },
+          approvedRequestModeratorNotification,
+          resJson: {
+            res,
+            message: 'Community description updated successfully'
+          }
+        });
+
+        return response;
       } catch (error: unknown) {
         throw error;
       }
