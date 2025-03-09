@@ -97,7 +97,7 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, _) => 
     const isCreator = req.isCreator;
     const moderatorActionRequirePermission = req.moderatorActionRequirePermission;
     if (!isCreator && moderatorActionRequirePermission) {
-        const buildResponse = new handleSendModeratorRequestResponseAction_1.default()
+        const prepareModeratorRequestResponse = new handleSendModeratorRequestResponseAction_1.default()
             .setCommons({ communityId: community._id, moderator: req.userId })
             .setModeratorRequestData({
             requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
@@ -113,8 +113,8 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, _) => 
             res,
             message: `Request to update community description to "${description}" is sent to admin`
         });
-        const response = yield buildResponse.execute();
-        return response;
+        const moderatorRequestEesponse = yield prepareModeratorRequestResponse.execute();
+        return moderatorRequestEesponse;
     }
     const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
         .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleUpdateDescription.bind(null, community, description))

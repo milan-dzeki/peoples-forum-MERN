@@ -12,6 +12,7 @@ import { Types } from 'mongoose';
 import { CreateModeratorRequestParameteresType, PrepareNewModeratorRequestType, SendModeratorRequestResponseParametersType } from 'types/controllers/communityModeratorRequests';
 import AppError from 'utils/appError';
 import CommunityService from './communityService';
+import HandleSendUpdateCommunityFieldRequestResponseActionBuilder from 'utils/builders/community/handleSendUpdateCommunityFieldRequestResponseAction';
 
 class CommunityModeratorChangeRequestService {
   static acceptUpdateCommunityField = {
@@ -30,35 +31,38 @@ class CommunityModeratorChangeRequestService {
           community: community._id
         });
 
-        const response = await CommunityService.handleSendUpdateCommunityFieldRequestResponseAction({
-          fieldUpdateHandler: CommunityService.updateFieldHandlers.handleUpdateDescription.bind(
-            null,
-            community,
-            updatedDescription,
-            true,
-            moderatorRequest
-          ),
-          communityId: community._id,
-          communityActivityLogData: {
+        const prepareResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+          .setFieldUpdateHandler(
+            CommunityService.updateFieldHandlers.handleUpdateDescription.bind(
+              null,
+              community,
+              updatedDescription,
+              true,
+              moderatorRequest
+            )
+          )
+          .setCommunityId(community._id)
+          .setCommunityActivityLogData({
             moderator: moderatorRequest.moderator,
             logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
-            text: `Moderator *user* updated community description to "${updatedDescription}"`,
-          },
-          moderatorsNotificationsData: {
+            text: `accepted *user* request to update community description to "${updatedDescription}"`,
+          }).
+          setApprovedRequestModeratorNotification(approvedRequestModeratorNotification)
+          .setModeratorsNotificationsData({
             moderators: community.moderators,
             communityCreator: community.creator,
             notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
             text: `"${community.name}" community description was changed`,
             sender: community.creator,
             doNotIncludeIds: [community.creator, moderatorRequest.moderator]
-          },
-          approvedRequestModeratorNotification,
-          resJson: {
+          })
+          .setResJson({
             res,
             message: 'Community description updated successfully'
-          }
-        });
-
+          });
+      
+        const response = await prepareResponse.execute();
+      
         return response;
       } catch (error: unknown) {
         throw error;

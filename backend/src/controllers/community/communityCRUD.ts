@@ -122,7 +122,7 @@ export const updateCommunityDescription = catchAsync (async (
   const moderatorActionRequirePermission = req.moderatorActionRequirePermission!;
 
   if (!isCreator && moderatorActionRequirePermission) {
-    const buildResponse = new HandleSendModeratorRequestResponseActionBuilder()
+    const prepareModeratorRequestResponse = new HandleSendModeratorRequestResponseActionBuilder()
       .setCommons({ communityId: community._id, moderator: req.userId! })
       .setModeratorRequestData({
         requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.UPDATE_DESCRIPTION,
@@ -139,9 +139,9 @@ export const updateCommunityDescription = catchAsync (async (
         message: `Request to update community description to "${description}" is sent to admin`
       });
 
-    const response = await buildResponse.execute();
+    const moderatorRequestEesponse = await prepareModeratorRequestResponse.execute();
 
-    return response;
+    return moderatorRequestEesponse;
   }
 
   const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
