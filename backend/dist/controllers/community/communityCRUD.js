@@ -26,6 +26,7 @@ const chatModel_1 = __importDefault(require("models/chatModel"));
 const messageModel_1 = __importDefault(require("models/messageModel"));
 const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
 const communityActivityLogs_2 = require("configs/communityActivityLogs");
+const notifications_1 = require("configs/notifications");
 exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { pendingInvitedModerators, name, description, rules, pendingInvitedUsers, chatNames } = req.fields;
     const parsedPendingInvitedModerators = pendingInvitedModerators ? JSON.parse(pendingInvitedModerators) : [];
@@ -112,6 +113,12 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, _) => 
             }
         });
     }
+    const moderatorNotifications = yield communityService_1.default.createCreatorAndModeratorNotifications(community.moderators, community.creator, req.userId, {
+        notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+        text: `"${community.name}" community description was changed`,
+        communityId: community._id,
+        sender: req.userId
+    });
     community.description = description;
     yield community.save();
     yield communityActivityLogs_1.default.create({
@@ -123,7 +130,8 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, _) => 
     return res.status(200).json({
         status: 'success',
         message: 'Community description updated successfully',
-        newDescription: community.description
+        newDescription: community.description,
+        moderatorNotifications
     });
 }));
 exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {

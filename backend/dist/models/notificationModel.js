@@ -24,7 +24,8 @@ const notificationsSchema = new mongoose_1.Schema({
             notifications_1.NOTIFICATION_TYPES.REQUEST_TO_JOIN_COMMUNITY_AS_MEMBER_DECLINED,
             notifications_1.NOTIFICATION_TYPES.COMMUNITY_SETTINGS_CHANGED,
             notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_DECLINED,
-            notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED
+            notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
+            notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED
         ]
     },
     text: {

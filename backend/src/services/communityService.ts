@@ -1,11 +1,13 @@
+import { Types } from 'mongoose';
 import Chat from 'models/chatModel';
 import Community, { CommunitySchemaType } from 'models/communityModel';
 import Notification from 'models/notificationModel';
 import User from 'models/userModel';
-import { CommunityListType, HandleSendModeratorRequestResponseActionParameters } from 'types/controllers/community';
+import { CommunityListType, HandleSendModeratorRequestResponseActionParameters, ModeratorNotificationType } from 'types/controllers/community';
 import AppError from 'utils/appError';
 import CommunityModeratorChangeRequestService from './communityModeratorChangeRequestsSerivce';
 import CommunityActivityLogsService from './communityActivityLogsService';
+import { PreparedNotificationType } from 'types/models/notificationModelTypes';
 
 class CommunityService {
   static async createCommunityChatsUponCommunityCreation (
@@ -94,6 +96,51 @@ class CommunityService {
       const populatedInviteNotification = await inviteUserNotification.populate({ path: 'sender', select: 'fullName profilePhotoUrl' });
 
       return populatedInviteNotification;
+    } catch (error: unknown) {
+      throw error;
+    }
+  }
+
+  static extractCreatorAndModeratorIds (
+    moderators: CommunitySchemaType['moderators'],
+    communityCreatorId: Types.ObjectId | string,
+    doNotIncludeId: Types.ObjectId | string
+  ): (Types.ObjectId | string)[] {
+    const ids = [...moderators.map((moderator) => moderator.user), communityCreatorId].filter((user) => user.toString() !== doNotIncludeId.toString());
+    return ids;
+  }
+
+  static async createCreatorAndModeratorNotifications (
+    moderators: CommunitySchemaType['moderators'],
+    communityCreatorId: Types.ObjectId | string,
+    doNotIncludeId: Types.ObjectId | string,
+    notificationInput: ModeratorNotificationType
+  ) {
+    try {
+      const moderatorIds = this.extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeId);
+
+      const {
+        notificationType,
+        text,
+        sender,
+        communityId
+      } = notificationInput;
+
+      const preparedNotifications: PreparedNotificationType[] = [];
+
+      for (const moderatorId of moderatorIds) {
+        preparedNotifications.push({
+          receiver: moderatorId,
+          notificationType,
+          text,
+          sender,
+          communityId
+        });
+      }
+
+      const notifications = await Notification.insertMany(preparedNotifications);
+      
+      return notifications;
     } catch (error: unknown) {
       throw error;
     }

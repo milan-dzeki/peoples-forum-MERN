@@ -14,8 +14,7 @@ import Chat from 'models/chatModel';
 import Message from 'models/messageModel';
 import CommunityActivityLog from 'models/communityActivityLogs';
 import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
-import CommunityModeratorChangeRequestService from 'services/communityModeratorChangeRequestsSerivce';
-import CommunityActivityLogsService from 'services/communityActivityLogsService';
+import { NOTIFICATION_TYPES } from 'configs/notifications';
 
 export const createCommunity = catchAsync (async (
   req: RequestWithUserIdType,
@@ -140,6 +139,18 @@ export const updateCommunityDescription = catchAsync (async (
     });
   }
 
+  const moderatorNotifications = await CommunityService.createCreatorAndModeratorNotifications(
+    community.moderators,
+    community.creator,
+    req.userId!,
+    {
+      notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+      text: `"${community.name}" community description was changed`,
+      communityId: community._id,
+      sender: req.userId!
+    }
+  );
+
   community.description = description;
   await community.save();
 
@@ -153,7 +164,8 @@ export const updateCommunityDescription = catchAsync (async (
   return res.status(200).json({
     status: 'success',
     message: 'Community description updated successfully',
-    newDescription: community.description
+    newDescription: community.description,
+    moderatorNotifications
   });
 });
 

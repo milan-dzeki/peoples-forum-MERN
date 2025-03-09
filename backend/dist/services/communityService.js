@@ -90,6 +90,33 @@ class CommunityService {
             }
         });
     }
+    static extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeId) {
+        const ids = [...moderators.map((moderator) => moderator.user), communityCreatorId].filter((user) => user.toString() !== doNotIncludeId.toString());
+        return ids;
+    }
+    static createCreatorAndModeratorNotifications(moderators, communityCreatorId, doNotIncludeId, notificationInput) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const moderatorIds = this.extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeId);
+                const { notificationType, text, sender, communityId } = notificationInput;
+                const preparedNotifications = [];
+                for (const moderatorId of moderatorIds) {
+                    preparedNotifications.push({
+                        receiver: moderatorId,
+                        notificationType,
+                        text,
+                        sender,
+                        communityId
+                    });
+                }
+                const notifications = yield notificationModel_1.default.insertMany(preparedNotifications);
+                return notifications;
+            }
+            catch (error) {
+                throw error;
+            }
+        });
+    }
     static handleSendModeratorRequestResponseAction(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
             try {

@@ -3,6 +3,7 @@ import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
 import { NotificationSchemaType } from 'models/notificationModel';
 import { ModeratorRequestType } from './communityModeratorRequests';
 import { CommunityActivityLogType } from './communityActivityLogs';
+import { NotificationType } from 'types/models/notificationModelTypes';
 
 export interface CommunityRuleType {
   title: string;
@@ -47,6 +48,13 @@ export type UserExistInListsType = {
     exists: boolean;
     alias: string;
   }
+}
+
+export interface ModeratorNotificationType {
+  notificationType: NotificationType;
+  text: string;
+  sender: Types.ObjectId | string;
+  communityId: Types.ObjectId | string;
 }
 
 export type CommunityPermissionNameType = typeof COMMUNITY_PERMISSION_NAMES[keyof typeof COMMUNITY_PERMISSION_NAMES];

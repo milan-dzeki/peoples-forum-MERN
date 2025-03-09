@@ -12,7 +12,8 @@ export const NOTIFICATION_TYPES = {
   REQUEST_TO_JOIN_COMMUNITY_AS_MEMBER_DECLINED: 'requestToJoinCommunityAsMemberDeclned',
   COMMUNITY_SETTINGS_CHANGED: 'communitySettingsChanged',
   MODERATOR_CHANGE_REQUEST_DECLINED: 'moderatorChangeRequestDeclined',
-  MODERATOR_CHANGE_REQUEST_APPROVED: 'moderatorChangeRequestApproved'
+  MODERATOR_CHANGE_REQUEST_APPROVED: 'moderatorChangeRequestApproved',
+  COMMUNITY_INFO_UPDATED: 'communityInfoUpdated'
 } as const;
 
 // becomeCommunityModeratorRequest
