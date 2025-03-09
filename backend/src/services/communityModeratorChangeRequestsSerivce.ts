@@ -4,9 +4,10 @@ import { NOTIFICATION_TYPES } from 'configs/notifications';
 import CommunityValidator from 'configs/validators/community/communityValidator';
 import CommunityActivityLog from 'models/communityActivityLogs';
 import { CommunitySchemaType } from 'models/communityModel';
-import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
+import CommunityModeratorChangeRequest, { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 import Notification from 'models/notificationModel';
 import { Types } from 'mongoose';
+import { ModeratorRequestType } from 'types/controllers/communityModeratorRequests';
 import AppError from 'utils/appError';
 
 
@@ -509,6 +510,28 @@ class CommunityModeratorChangeRequestService {
     }
 
     await cloudinary.uploader.destroy(photo.public_id);
+  }
+
+  static async createNewModeratorRequest (
+    requestType: ModeratorRequestType,
+    communityId: Types.ObjectId,
+    communityCreator: Types.ObjectId,
+    moderator: Types.ObjectId,
+    requestText: string,
+  ): Promise<CommunityModeratorChangeRequestSchemaType> {
+    try {
+      const moderatorRequest = await CommunityModeratorChangeRequest.create({
+        requestType,
+        community: communityId,
+        communityCreator,
+        moderator,
+        requestText
+      });
+
+      return moderatorRequest;
+    } catch (error: unknown) {
+      throw error;
+    }
   }
 }
 

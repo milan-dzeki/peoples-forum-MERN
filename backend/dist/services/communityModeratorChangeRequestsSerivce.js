@@ -18,6 +18,7 @@ const communityActivityLogs_1 = require("configs/communityActivityLogs");
 const notifications_1 = require("configs/notifications");
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 const communityActivityLogs_2 = __importDefault(require("models/communityActivityLogs"));
+const communityModeratorChangeRequestModel_1 = __importDefault(require("models/communityModeratorChangeRequestModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 const appError_1 = __importDefault(require("utils/appError"));
 class CommunityModeratorChangeRequestService {
@@ -107,6 +108,23 @@ class CommunityModeratorChangeRequestService {
                 return;
             }
             yield cloudinary_1.default.uploader.destroy(photo.public_id);
+        });
+    }
+    static createNewModeratorRequest(requestType, communityId, communityCreator, moderator, requestText) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const moderatorRequest = yield communityModeratorChangeRequestModel_1.default.create({
+                    requestType,
+                    community: communityId,
+                    communityCreator,
+                    moderator,
+                    requestText
+                });
+                return moderatorRequest;
+            }
+            catch (error) {
+                throw error;
+            }
         });
     }
 }
