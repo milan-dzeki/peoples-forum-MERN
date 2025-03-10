@@ -85,7 +85,9 @@ class CommunityService {
         });
     }
     static removeUserFromLists(community, listNames, userId) {
+        console.log(community, listNames, userId);
         for (const list of listNames) {
+            console.log(community[list]);
             community[list].pull({ user: userId });
         }
     }

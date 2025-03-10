@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.COMMUNITY_PERMISSION_NAMES = void 0;
+exports.COMMUNITY_LIST_RESPONSE_NAMES = exports.COMMUNITY_PERMISSION_NAMES = void 0;
 exports.COMMUNITY_PERMISSION_NAMES = {
     UPDATE_DESCRIPTION: 'update_description',
     UPDATE_PROFILE_PHOTO: 'update_profile_photo',
@@ -24,4 +24,12 @@ exports.COMMUNITY_PERMISSION_NAMES = {
     DECLINE_JOIN_REQUESTS: 'decline_join_requests',
     REMOVE_CHATS: 'remove_chats',
     REMOVE_CHAT_MESSAGES: 'remove_chat_messages'
+};
+exports.COMMUNITY_LIST_RESPONSE_NAMES = {
+    'bannedUsers': 'banned users',
+    'members': 'members',
+    'pendingInvitedUsers': 'pending invited users',
+    'pendingInvitedModerators': 'pending invited moderators',
+    'userJoinRequests': 'request',
+    'moderators': 'moderators'
 };

@@ -16,44 +16,22 @@ exports.moderatorDeclineUserJoinRequest = exports.moderatorAcceptUserJoinRequest
 const mongoose_1 = require("mongoose");
 const communityService_1 = __importDefault(require("services/communityService"));
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
-const appError_1 = __importDefault(require("utils/appError"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
-exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const communityUserManagerBuilder_1 = __importDefault(require("utils/builders/community/communityUserManagerBuilder"));
+exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const existInLists = req.existInLists;
-    if (existInLists.bannedUsers.exists) {
-        next(new appError_1.default(400, 'User is already banned from this community'));
-        return;
-    }
     const community = req.community;
     const isCreator = req.isCreator;
     const { targetUserId, shouldNotifyUser = false } = req.body;
     const targetUserIdString = targetUserId.toString();
-    const existInAnyList = Object.keys(existInLists).some((list) => existInLists[list].exists);
-    if (!existInAnyList) {
-        next(new appError_1.default(400, 'User you are trying to ban is not a member of community, nor is he / she in pending lists. Maybe he / she already left'));
-        return;
-    }
-    if (existInLists.moderators.exists) {
-        if (!isCreator) {
-            next(new appError_1.default(400, 'User you are trying to ban is moderator. Only creator can ban moderators'));
-            return;
-        }
-        communityService_1.default.removeUserFromLists(community, ['moderators'], targetUserIdString);
-    }
-    if (existInLists.pendingInvitedModerators.exists) {
-        if (!isCreator) {
-            next(new appError_1.default(400, 'User you are trying to ban is invited to be moderator. Only creator can ban moderators invitations'));
-            return;
-        }
-        communityService_1.default.removeUserFromLists(community, ['pendingInvitedModerators'], targetUserIdString);
-    }
-    // remove from all lists except moderator lists
-    communityService_1.default.removeUserFromLists(community, ['members', 'pendingInvitedUsers', 'userJoinRequests', 'bannedUsers'], targetUserIdString);
-    // add to banned list
-    community.bannedUsers.push({
-        user: new mongoose_1.Types.ObjectId(targetUserIdString),
-        bannedBy: new mongoose_1.Types.ObjectId(req.userId)
-    });
+    const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
+    yield manageAction
+        .throwErrorIfNotInAnyList('User you are trying to ban is not a member of community, nor is he / she in pending lists. Maybe he / she already left')
+        .throwErrorIfCreatorActionTriedByNonCreator(existInLists.moderators.exists && !isCreator, 'User you are trying to ban is moderator. Only creator can ban moderators')
+        .throwErrorIfCreatorActionTriedByNonCreator(existInLists.pendingInvitedModerators.exists && !isCreator, 'User you are trying to ban is invited to be moderator. Only creator can ban moderators invitations')
+        .removeUserFromLists(['members', 'pendingInvitedUsers', 'userJoinRequests', 'bannedUsers', 'pendingInvitedModerators', 'moderators'])
+        .addUserToList('bannedUsers', { bannedBy: new mongoose_1.Types.ObjectId(req.userId) })
+        .saveCommunity();
     // remove user from community chats
     yield communityService_1.default.removeUserFromAllCommunityChats(community._id.toString(), community.availableChats.length, targetUserIdString, 'Failed to remove banned user from chats');
     const responseData = {
@@ -69,24 +47,19 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __a
         });
         responseData.bannedUserNotification = bannedUserNotification;
     }
-    yield community.save();
     return res.status(200).json(responseData);
 }));
-exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const existInLists = req.existInLists;
-    const isInOtherLists = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'bannedUsers');
-    if (isInOtherLists) {
-        next(new appError_1.default(400, `User you are trying to un-ban is member of ${existInLists[isInOtherLists].alias}. If this was not intended, remove user from this list`));
-        return;
-    }
-    if (!existInLists.bannedUsers.exists) {
-        next(new appError_1.default(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
-        return;
-    }
+exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const { targetUserId, shouldNotifyUser = false } = req.body;
     const targetUserIdString = targetUserId.toString();
     const community = req.community;
-    communityService_1.default.removeUserFromLists(community, ['bannedUsers'], targetUserIdString);
+    const existInLists = req.existInLists;
+    const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
+    yield manageAction
+        .throwErrorIfInAnyListExcept(['bannedUsers'])
+        .throwErrorIfUserNotInList('bannedUsers', 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned')
+        .removeUserFromLists(['bannedUsers'])
+        .saveCommunity();
     const responseData = {
         status: 'success',
         message: 'You have successfully removed ban for user',
@@ -101,25 +74,19 @@ exports.undoBanUserFromCommunity = (0, catchAsync_1.default)((req, res, next) =>
         });
         responseData.userRemovedBanNotifications = userRemovedBanNotifications;
     }
-    yield community.save();
     return res.status(200).json(responseData);
 }));
-exports.inviteUserToJoinAsMember = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.inviteUserToJoinAsMember = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const existInLists = req.existInLists;
-    const existInAnyLists = Object.keys(existInLists).find((list) => existInLists[list].exists);
-    if (existInAnyLists) {
-        next(new appError_1.default(400, `Invitation failed. User already found in ${existInLists[existInAnyLists].alias}.`));
-        return;
-    }
     const { targetUserId } = req.body;
     const targetUserIdString = targetUserId.toString();
     const community = req.community;
-    community.pendingInvitedUsers.push({
-        user: new mongoose_1.Types.ObjectId(targetUserIdString),
-        invitedBy: new mongoose_1.Types.ObjectId(req.userId)
-    });
+    const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
+    yield manageAction
+        .throwErrorIfInAnyListExcept([])
+        .addUserToList('pendingInvitedUsers', { invitedBy: new mongoose_1.Types.ObjectId(req.userId) })
+        .saveCommunity();
     const inviteUserNotification = yield communityService_1.default.createInviteUserNotification(targetUserIdString, req.userId, community._id.toString(), community.name, 'becomeCommunityMemberRequest');
-    yield community.save();
     return res.status(200).json({
         status: 'success',
         message: 'User successfully invited to join',
@@ -127,31 +94,18 @@ exports.inviteUserToJoinAsMember = (0, catchAsync_1.default)((req, res, next) =>
         inviteUserNotification
     });
 }));
-exports.inviteUserToJoinAsModerator = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.inviteUserToJoinAsModerator = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const community = req.community;
-    const isCreator = community.creator.toString() === req.userId.toString();
-    if (!isCreator) {
-        next(new appError_1.default(401, 'Only community creator can invite users to join as moderators'));
-        return;
-    }
-    const existInLists = req.existInLists;
-    // joinedUsers is not checked because creator can invite them to become moderators
-    const existInAnyListsExcetMembers = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'members');
-    if (existInAnyListsExcetMembers) {
-        next(new appError_1.default(400, `Invitation failed. User already found in ${existInLists[existInAnyListsExcetMembers].alias}.`));
-        return;
-    }
     const { targetUserId } = req.body;
     const targetUserIdString = targetUserId.toString();
-    // NOTE: if user is already in members, now he will be in 2 lists
-    // becuase he can decline moderator role and stay member
-    // This need to be handled in user accept invite
-    community.pendingInvitedModerators.push({
-        user: new mongoose_1.Types.ObjectId(targetUserIdString),
-        invitedBy: new mongoose_1.Types.ObjectId(req.userId)
-    });
+    const existInLists = req.existInLists;
+    const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
+    yield manageAction
+        .throwErrorIfInAnyListExcept(['members'])
+        .addUserToList('pendingInvitedModerators', { invitedBy: new mongoose_1.Types.ObjectId(req.userId) })
+        .saveCommunity();
     const inviteUserNotification = yield communityService_1.default.createInviteUserNotification(targetUserIdString, req.userId, community._id.toString(), community.name, 'becomeCommunityModeratorRequest');
-    yield community.save();
+    // await community.save();
     return res.status(200).json({
         status: 'success',
         message: 'User successfully invited to join as moderator',
@@ -159,80 +113,60 @@ exports.inviteUserToJoinAsModerator = (0, catchAsync_1.default)((req, res, next)
         inviteUserNotification
     });
 }));
-exports.withdrawCommunityInviteForUser = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.withdrawCommunityInviteForUser = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const existInLists = req.existInLists;
-    if (!existInLists.pendingInvitedUsers.exists) {
-        next(new appError_1.default(400, 'User in not found in pending invite list. Maybe he / she has declined request in the meantime'));
-        return;
-    }
-    const existInAnyLists = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'pendingInvitedUsers');
-    if (existInAnyLists) {
-        next(new appError_1.default(400, `User also exists in ${existInLists[existInAnyLists]}. If this was not indented, remove user from that list before proceeding.`));
-        return;
-    }
     const { targetUserId } = req.body;
     const targetUserIdString = targetUserId.toString();
     const community = req.community;
-    communityService_1.default.removeUserFromLists(community, ['pendingInvitedUsers'], targetUserIdString);
-    yield community.save();
+    const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
+    yield manageAction
+        .throwErrorIfInAnyListExcept(['pendingInvitedUsers'])
+        .throwErrorIfUserNotInList('pendingInvitedUsers', 'User is not in pending list. Maybe request was withdrew or declined before')
+        .removeUserFromLists(['pendingInvitedUsers'])
+        .saveCommunity();
     return res.status(200).json({
         status: 'success',
         message: 'You have successfully withdrew invite for user',
         userToWithdrawInviteId: targetUserIdString
     });
 }));
-exports.widthrawCommunityModeratorInvite = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+// doesnt need internal check if user is creator (only creators can deal with moderators)
+// because is done in permission middleware
+exports.widthrawCommunityModeratorInvite = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const community = req.community;
-    const isCreator = community.creator.toString() === req.userId.toString();
     const existInLists = req.existInLists;
-    if (!isCreator) {
-        next(new appError_1.default(401, 'Only community creator can withdraw moderator invitation'));
-        return;
-    }
     const { targetUserId } = req.body;
     const targetUserIdString = targetUserId.toString();
-    if (!existInLists.pendingInvitedModerators.exists) {
-        next(new appError_1.default(404, 'User not found in moderator invitation list. Maybe it has declined request. Try refreshing the page'));
-        return;
-    }
-    // user can be regular member while being invited as moderator
-    const existInAnyLists = Object.keys(existInLists)
-        .find((list) => existInLists[list].exists && list !== 'pendingInvitedModerators' && list !== 'members');
-    if (existInAnyLists) {
-        next(new appError_1.default(400, `User also exists in ${existInLists[existInAnyLists]}. If this was not indented, remove user from that list before proceeding.`));
-        return;
-    }
-    communityService_1.default.removeUserFromLists(community, ['pendingInvitedModerators'], targetUserIdString);
-    yield community.save();
+    const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
+    yield manageAction
+        .throwErrorIfUserNotInList('pendingInvitedModerators', 'User not found in moderator invitation list. Maybe it has declined request. Try refreshing the page')
+        .throwErrorIfInAnyListExcept(['members', 'pendingInvitedModerators'])
+        .removeUserFromLists(['pendingInvitedModerators'])
+        .saveCommunity();
     return res.status(200).json({
         status: 'success',
         message: 'Moderator invitation withdrew successfully',
         withdrewUserInviteId: targetUserId
     });
 }));
-exports.moderatorAcceptUserJoinRequest = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.moderatorAcceptUserJoinRequest = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const existInLists = req.existInLists;
-    if (!existInLists.userJoinRequests.exists) {
-        next(new appError_1.default(400, 'User is not in request list. Maybe it has withdrew request'));
-        return;
-    }
-    const existInAnyLists = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'userJoinRequests');
-    if (existInAnyLists) {
-        next(new appError_1.default(400, `User also exists in ${existInLists[existInAnyLists]}. If this was not indented, remove user from that list before proceeding.`));
-        return;
-    }
     const { targetUserId } = req.body;
     const targetUserIdString = targetUserId.toString();
     const community = req.community;
-    communityService_1.default.removeUserFromLists(community, ['userJoinRequests'], targetUserIdString);
-    community.members.push({ user: new mongoose_1.Types.ObjectId(targetUserIdString) });
+    const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
+    yield manageAction
+        .throwErrorIfInAnyListExcept(['userJoinRequests'])
+        .throwErrorIfUserNotInList('userJoinRequests', 'User is not in request list. Maybe request was removed before')
+        .removeUserFromLists(['userJoinRequests'])
+        .addUserToList('members')
+        .saveCommunity();
     const userNotification = yield notificationModel_1.default.create({
         receiver: targetUserId,
         community: community._id,
         text: `Your request to join "${community.name}" community has been approved. You are not a member`,
         notificationType: 'requestToJoinCommunityAccepted'
     });
-    yield community.save();
     return res.status(200).json({
         status: 'success',
         message: 'User join request approved successfully',
@@ -240,21 +174,17 @@ exports.moderatorAcceptUserJoinRequest = (0, catchAsync_1.default)((req, res, ne
         userNotification
     });
 }));
-exports.moderatorDeclineUserJoinRequest = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+exports.moderatorDeclineUserJoinRequest = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const existInLists = req.existInLists;
-    if (!existInLists.userJoinRequests.exists) {
-        next(new appError_1.default(400, 'User is not in request list. Maybe it has withdrew request'));
-        return;
-    }
-    const existInAnyLists = Object.keys(existInLists).find((list) => existInLists[list].exists && list !== 'userJoinRequests');
-    if (existInAnyLists) {
-        next(new appError_1.default(400, `User also exists in ${existInLists[existInAnyLists]}. If this was not indented, remove user from that list before proceeding.`));
-        return;
-    }
     const community = req.community;
     const { targetUserId } = req.body;
     const targetUserIdString = targetUserId.toString();
-    communityService_1.default.removeUserFromLists(community, ['userJoinRequests'], targetUserIdString);
+    const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
+    yield manageAction
+        .throwErrorIfUserNotInList('userJoinRequests', 'User is not in request list. Maybe it has withdrew request')
+        .throwErrorIfInAnyListExcept(['userJoinRequests'])
+        .removeUserFromLists(['userJoinRequests'])
+        .saveCommunity();
     const userNotification = yield notificationModel_1.default.create({
         receiver: targetUserId,
         community: community._id,

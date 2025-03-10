@@ -4,7 +4,8 @@ import Community, { CommunitySchemaType } from 'models/communityModel';
 import AppError from 'utils/appError';
 import User from 'models/userModel';
 import CommunitySettings from 'models/settings/communitySettingsModel';
-import { CommunityPermissionNameType, UserExistInListsType } from 'types/controllers/community';
+import { CommunityListType, CommunityPermissionNameType, UserExistInListsType } from 'types/controllers/community';
+import { COMMUNITY_LIST_RESPONSE_NAMES } from 'configs/community/community';
 
 export const doesCommunityExist = async (
   req: RequestWithCommunityType,
@@ -52,16 +53,20 @@ export const isUserCommunityCreator = async (
   }
 };
 
-export const havePermissionToPerformAction = (permissionName: CommunityPermissionNameType) => {
+export const havePermissionToPerformAction = (permissionName: CommunityPermissionNameType, creatorPermittedOnly?: boolean) => {
   return async (
     req: RequestWithCommunityType,
     _: Response,
     next: NextFunction
   ) => {
-    console.log(req.params, req.originalUrl, req.url.split('/'), req.baseUrl);
     try {
       const community = req.community! as CommunitySchemaType;
       const isCreator = community.creator.toString() == req.userId!.toString();
+
+      if (creatorPermittedOnly && !isCreator) {
+        next(new AppError(401, 'Action dennied: Only community creator is permitted to perform this action.'));
+        return;
+      }
       // if user is creator go next because creator has all permissions
       if (isCreator) {
         req.isCreator = true;
@@ -272,4 +277,42 @@ export const changesByModeratorRequireAdminApproval = async (
     next(error);
     return;
   }
+};
+
+export const isTargetUserInTargetList = (listName: CommunityListType) => {
+  return (
+    req: RequestWithCommunityType,
+    _: Response,
+    next: NextFunction
+  ) => {
+    const { targetUserId } = req.body;
+    const community = req.community!;
+
+    const isInList = community[listName].find((user) => user.user!.toString() === targetUserId.toString());
+    if (isInList) {
+      next(new AppError(400, `User is already in ${COMMUNITY_LIST_RESPONSE_NAMES[listName]} list`));
+      return;
+    }
+
+    next();
+  };
+};
+
+export const isNotInRequiredList = (listName: CommunityListType) => {
+  return (
+    req: RequestWithCommunityType,
+    _: Response,
+    next: NextFunction
+  ) => {
+    const { targetUserId } = req.body;
+    const community = req.community!;
+
+    const isInList = community[listName].find((user) => user.user!.toString() === targetUserId.toString());
+    if (!isInList) {
+      next(new AppError(400, `User is no found in ${COMMUNITY_LIST_RESPONSE_NAMES[listName]} list. Maybe request was removed.`));
+      return;
+    }
+
+    next();
+  };
 };

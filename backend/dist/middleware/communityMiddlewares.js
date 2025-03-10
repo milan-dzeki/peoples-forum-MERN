@@ -12,11 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changesByModeratorRequireAdminApproval = exports.isRequestUserAlreadyInLists = exports.isTargetUserAlreadyInLists = exports.isTargetUserLoggedInUser = exports.checkIfTargetUserExist = exports.havePermissionToPerformAction = exports.isUserCommunityCreator = exports.doesCommunityExist = void 0;
+exports.isNotInRequiredList = exports.isTargetUserInTargetList = exports.changesByModeratorRequireAdminApproval = exports.isRequestUserAlreadyInLists = exports.isTargetUserAlreadyInLists = exports.isTargetUserLoggedInUser = exports.checkIfTargetUserExist = exports.havePermissionToPerformAction = exports.isUserCommunityCreator = exports.doesCommunityExist = void 0;
 const communityModel_1 = __importDefault(require("models/communityModel"));
 const appError_1 = __importDefault(require("utils/appError"));
 const userModel_1 = __importDefault(require("models/userModel"));
 const communitySettingsModel_1 = __importDefault(require("models/settings/communitySettingsModel"));
+const community_1 = require("configs/community/community");
 const doesCommunityExist = (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { communityId } = req.params;
@@ -52,13 +53,16 @@ const isUserCommunityCreator = (req, _, next) => __awaiter(void 0, void 0, void 
     }
 });
 exports.isUserCommunityCreator = isUserCommunityCreator;
-const havePermissionToPerformAction = (permissionName) => {
+const havePermissionToPerformAction = (permissionName, creatorPermittedOnly) => {
     return (req, _, next) => __awaiter(void 0, void 0, void 0, function* () {
         var _a, _b;
-        console.log(req.params, req.originalUrl, req.url.split('/'), req.baseUrl);
         try {
             const community = req.community;
             const isCreator = community.creator.toString() == req.userId.toString();
+            if (creatorPermittedOnly && !isCreator) {
+                next(new appError_1.default(401, 'Action dennied: Only community creator is permitted to perform this action.'));
+                return;
+            }
             // if user is creator go next because creator has all permissions
             if (isCreator) {
                 req.isCreator = true;
@@ -231,3 +235,29 @@ const changesByModeratorRequireAdminApproval = (req, _, next) => __awaiter(void 
     }
 });
 exports.changesByModeratorRequireAdminApproval = changesByModeratorRequireAdminApproval;
+const isTargetUserInTargetList = (listName) => {
+    return (req, _, next) => {
+        const { targetUserId } = req.body;
+        const community = req.community;
+        const isInList = community[listName].find((user) => user.user.toString() === targetUserId.toString());
+        if (isInList) {
+            next(new appError_1.default(400, `User is already in ${community_1.COMMUNITY_LIST_RESPONSE_NAMES[listName]} list`));
+            return;
+        }
+        next();
+    };
+};
+exports.isTargetUserInTargetList = isTargetUserInTargetList;
+const isNotInRequiredList = (listName) => {
+    return (req, _, next) => {
+        const { targetUserId } = req.body;
+        const community = req.community;
+        const isInList = community[listName].find((user) => user.user.toString() === targetUserId.toString());
+        if (!isInList) {
+            next(new appError_1.default(400, `User is no found in ${community_1.COMMUNITY_LIST_RESPONSE_NAMES[listName]} list. Maybe request was removed.`));
+            return;
+        }
+        next();
+    };
+};
+exports.isNotInRequiredList = isNotInRequiredList;

@@ -12,7 +12,8 @@ exports.COMMUNITY_MODERATOR_REQUEST_TYPES = {
     UPDATE_RULES: 'update_rules',
     DELETE_SINGLE_RULE: 'delete_single_rule',
     DELETE_MULTIPLE_RULES: 'delete_multiple_rules',
-    DELETE_ALL_RULES: 'delete_all_rules'
+    DELETE_ALL_RULES: 'delete_all_rules',
+    BAN_USER: 'ban_user'
 };
 exports.ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES = [
     'newDescriptionValue',

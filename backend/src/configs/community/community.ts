@@ -23,3 +23,11 @@ export const COMMUNITY_PERMISSION_NAMES = {
   REMOVE_CHAT_MESSAGES: 'remove_chat_messages'
 } as const;
 
+export const COMMUNITY_LIST_RESPONSE_NAMES = {
+  'bannedUsers': 'banned users',
+  'members': 'members',
+  'pendingInvitedUsers': 'pending invited users',
+  'pendingInvitedModerators': 'pending invited moderators',
+  'userJoinRequests': 'request',
+  'moderators': 'moderators' 
+};

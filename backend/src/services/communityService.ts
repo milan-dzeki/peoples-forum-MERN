@@ -356,7 +356,9 @@ class CommunityService {
   }
 
   static removeUserFromLists (community: CommunitySchemaType, listNames: CommunityListType[], userId: string): void {
+    console.log(community, listNames, userId)
     for (const list of listNames) {
+      console.log(community[list])
       community[list].pull({ user: userId });
     }
   }

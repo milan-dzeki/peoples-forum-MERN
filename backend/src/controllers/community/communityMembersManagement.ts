@@ -4,21 +4,16 @@ import type { RequestWithCommunityType } from 'types/lib';
 import type { BannedUserResDataType, RemoveUserBanResDataType, UserExistInListsType } from 'types/controllers/community';
 import CommunityService from 'services/communityService';
 import catchAsync from 'utils/catchAsync';
-import AppError from 'utils/appError';
 import Notification from 'models/notificationModel';
 import { CommunitySchemaType } from 'models/communityModel';
+import CommunityUserManagerBuilder from 'utils/builders/community/communityUserManagerBuilder';
 
 export const banUserFromCommunity = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  next: NextFunction
+  _: NextFunction
 ) => {
   const existInLists = req.existInLists! as UserExistInListsType;
-
-  if (existInLists.bannedUsers.exists) {
-    next(new AppError(400, 'User is already banned from this community'));
-    return;
-  }
 
   const community = req.community! as CommunitySchemaType;
   const isCreator = req.isCreator!;
@@ -26,51 +21,31 @@ export const banUserFromCommunity = catchAsync (async (
   const { targetUserId, shouldNotifyUser = false } = req.body;
   const targetUserIdString: string = targetUserId.toString();
 
-  const existInAnyList = Object.keys(existInLists).some((list) => existInLists[list as keyof UserExistInListsType].exists);
-  if (!existInAnyList) {
-    next(new AppError(400, 'User you are trying to ban is not a member of community, nor is he / she in pending lists. Maybe he / she already left'));
-    return;
-  }
-  
-  if (existInLists.moderators.exists) {
-    if (!isCreator) {
-      next(new AppError(400, 'User you are trying to ban is moderator. Only creator can ban moderators'));
-      return;
-    }
-
-    CommunityService.removeUserFromLists(
-      community,
-      ['moderators'],
-      targetUserIdString
-    );
-  }
-
-  if (existInLists.pendingInvitedModerators.exists) {
-    if (!isCreator) {
-      next(new AppError(400, 'User you are trying to ban is invited to be moderator. Only creator can ban moderators invitations'));
-      return;
-    }
-
-    CommunityService.removeUserFromLists(
-      community,
-      ['pendingInvitedModerators'],
-      targetUserIdString
-    );
-  }
-
-  // remove from all lists except moderator lists
-  CommunityService.removeUserFromLists(
-    community,
-    ['members', 'pendingInvitedUsers', 'userJoinRequests', 'bannedUsers'],
-    targetUserIdString
+  const manageAction = new CommunityUserManagerBuilder(
+    community, 
+    targetUserIdString,
+    req.userId!,
+    existInLists
   );
 
-  // add to banned list
-  community.bannedUsers.push({
-    user: new Types.ObjectId(targetUserIdString),
-    bannedBy: new Types.ObjectId(req.userId!)
-  });
-
+  await manageAction
+    .throwErrorIfNotInAnyList(
+      'User you are trying to ban is not a member of community, nor is he / she in pending lists. Maybe he / she already left'
+    )
+    .throwErrorIfCreatorActionTriedByNonCreator(
+      existInLists.moderators.exists && !isCreator,
+      'User you are trying to ban is moderator. Only creator can ban moderators'
+    )
+    .throwErrorIfCreatorActionTriedByNonCreator(
+      existInLists.pendingInvitedModerators.exists && !isCreator,
+      'User you are trying to ban is invited to be moderator. Only creator can ban moderators invitations'
+    )
+    .removeUserFromLists(
+      ['members', 'pendingInvitedUsers', 'userJoinRequests', 'bannedUsers', 'pendingInvitedModerators', 'moderators']
+    )
+    .addUserToList('bannedUsers', { bannedBy: new Types.ObjectId(req.userId!) })
+    .saveCommunity()
+  
   // remove user from community chats
   await CommunityService.removeUserFromAllCommunityChats(community._id.toString(), community.availableChats.length, targetUserIdString, 'Failed to remove banned user from chats');
 
@@ -90,39 +65,37 @@ export const banUserFromCommunity = catchAsync (async (
     responseData.bannedUserNotification = bannedUserNotification;
   }
 
-  await community.save();
-
   return res.status(200).json(responseData);
 });
 
 export const undoBanUserFromCommunity = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  next: NextFunction
+  _: NextFunction
 ) => {
-  const existInLists = req.existInLists! as UserExistInListsType;
-
-  const isInOtherLists = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'bannedUsers');
-  if (isInOtherLists) {
-    next(new AppError(400, `User you are trying to un-ban is member of ${existInLists[isInOtherLists as keyof UserExistInListsType].alias}. If this was not intended, remove user from this list`));
-    return;
-  }
-
-  if (!existInLists.bannedUsers.exists) {
-    next(new AppError(400, 'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'));
-    return;
-  }
-
   const { targetUserId, shouldNotifyUser = false } = req.body;  
   const targetUserIdString: string = targetUserId.toString();
 
   const community = req.community! as CommunitySchemaType;
+  const existInLists = req.existInLists! as UserExistInListsType;
 
-  CommunityService.removeUserFromLists(
-    community,
-    ['bannedUsers'],
-    targetUserIdString
+  const manageAction = new CommunityUserManagerBuilder(
+    community, 
+    targetUserIdString,
+    req.userId!,
+    existInLists
   );
+
+  await manageAction
+    .throwErrorIfInAnyListExcept(
+      ['bannedUsers']
+    )
+    .throwErrorIfUserNotInList(
+      'bannedUsers',
+      'User you are trying to un-ban is not in banned users list. You cannot un-ban user that is not banned'
+    )
+    .removeUserFromLists(['bannedUsers'])
+    .saveCommunity()
 
   const responseData: RemoveUserBanResDataType = {
     status: 'success',
@@ -141,33 +114,31 @@ export const undoBanUserFromCommunity = catchAsync (async (
     responseData.userRemovedBanNotifications = userRemovedBanNotifications;
   }
 
-  await community.save();
-
   return res.status(200).json(responseData);
 });
 
 export const inviteUserToJoinAsMember = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  next: NextFunction
+  _: NextFunction
 ) => {
   const existInLists = req.existInLists! as UserExistInListsType;
-  const existInAnyLists = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists);
-  
-  if (existInAnyLists) {
-    next(new AppError(400, `Invitation failed. User already found in ${existInLists[existInAnyLists as keyof UserExistInListsType].alias}.`));
-    return;
-  }
-
   const { targetUserId } = req.body;
   const targetUserIdString: string = targetUserId.toString();
 
   const community = req.community! as CommunitySchemaType;
 
-  community.pendingInvitedUsers.push({
-    user: new Types.ObjectId(targetUserIdString),
-    invitedBy: new Types.ObjectId(req.userId!)
-  });
+  const manageAction = new CommunityUserManagerBuilder(
+    community, 
+    targetUserIdString,
+    req.userId!,
+    existInLists
+  );
+
+  await manageAction
+    .throwErrorIfInAnyListExcept([])
+    .addUserToList('pendingInvitedUsers', { invitedBy: new Types.ObjectId(req.userId!) })
+    .saveCommunity()
 
   const inviteUserNotification = await CommunityService.createInviteUserNotification(
     targetUserIdString,
@@ -176,8 +147,6 @@ export const inviteUserToJoinAsMember = catchAsync (async (
     community.name,
     'becomeCommunityMemberRequest'
   );
-
-  await community.save();
 
   return res.status(200).json({
     status: 'success',
@@ -190,34 +159,25 @@ export const inviteUserToJoinAsMember = catchAsync (async (
 export const inviteUserToJoinAsModerator = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  next: NextFunction
+  _: NextFunction
 ) => {
   const community = req.community! as CommunitySchemaType;
-  const isCreator = community.creator.toString() === req.userId!.toString();
-  if (!isCreator) {
-    next(new AppError(401, 'Only community creator can invite users to join as moderators'));
-    return;
-  }
-
-  const existInLists = req.existInLists! as UserExistInListsType;
-
-  // joinedUsers is not checked because creator can invite them to become moderators
-  const existInAnyListsExcetMembers = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'members');
-  if (existInAnyListsExcetMembers) {
-    next(new AppError(400, `Invitation failed. User already found in ${existInLists[existInAnyListsExcetMembers as keyof UserExistInListsType].alias}.`));
-    return;
-  }
-
   const { targetUserId } = req.body;
   const targetUserIdString: string = targetUserId.toString();
 
-  // NOTE: if user is already in members, now he will be in 2 lists
-  // becuase he can decline moderator role and stay member
-  // This need to be handled in user accept invite
-  community.pendingInvitedModerators.push({
-    user: new Types.ObjectId(targetUserIdString),
-    invitedBy: new Types.ObjectId(req.userId!)
-  });
+  const existInLists = req.existInLists! as UserExistInListsType;
+
+  const manageAction = new CommunityUserManagerBuilder(
+    community, 
+    targetUserIdString,
+    req.userId!,
+    existInLists
+  );
+
+  await manageAction
+    .throwErrorIfInAnyListExcept(['members'])
+    .addUserToList('pendingInvitedModerators', { invitedBy: new Types.ObjectId(req.userId!) })
+    .saveCommunity()
 
   const inviteUserNotification = await CommunityService.createInviteUserNotification(
     targetUserIdString,
@@ -227,7 +187,7 @@ export const inviteUserToJoinAsModerator = catchAsync (async (
     'becomeCommunityModeratorRequest'
   );
 
-  await community.save();
+  // await community.save();
 
   return res.status(200).json({
     status: 'success',
@@ -240,32 +200,28 @@ export const inviteUserToJoinAsModerator = catchAsync (async (
 export const withdrawCommunityInviteForUser = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  next: NextFunction
+  _: NextFunction
 ) => {
   const existInLists = req.existInLists! as UserExistInListsType;
-
-  if (!existInLists.pendingInvitedUsers.exists) {
-    next(new AppError(400, 'User in not found in pending invite list. Maybe he / she has declined request in the meantime'));
-    return;
-  }
-
-  const existInAnyLists = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'pendingInvitedUsers');
-  if (existInAnyLists) {
-    next(new AppError(400, `User also exists in ${existInLists[existInAnyLists as keyof UserExistInListsType]}. If this was not indented, remove user from that list before proceeding.`));
-    return;
-  }
-
   const { targetUserId } = req.body;
   const targetUserIdString = targetUserId.toString();
   const community = req.community! as CommunitySchemaType;
 
-  CommunityService.removeUserFromLists(
-    community,
-    ['pendingInvitedUsers'],
-    targetUserIdString
+  const manageAction = new CommunityUserManagerBuilder(
+    community, 
+    targetUserIdString,
+    req.userId!,
+    existInLists
   );
 
-  await community.save();
+  await manageAction
+    .throwErrorIfInAnyListExcept(['pendingInvitedUsers'])
+    .throwErrorIfUserNotInList(
+      'pendingInvitedUsers',
+      'User is not in pending list. Maybe request was withdrew or declined before'
+    )
+    .removeUserFromLists(['pendingInvitedUsers'])
+    .saveCommunity()
 
   return res.status(200).json({
     status: 'success',
@@ -274,43 +230,34 @@ export const withdrawCommunityInviteForUser = catchAsync (async (
   });
 });
 
+// doesnt need internal check if user is creator (only creators can deal with moderators)
+// because is done in permission middleware
 export const widthrawCommunityModeratorInvite = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  next: NextFunction
+  _: NextFunction
 ) => {
   const community = req.community! as CommunitySchemaType;
-  const isCreator = community.creator.toString() === req.userId!.toString();
   const existInLists = req.existInLists! as UserExistInListsType;
-
-  if (!isCreator) {
-    next(new AppError(401, 'Only community creator can withdraw moderator invitation'));
-    return;
-  }
 
   const { targetUserId } = req.body;
   const targetUserIdString = targetUserId.toString();
 
-  if (!existInLists.pendingInvitedModerators.exists) {
-    next(new AppError(404, 'User not found in moderator invitation list. Maybe it has declined request. Try refreshing the page'));
-    return;
-  }
-
-  // user can be regular member while being invited as moderator
-  const existInAnyLists = Object.keys(existInLists)
-    .find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'pendingInvitedModerators' && list !== 'members');
-  if (existInAnyLists) {
-    next(new AppError(400, `User also exists in ${existInLists[existInAnyLists as keyof UserExistInListsType]}. If this was not indented, remove user from that list before proceeding.`));
-    return;
-  }
-
-  CommunityService.removeUserFromLists(
-    community,
-    ['pendingInvitedModerators'],
-    targetUserIdString
+  const manageAction = new CommunityUserManagerBuilder(
+    community, 
+    targetUserIdString,
+    req.userId!,
+    existInLists
   );
 
-  await community.save();
+  await manageAction
+    .throwErrorIfUserNotInList(
+      'pendingInvitedModerators',
+      'User not found in moderator invitation list. Maybe it has declined request. Try refreshing the page'
+    )
+    .throwErrorIfInAnyListExcept(['members', 'pendingInvitedModerators'])
+    .removeUserFromLists(['pendingInvitedModerators'])
+    .saveCommunity()
 
   return res.status(200).json({
     status: 'success',
@@ -322,32 +269,29 @@ export const widthrawCommunityModeratorInvite = catchAsync (async (
 export const moderatorAcceptUserJoinRequest = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  next: NextFunction
+  _: NextFunction
 ) => {
   const existInLists = req.existInLists! as UserExistInListsType;
-
-  if (!existInLists.userJoinRequests.exists) {
-    next(new AppError(400, 'User is not in request list. Maybe it has withdrew request'));
-    return;
-  }
-
-  const existInAnyLists = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'userJoinRequests');
-  if (existInAnyLists) {
-    next(new AppError(400, `User also exists in ${existInLists[existInAnyLists as keyof UserExistInListsType]}. If this was not indented, remove user from that list before proceeding.`));
-    return;
-  }
-
   const { targetUserId } = req.body;
   const targetUserIdString: string = targetUserId.toString();
   const community = req.community! as CommunitySchemaType;
 
-  CommunityService.removeUserFromLists(
-    community,
-    ['userJoinRequests'],
-    targetUserIdString
+  const manageAction = new CommunityUserManagerBuilder(
+    community, 
+    targetUserIdString,
+    req.userId!,
+    existInLists
   );
 
-  community.members.push({ user: new Types.ObjectId(targetUserIdString) });
+  await manageAction
+    .throwErrorIfInAnyListExcept(['userJoinRequests'])
+    .throwErrorIfUserNotInList(
+      'userJoinRequests',
+      'User is not in request list. Maybe request was removed before'
+    )
+    .removeUserFromLists(['userJoinRequests'])
+    .addUserToList('members')
+    .saveCommunity()
 
   const userNotification = await Notification.create({
     receiver: targetUserId,
@@ -355,8 +299,6 @@ export const moderatorAcceptUserJoinRequest = catchAsync (async (
     text: `Your request to join "${community.name}" community has been approved. You are not a member`,
     notificationType: 'requestToJoinCommunityAccepted'
   });
-
-  await community.save();
 
   return res.status(200).json({
     status: 'success',
@@ -369,30 +311,28 @@ export const moderatorAcceptUserJoinRequest = catchAsync (async (
 export const moderatorDeclineUserJoinRequest = catchAsync (async (
   req: RequestWithCommunityType,
   res: Response,
-  next: NextFunction
+  _: NextFunction
 ) => {
   const existInLists = req.existInLists! as UserExistInListsType;
-
-  if (!existInLists.userJoinRequests.exists) {
-    next(new AppError(400, 'User is not in request list. Maybe it has withdrew request'));
-    return;
-  }
-
-  const existInAnyLists = Object.keys(existInLists).find((list) => existInLists[list as keyof UserExistInListsType].exists && list !== 'userJoinRequests');
-  if (existInAnyLists) {
-    next(new AppError(400, `User also exists in ${existInLists[existInAnyLists as keyof UserExistInListsType]}. If this was not indented, remove user from that list before proceeding.`));
-    return;
-  }
-
   const community = req.community! as CommunitySchemaType;
   const { targetUserId } = req.body;
   const targetUserIdString = targetUserId.toString();
 
-  CommunityService.removeUserFromLists(
-    community,
-    ['userJoinRequests'],
-    targetUserIdString
+  const manageAction = new CommunityUserManagerBuilder(
+    community, 
+    targetUserIdString,
+    req.userId!,
+    existInLists
   );
+
+  await manageAction
+    .throwErrorIfUserNotInList(
+      'userJoinRequests',
+      'User is not in request list. Maybe it has withdrew request'
+    )
+    .throwErrorIfInAnyListExcept(['userJoinRequests'])
+    .removeUserFromLists(['userJoinRequests'])
+    .saveCommunity()
 
   const userNotification = await Notification.create({
     receiver: targetUserId,

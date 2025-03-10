@@ -9,7 +9,9 @@ import {
   havePermissionToPerformAction, 
   isTargetUserAlreadyInLists, 
   isRequestUserAlreadyInLists, 
-  changesByModeratorRequireAdminApproval 
+  changesByModeratorRequireAdminApproval ,
+  isTargetUserInTargetList,
+  isNotInRequiredList
 } from 'middleware/communityMiddlewares';
 import {
   communityCRUD,
@@ -166,7 +168,9 @@ router.patch(
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.BAN_USERS),
+  isTargetUserInTargetList('bannedUsers'),
   isTargetUserAlreadyInLists,
+  changesByModeratorRequireAdminApproval,
   banUserFromCommunity
 );
 
@@ -186,6 +190,7 @@ router.patch(
   checkIfTargetUserExist,
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.INVITE_USERS_AS_MEMBERS),
   isTargetUserLoggedInUser,
+  isTargetUserInTargetList('pendingInvitedUsers'),
   isTargetUserAlreadyInLists,
   inviteUserToJoinAsMember
 );
@@ -194,6 +199,7 @@ router.patch(
   '/:communityId/inviteToJoinAsModerator',
   doesCommunityExist,
   checkIfTargetUserExist,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.INVITE_USERS_AS_MODERATORS, true),
   isTargetUserAlreadyInLists,
   inviteUserToJoinAsModerator
 );
@@ -205,6 +211,7 @@ router.patch(
   isTargetUserLoggedInUser,
   isTargetUserAlreadyInLists,
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.WITHDRAW_INVITE_USERS_AS_MEMBERS),
+  isNotInRequiredList('pendingInvitedUsers'),
   withdrawCommunityInviteForUser
 );
 
@@ -214,6 +221,7 @@ router.patch(
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
   isTargetUserAlreadyInLists,
+  havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.WITHDRAW_INVITE_USERS_AS_MODERATORS, true),
   widthrawCommunityModeratorInvite
 );
 
@@ -222,8 +230,9 @@ router.patch(
   doesCommunityExist, 
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
-  isTargetUserAlreadyInLists,
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.ACCEPT_JOIN_REQUESTS),
+  isNotInRequiredList('userJoinRequests'),
+  isTargetUserAlreadyInLists,
   moderatorAcceptUserJoinRequest
 );
 
@@ -232,8 +241,9 @@ router.patch(
   doesCommunityExist, 
   checkIfTargetUserExist,
   isTargetUserLoggedInUser,
-  isTargetUserAlreadyInLists,
   havePermissionToPerformAction(COMMUNITY_PERMISSION_NAMES.DECLINE_JOIN_REQUESTS),
+  isNotInRequiredList('userJoinRequests'),
+  isTargetUserAlreadyInLists,
   moderatorDeclineUserJoinRequest,
 );
 
