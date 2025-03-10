@@ -81,7 +81,7 @@ const havePermissionToPerformAction = (permissionName, creatorPermittedOnly) => 
                 return;
             }
             // if fails to find settings throw error
-            const communitySettingsModeratorPermissions = yield communitySettingsModel_1.default.findOne({ community: community._id }).select('moderators_settings -_id');
+            const communitySettingsModeratorPermissions = yield communitySettingsModel_1.default.findOne({ community: community._id });
             if (!communitySettingsModeratorPermissions || !((_b = (_a = communitySettingsModeratorPermissions.moderators_settings) === null || _a === void 0 ? void 0 : _a.moderatorPermissions) === null || _b === void 0 ? void 0 : _b.value)) {
                 next(new appError_1.default(404, 'Cannot access community settings. Try updating settings and save changes.'));
                 return;

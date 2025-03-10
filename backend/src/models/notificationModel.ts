@@ -24,7 +24,8 @@ const notificationsSchema = new Schema({
       NOTIFICATION_TYPES.COMMUNITY_SETTINGS_CHANGED,
       NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_DECLINED,
       NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-      NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED
+      NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+      NOTIFICATION_TYPES.USERS_MANAGED_BY_MODERATOR
     ]
   },
   text: {
@@ -54,6 +55,10 @@ const notificationsSchema = new Schema({
   chat: {
     type: Schema.Types.ObjectId,
     ref: 'Chat'
+  },
+  user: {
+    type: Schema.Types.ObjectId,
+    ref: 'User'
   }
 }, {
   timestamps: true

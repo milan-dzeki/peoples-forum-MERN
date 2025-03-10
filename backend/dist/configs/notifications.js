@@ -16,7 +16,8 @@ exports.NOTIFICATION_TYPES = {
     COMMUNITY_SETTINGS_CHANGED: 'communitySettingsChanged',
     MODERATOR_CHANGE_REQUEST_DECLINED: 'moderatorChangeRequestDeclined',
     MODERATOR_CHANGE_REQUEST_APPROVED: 'moderatorChangeRequestApproved',
-    COMMUNITY_INFO_UPDATED: 'communityInfoUpdated'
+    COMMUNITY_INFO_UPDATED: 'communityInfoUpdated',
+    USERS_MANAGED_BY_MODERATOR: 'usersManagedByModerator'
 };
 // becomeCommunityModeratorRequest
 //becomeCommunityMemberRequest

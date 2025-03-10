@@ -6,6 +6,7 @@ import { ModeratorRequestType } from './communityModeratorRequests';
 import { CommunityActivityLogType } from './communityActivityLogs';
 import { NotificationType } from 'types/models/notificationModelTypes';
 import { CommunitySchemaType } from 'models/communityModel';
+import { NOTIFICATION_TYPES } from 'configs/notifications';
 
 export interface CommunityRuleType {
   title: string;
@@ -33,20 +34,6 @@ export interface PrepareCommunityForCreateType {
   bannerImagePublicId?: string;
   profileImageUrl?: string;
   profileImagePublicId?: string;
-}
-
-export interface BannedUserResDataType {
-  status: string;
-  message: string;
-  bannedUserId: string;
-  bannedUserNotification?: NotificationSchemaType;
-}
-
-export interface RemoveUserBanResDataType {
-  status: string;
-  message: string;
-  userRemovedBanId: string;
-  userRemovedBanNotifications?: NotificationSchemaType;
 }
 
 export type CommunityListType = 'bannedUsers' | 'members' | 'pendingInvitedUsers' | 'pendingInvitedModerators' | 'userJoinRequests' | 'moderators';
@@ -152,4 +139,29 @@ export interface HandleSendUpdateCommunityFieldRequestResponseActionType {
     newDescription?: string;
     newProfilePhoto?: string;
   }
+}
+
+export interface CommunityUserManagenentNotificationInputType {
+  notificationType: NotificationType;
+  text: string;
+  receiver: Types.ObjectId | string;
+  sender?: Types.ObjectId | string;
+  user?: Types.ObjectId | string;
+  community?: Types.ObjectId | string;
+}
+
+export interface CommunityUserManagementResponseJsonType {
+  res: Response;
+  message: string;
+  targetUserId: string;
+  userNotification?: NotificationSchemaType;
+  creatorNotification?: NotificationSchemaType;
+}
+
+export interface CommunityUserManagementResponseJsonDataType {
+  status: 'success';
+  message: string;
+  targetUserId: string;
+  userNotification?: NotificationSchemaType;
+  creatorNotification?: NotificationSchemaType;
 }

@@ -90,7 +90,7 @@ export const havePermissionToPerformAction = (permissionName: CommunityPermissio
       }
 
       // if fails to find settings throw error
-      const communitySettingsModeratorPermissions = await CommunitySettings.findOne({ community: community._id }).select('moderators_settings -_id');
+      const communitySettingsModeratorPermissions = await CommunitySettings.findOne({ community: community._id });
       
       if (!communitySettingsModeratorPermissions || !communitySettingsModeratorPermissions.moderators_settings?.moderatorPermissions?.value) {
         next(new AppError(404, 'Cannot access community settings. Try updating settings and save changes.'));

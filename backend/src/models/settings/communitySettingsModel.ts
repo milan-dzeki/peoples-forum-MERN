@@ -8,6 +8,12 @@ const communitySettingsSchema = new Schema({
     ref: 'Community',
     required: true
   },
+  notifyCreatorForUserManagementActions: {
+    value: {
+      type: Boolean,
+      default: false
+    }
+  },
   access: {
     value: {
       type: String,

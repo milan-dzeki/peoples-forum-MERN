@@ -7,6 +7,8 @@ import {
   CommunityListType, 
   CommunityRuleType, 
   CommunityUpdateRuleType,  
+  CommunityUserManagementResponseJsonDataType,  
+  CommunityUserManagementResponseJsonType,  
   ModeratorNotificationType, 
   SendUpdateFieldRequestResponseType, 
   UpdateFieldResponseJsonType
@@ -16,6 +18,7 @@ import { PreparedNotificationType } from 'types/models/notificationModelTypes';
 import CommunityValidator from 'configs/validators/community/communityValidator';
 import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 import cloudinary from 'configs/cloudinary';
+import { NOTIFICATION_TYPES } from 'configs/notifications';
 
 class CommunityService {
   static updateFieldHandlers = {
@@ -368,7 +371,7 @@ class CommunityService {
     invitatorId: string,
     communityId: string,
     communityName: string,
-    notificationType: 'becomeCommunityMemberRequest' | 'becomeCommunityModeratorRequest'
+    notificationType: typeof NOTIFICATION_TYPES.BECOME_COMMUNITY_MEMBER_INVITATION | typeof NOTIFICATION_TYPES.BECOME_COMMUNITY_MODERATOR_INVITATION
   ) {
     try {
       const invitator = await User.findById(invitatorId).select('fullName profilePhotoUrl');
@@ -485,6 +488,32 @@ class CommunityService {
 
     if (updatedRules) {
       responseJson.updatedRules = updatedRules;
+    }
+
+    return res.status(200).json(responseJson);
+  }
+
+  static createCommunityUserManagementRequestResponse (resData: CommunityUserManagementResponseJsonType) {
+    const { 
+      res ,
+      message,
+      targetUserId,
+      userNotification,
+      creatorNotification
+
+    } = resData;
+    const responseJson: CommunityUserManagementResponseJsonDataType = {
+      status: 'success',
+      message: message,
+      targetUserId: targetUserId
+    };
+
+    if (resData.userNotification) {
+      responseJson.userNotification = userNotification;
+    }
+
+    if (resData.creatorNotification) {
+      responseJson.creatorNotification = creatorNotification;
     }
 
     return res.status(200).json(responseJson);

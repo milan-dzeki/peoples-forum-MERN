@@ -2,9 +2,7 @@ import { Response } from "express";
 import { Types } from "mongoose";
 import CommunityActivityLogsService from "services/communityActivityLogsService";
 import Notification, { NotificationSchemaType } from "models/notificationModel";
-import { HandleSendUpdateCommunityFieldRequestResponseActionType, SendUpdateFieldRequestResponseType, UpdateFieldResponseJsonType } from "types/controllers/community";
-import { CommunitySchemaType } from "models/communityModel";
-import { CommunityModeratorChangeRequestSchemaType } from "models/communityModeratorChangeRequestModel";
+import { HandleSendUpdateCommunityFieldRequestResponseActionType, SendUpdateFieldRequestResponseType } from "types/controllers/community";
 import { NOTIFICATION_TYPES } from "configs/notifications";
 import CommunityService from "services/communityService";
 

@@ -25,7 +25,8 @@ const notificationsSchema = new mongoose_1.Schema({
             notifications_1.NOTIFICATION_TYPES.COMMUNITY_SETTINGS_CHANGED,
             notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_DECLINED,
             notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-            notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED
+            notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            notifications_1.NOTIFICATION_TYPES.USERS_MANAGED_BY_MODERATOR
         ]
     },
     text: {
@@ -55,6 +56,10 @@ const notificationsSchema = new mongoose_1.Schema({
     chat: {
         type: mongoose_1.Schema.Types.ObjectId,
         ref: 'Chat'
+    },
+    user: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: 'User'
     }
 }, {
     timestamps: true

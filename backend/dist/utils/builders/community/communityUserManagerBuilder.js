@@ -14,12 +14,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const appError_1 = __importDefault(require("utils/appError"));
 const communityService_1 = __importDefault(require("services/communityService"));
+const notificationModel_1 = __importDefault(require("models/notificationModel"));
 class CommunityUserManagerBuilder {
     constructor(community, userId, operatorId, userExistsInLists) {
         this.community = community;
         this.userId = userId;
         this.operatorId = operatorId;
         this.userExistsInLists = userExistsInLists;
+        this.userNotificationInput = undefined;
+        this.creatorNotificationInput = undefined;
+        this.resJson = {
+            res: {},
+            message: '',
+            targetUserId: ''
+        };
     }
     throwErrorIfNotInAnyList(errorMsg) {
         const existInAnyList = Object.keys(this.userExistsInLists)
@@ -61,6 +69,44 @@ class CommunityUserManagerBuilder {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.community.save();
             return this;
+        });
+    }
+    setUserNotification(input) {
+        this.userNotificationInput = input;
+        return this;
+    }
+    setCreatorNotification(input) {
+        this.creatorNotificationInput = input;
+        return this;
+    }
+    createNotification(input) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (input) {
+                const notification = yield notificationModel_1.default.create(input);
+                return notification;
+            }
+            return null;
+        });
+    }
+    setResJson(input) {
+        this.resJson = input;
+        return this;
+    }
+    execute() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const sendUserNotification = yield this.createNotification(this.userNotificationInput);
+            const sendCreatorNotification = yield this.createNotification(this.creatorNotificationInput);
+            if (this.resJson.message.trim().length === 0) {
+                throw new appError_1.default(400, 'Invalid response set up. No message found');
+            }
+            const response = this.resJson;
+            if (sendUserNotification) {
+                response.userNotification = sendUserNotification;
+            }
+            if (sendCreatorNotification) {
+                response.creatorNotification = sendCreatorNotification;
+            }
+            return communityService_1.default.createCommunityUserManagementRequestResponse(response);
         });
     }
 }

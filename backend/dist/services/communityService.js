@@ -171,6 +171,21 @@ class CommunityService {
         }
         return res.status(200).json(responseJson);
     }
+    static createCommunityUserManagementRequestResponse(resData) {
+        const { res, message, targetUserId, userNotification, creatorNotification } = resData;
+        const responseJson = {
+            status: 'success',
+            message: message,
+            targetUserId: targetUserId
+        };
+        if (resData.userNotification) {
+            responseJson.userNotification = userNotification;
+        }
+        if (resData.creatorNotification) {
+            responseJson.creatorNotification = creatorNotification;
+        }
+        return res.status(200).json(responseJson);
+    }
 }
 _a = CommunityService;
 CommunityService.updateFieldHandlers = {
