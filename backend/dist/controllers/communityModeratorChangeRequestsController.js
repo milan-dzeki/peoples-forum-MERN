@@ -18,8 +18,8 @@ const appError_1 = __importDefault(require("utils/appError"));
 const notifications_1 = require("configs/notifications");
 const communityModeratorChangeRequestsSerivce_1 = __importDefault(require("services/communityModeratorChangeRequestsSerivce"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
-const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
-const communityActivityLogs_2 = require("configs/communityActivityLogs");
+const communityActivityLogsModel_1 = __importDefault(require("models/communityActivityLogsModel"));
+const communityActivityLogs_1 = require("configs/community/communityActivityLogs");
 exports.declineModeratorRequest = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // CommunityService.updateCommunityField.update_description(req.community!);
     const moderatorRequest = req.moderatorRequest;
@@ -48,9 +48,9 @@ exports.declineModeratorRequest = (0, catchAsync_1.default)((req, res, next) => 
         });
         responseJson.moderatorNotification = moderatorNotification;
     }
-    yield communityActivityLogs_1.default.create({
+    yield communityActivityLogsModel_1.default.create({
         community: community._id,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
         moderator: moderatorRequest.moderator,
         text: `declined request to ${moderatorRequest.requestType} made by moderator *user*`,
         moderatorRequest: moderatorRequest._id

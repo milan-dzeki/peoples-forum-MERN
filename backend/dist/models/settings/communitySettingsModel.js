@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
-const community_1 = require("configs/community");
+const community_1 = require("configs/community/community");
 const communitySettingsSchema = new mongoose_1.Schema({
     community: {
         type: mongoose_1.Schema.Types.ObjectId,

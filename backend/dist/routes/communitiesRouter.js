@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const express_formidable_1 = __importDefault(require("express-formidable"));
-const community_1 = require("configs/community");
+const community_1 = require("configs/community/community");
 const isAuthMiddleware_1 = __importDefault(require("middleware/isAuthMiddleware"));
 const communityMiddlewares_1 = require("middleware/communityMiddlewares");
 const community_2 = require("controllers/community");

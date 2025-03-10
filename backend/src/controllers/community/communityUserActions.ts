@@ -9,7 +9,7 @@ import User from 'models/userModel';
 import Notification, { NotificationSchemaType } from 'models/notificationModel';
 import CommunitySettings from 'models/settings/communitySettingsModel';
 import CommunityService from 'services/communityService';
-import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community/community';
 
 export const userRequestCommunityJoin = catchAsync (async (
   req: RequestWithCommunityType,

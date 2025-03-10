@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 const communityInputRules_1 = __importDefault(require("configs/validators/community/communityInputRules"));
-const community_1 = require("configs/community");
+const community_1 = require("configs/community/community");
 const communitySchema = new mongoose_1.Schema({
     creator: {
         type: mongoose_1.Schema.Types.ObjectId,

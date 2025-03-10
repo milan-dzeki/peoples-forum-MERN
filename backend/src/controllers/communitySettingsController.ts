@@ -1,17 +1,17 @@
 import { Response, NextFunction } from 'express';
 import type { RequestWithCommunitySettingsType } from 'types/lib';
-import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community/community';
 import { 
   ALLOWED_JOINED_MEMBERS_POST_SETTINGS_NAMES, 
   ALLOWED_JOINED_MEMBERS_CHATS_SETTINGS_NAMES,
   ALLOWED_NON_MEMBERS_PERMISSION_NAMES
-} from 'configs/communitySettings';
+} from 'configs/community/communitySettings';
 import catchAsync from 'utils/catchAsync';
 import AppError from 'utils/appError';
 import CommunitySettingsService from 'services/communitySettingsService';
 import { ChatsSettings, NonMembersPermissions, PostsSettings } from 'types/controllers/communitySettings';
-import CommunitySettingsValidator from 'configs/validators/communitySettings/CommunitySettingsValidator';
-import CommunityActivityLog from 'models/communityActivityLogs';
+import CommunitySettingsValidator from 'configs/validators/communitySettings/communitySettingsValidator';
+import CommunityActivityLog from 'models/communityActivityLogsModel';
 import { CommunitySettingsResponseType } from 'types/controllers/communitySettings';
 
 export const getCommunitySettings = catchAsync (async (

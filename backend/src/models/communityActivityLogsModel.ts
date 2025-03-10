@@ -1,5 +1,5 @@
 import { Schema, models, model } from 'mongoose';
-import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
+import { COMMUNITY_LOG_TYPE } from 'configs/community/communityActivityLogs';
 
 const communityActivityLogsSchema = new Schema({
   community: {

@@ -6,16 +6,12 @@ import User from 'models/userModel';
 import { 
   CommunityListType, 
   CommunityRuleType, 
-  CommunityUpdateRuleType, 
-  HandleSendModeratorRequestResponseActionParameters, 
-  HandleSendUpdateCommunityFieldRequestResponseActionType, 
+  CommunityUpdateRuleType,  
   ModeratorNotificationType, 
   SendUpdateFieldRequestResponseType, 
   UpdateFieldResponseJsonType
 } from 'types/controllers/community';
 import AppError from 'utils/appError';
-import CommunityModeratorChangeRequestService from './communityModeratorChangeRequestsSerivce';
-import CommunityActivityLogsService from './communityActivityLogsService';
 import { PreparedNotificationType } from 'types/models/notificationModelTypes';
 import CommunityValidator from 'configs/validators/community/communityValidator';
 import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';

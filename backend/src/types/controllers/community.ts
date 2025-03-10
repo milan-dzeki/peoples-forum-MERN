@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { Types } from 'mongoose';
-import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community/community';
 import { NotificationSchemaType } from 'models/notificationModel';
 import { ModeratorRequestType } from './communityModeratorRequests';
 import { CommunityActivityLogType } from './communityActivityLogs';

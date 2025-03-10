@@ -1,5 +1,5 @@
 import { Schema, models, model, HydratedDocument, InferSchemaType } from 'mongoose';
-import { COMMUNITY_MODERATOR_REQUEST_TYPES } from 'configs/communityModeratorChangeRequests';
+import { COMMUNITY_MODERATOR_REQUEST_TYPES } from 'configs/community/communityModeratorChangeRequests';
 
 const communityModeratorChangeRequestSchema = new Schema({
   status: {

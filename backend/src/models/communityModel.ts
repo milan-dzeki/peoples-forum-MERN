@@ -1,6 +1,6 @@
 import { Schema, models, model, InferSchemaType, HydratedDocument } from 'mongoose';
 import communityInputRules from 'configs/validators/community/communityInputRules';
-import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community/community';
 
 const communitySchema = new Schema({
   creator: {

@@ -3,7 +3,7 @@ import { CommunitySettingsSchemaType } from 'models/settings/communitySettingsMo
 import { CommunitySchemaType } from 'models/communityModel';
 import { NOTIFICATION_TYPES } from 'configs/notifications';
 import { CommunitySettingsResponseType, ModeratorCommunitySettingsChangedNotificationType } from 'types/controllers/communitySettings';
-import CommunityActivityLog from 'models/communityActivityLogs';
+import CommunityActivityLog from 'models/communityActivityLogsModel';
 import Notification from 'models/notificationModel';
 
 class CommunitySettingsService {

@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
+import { COMMUNITY_LOG_TYPE } from 'configs/community/communityActivityLogs';
 
 export type CommunityActivityLogType = typeof COMMUNITY_LOG_TYPE[keyof typeof COMMUNITY_LOG_TYPE];
 

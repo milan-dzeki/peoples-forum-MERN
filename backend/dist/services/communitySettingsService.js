@@ -13,7 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const notifications_1 = require("configs/notifications");
-const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
+const communityActivityLogsModel_1 = __importDefault(require("models/communityActivityLogsModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 class CommunitySettingsService {
     // for joined_members_permissions_settings
@@ -44,7 +44,7 @@ class CommunitySettingsService {
     }
     static createCommunitySettingsChangedLog(comunityId, actor, logText) {
         return __awaiter(this, void 0, void 0, function* () {
-            yield communityActivityLogs_1.default.create({
+            yield communityActivityLogsModel_1.default.create({
                 community: comunityId,
                 user: actor,
                 logType: 'changedSettings',

@@ -14,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCommunity = exports.deleteAllCommunityRules = exports.deleteMultipleCommunityRules = exports.deleteSingleCommunityRule = exports.updateCommunityRules = exports.updateSingleCommunityRule = exports.addNewCommunityRule = exports.removeCommunityBannerImage = exports.updateCommunityBannerImage = exports.removeCommunityProfileImage = exports.updateCommunityProfileImage = exports.updateCommunityDescription = exports.createCommunity = void 0;
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
-const communityModeratorChangeRequests_1 = require("configs/communityModeratorChangeRequests");
+const communityModeratorChangeRequests_1 = require("configs/community/communityModeratorChangeRequests");
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 const communityService_1 = __importDefault(require("services/communityService"));
@@ -24,8 +24,8 @@ const communityModel_1 = __importDefault(require("models/communityModel"));
 const communitySettingsModel_1 = __importDefault(require("models/settings/communitySettingsModel"));
 const chatModel_1 = __importDefault(require("models/chatModel"));
 const messageModel_1 = __importDefault(require("models/messageModel"));
-const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
-const communityActivityLogs_2 = require("configs/communityActivityLogs");
+const communityActivityLogsModel_1 = __importDefault(require("models/communityActivityLogsModel"));
+const communityActivityLogs_1 = require("configs/community/communityActivityLogs");
 const notifications_1 = require("configs/notifications");
 const handleSendModeratorRequestResponseAction_1 = __importDefault(require("utils/builders/community/handleSendModeratorRequestResponseAction"));
 const handleSendUpdateCommunityFieldRequestResponseAction_1 = __importDefault(require("utils/builders/community/handleSendUpdateCommunityFieldRequestResponseAction"));
@@ -77,7 +77,7 @@ exports.createCommunity = (0, catchAsync_1.default)((req, res, next) => __awaite
     const chatIds = yield communityService_1.default.createCommunityChatsUponCommunityCreation(req.userId, newCommunity._id, parsedChatNames);
     newCommunity.availableChats = chatIds;
     yield newCommunity.save();
-    yield communityActivityLogs_1.default.create({
+    yield communityActivityLogsModel_1.default.create({
         community: newCommunity._id,
         logType: 'communityCreated',
         text: 'created community',
@@ -106,7 +106,7 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, _) => 
             updateValues: { newDescriptionValue: description }
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: `Moderator *user* made request to update community description to "${description}"`
         })
             .setResJson({
@@ -121,7 +121,7 @@ exports.updateCommunityDescription = (0, catchAsync_1.default)((req, res, _) => 
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: `Moderator *user* updated community description to "${description}"`
     })
         .setModeratorsNotificationsData({
@@ -164,7 +164,7 @@ exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
                 } }
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to update community profile photo',
             photoUrl: uploadedPhotoData.secure_url
         })
@@ -181,7 +181,7 @@ exports.updateCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* updated community profile photo'
     })
         .setModeratorsNotificationsData({
@@ -217,7 +217,7 @@ exports.removeCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
             requestText: 'Moderator *user* made request to remove community profile photo'
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to update community profile photo'
         })
             .setResJson({
@@ -232,7 +232,7 @@ exports.removeCommunityProfileImage = (0, catchAsync_1.default)((req, res, next)
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* removed community profile photo'
     })
         .setModeratorsNotificationsData({
@@ -275,7 +275,7 @@ exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
                 } }
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to change community banner photo',
             photoUrl: uploadedPhotoData.secure_url
         })
@@ -292,7 +292,7 @@ exports.updateCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* updated community profile photo'
     })
         .setModeratorsNotificationsData({
@@ -328,7 +328,7 @@ exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
             requestText: `*user* (moderator) wants to remove "${community.name}" community banner image.`
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to remove community banner photo'
         })
             .setResJson({
@@ -343,7 +343,7 @@ exports.removeCommunityBannerImage = (0, catchAsync_1.default)((req, res, next) 
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* removed community banner photo'
     })
         .setModeratorsNotificationsData({
@@ -384,7 +384,7 @@ exports.addNewCommunityRule = (0, catchAsync_1.default)((req, res, next) => __aw
             }
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to add new community rule'
         })
             .setResJson({
@@ -400,7 +400,7 @@ exports.addNewCommunityRule = (0, catchAsync_1.default)((req, res, next) => __aw
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* added new community rule'
     })
         .setModeratorsNotificationsData({
@@ -441,7 +441,7 @@ exports.updateSingleCommunityRule = (0, catchAsync_1.default)((req, res, next) =
             }
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to update community rule'
         })
             .setResJson({
@@ -457,7 +457,7 @@ exports.updateSingleCommunityRule = (0, catchAsync_1.default)((req, res, next) =
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* updated community rule'
     })
         .setModeratorsNotificationsData({
@@ -497,7 +497,7 @@ exports.updateCommunityRules = (0, catchAsync_1.default)((req, res, next) => __a
             }
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to update community rules'
         })
             .setResJson({
@@ -513,7 +513,7 @@ exports.updateCommunityRules = (0, catchAsync_1.default)((req, res, next) => __a
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* updated community rules'
     })
         .setModeratorsNotificationsData({
@@ -549,7 +549,7 @@ exports.deleteSingleCommunityRule = (0, catchAsync_1.default)((req, res, _) => _
             }
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to delete community rule'
         })
             .setResJson({
@@ -564,7 +564,7 @@ exports.deleteSingleCommunityRule = (0, catchAsync_1.default)((req, res, _) => _
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* deleted 1 community rule'
     })
         .setModeratorsNotificationsData({
@@ -603,7 +603,7 @@ exports.deleteMultipleCommunityRules = (0, catchAsync_1.default)((req, res, next
             }
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to delete multiple community rules'
         })
             .setResJson({
@@ -618,7 +618,7 @@ exports.deleteMultipleCommunityRules = (0, catchAsync_1.default)((req, res, next
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* deleted multiple community rules'
     })
         .setModeratorsNotificationsData({
@@ -649,7 +649,7 @@ exports.deleteAllCommunityRules = (0, catchAsync_1.default)((req, res, _) => __a
             requestText: `*user* (moderator) wants to delete all comunity rules for "${community.name}" community.`
         })
             .setCommunityActivityLogData({
-            logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
             text: 'Moderator *user* made request to all multiple community rules'
         })
             .setResJson({
@@ -664,7 +664,7 @@ exports.deleteAllCommunityRules = (0, catchAsync_1.default)((req, res, _) => __a
         .setCommunityId(community._id)
         .setCommunityActivityLogData({
         moderator: req.userId,
-        logType: communityActivityLogs_2.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+        logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
         text: 'Moderator *user* deleted all community rules'
     })
         .setModeratorsNotificationsData({

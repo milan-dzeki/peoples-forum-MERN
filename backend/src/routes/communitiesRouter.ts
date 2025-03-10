@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import formidable from 'express-formidable';
-import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community/community';
 import isAuth from 'middleware/isAuthMiddleware';
 import { 
   doesCommunityExist, 

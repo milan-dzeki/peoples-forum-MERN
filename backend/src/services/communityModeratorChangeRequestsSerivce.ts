@@ -1,14 +1,10 @@
 import { Response } from 'express';
 import cloudinary from 'configs/cloudinary';
-import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
-import { ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES } from 'configs/communityModeratorChangeRequests';
+import { COMMUNITY_LOG_TYPE } from 'configs/community/communityActivityLogs';
+import { ALLOWED_MODERATOR_REQUEST_UPDATE_VALUES } from 'configs/community/communityModeratorChangeRequests';
 import { NOTIFICATION_TYPES } from 'configs/notifications';
-import CommunityValidator from 'configs/validators/community/communityValidator';
-import CommunityActivityLog from 'models/communityActivityLogs';
 import { CommunitySchemaType } from 'models/communityModel';
 import CommunityModeratorChangeRequest, { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
-import Notification from 'models/notificationModel';
-import { Types } from 'mongoose';
 import { CreateModeratorRequestParameteresType, PrepareNewModeratorRequestType, SendModeratorRequestResponseParametersType } from 'types/controllers/communityModeratorRequests';
 import AppError from 'utils/appError';
 import CommunityService from './communityService';
@@ -498,108 +494,6 @@ class CommunityModeratorChangeRequestService {
       const updateResponse = await prepareUpdateResponse.execute();
 
       return updateResponse;
-    }
-  }
-
-  static async updateCommunityPhoto (
-    community: CommunitySchemaType,
-    moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-    photoName: 'profile' | 'banner',
-    shouldNotifyModerator?: boolean
-  ) {
-    try {
-      const targetPhoto = moderatorRequest.photo as any;
-      if (
-        !targetPhoto &&
-        (targetPhoto && !targetPhoto.public_id && !targetPhoto.secure_url)
-      ) {
-        throw new AppError(400, `Request ${photoName} photo not found`);
-      }
-
-      if (community.bannerImagePublicId) {
-        await cloudinary.uploader.destroy(community.bannerImagePublicId);
-      }
-      const targetUrl = photoName === 'profile' ? 'profileImageUrl' : 'bannerImageUrl';
-      const targetPublicId = photoName === 'profile' ? 'profileImagePublicId' : 'bannerImagePublicId';
-
-      community[targetUrl] = targetPhoto.secure_url;
-      community[targetPublicId] = targetPhoto.public_id;
-      await community.save();
-
-      moderatorRequest.status = 'approved';
-      await moderatorRequest.save();
-
-      await CommunityActivityLog.create({
-        community: community._id,
-        logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-        moderator: moderatorRequest.moderator,
-        text: `approved request to update community ${photoName} photo made by moderator`,
-        moderatorRequest: moderatorRequest._id,
-        photoUrl: targetPhoto.secure_url
-      });
-
-      if (shouldNotifyModerator) {
-        const moderatorNotification = await Notification.create({
-          receiver: moderatorRequest.moderator,
-          notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-          community: community._id
-        });
-
-        return moderatorNotification;
-      }
-
-      return null;
-    } catch (error: unknown) {
-      throw error;
-    }
-  }
-
-  static async removeCommunityPhoto (
-    community: CommunitySchemaType,
-    moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-    photoName: 'profile' | 'banner',
-    shouldNotifyModerator?: boolean
-  ) {
-    try {
-      const targetUrl = photoName === 'profile' ? 'profileImageUrl' : 'bannerImageUrl';
-      const targetPublicId = photoName === 'profile' ? 'profileImagePublicId' : 'bannerImagePublicId';
-
-      if (!community[targetUrl] && !community[targetPublicId]) {
-        throw new AppError(404, 'Community doesnt have profile photo');
-      }
-
-      await cloudinary.uploader.destroy(community[targetPublicId]!);
-
-      community[targetUrl] = null;
-      community[targetPublicId] = null;
-      await community.save();
-
-      moderatorRequest.status = 'approved';
-      await moderatorRequest.save();
-
-      await CommunityActivityLog.create({
-        community: community._id,
-        logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-        moderator: moderatorRequest.moderator,
-        text: `approved request to remove community ${photoName} photo made by moderator`,
-        moderatorRequest: moderatorRequest._id
-      });
-
-      if (shouldNotifyModerator) {
-        const moderatorNotification = await Notification.create({
-          receiver: moderatorRequest.moderator,
-          notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-          community: community._id
-        });
-
-        return moderatorNotification;
-      }
-
-      return null;
-    } catch (error: unknown) {
-      throw error;
     }
   }
 

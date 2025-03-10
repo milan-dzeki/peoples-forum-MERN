@@ -20,7 +20,7 @@ const userModel_1 = __importDefault(require("models/userModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
 const communitySettingsModel_1 = __importDefault(require("models/settings/communitySettingsModel"));
 const communityService_1 = __importDefault(require("services/communityService"));
-const community_1 = require("configs/community");
+const community_1 = require("configs/community/community");
 exports.userRequestCommunityJoin = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.userId;
     const community = req.community;

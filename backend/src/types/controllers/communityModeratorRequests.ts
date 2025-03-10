@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { Types } from 'mongoose';
-import { COMMUNITY_MODERATOR_REQUEST_TYPES } from 'configs/communityModeratorChangeRequests';
+import { COMMUNITY_MODERATOR_REQUEST_TYPES } from 'configs/community/communityModeratorChangeRequests';
 import { NotificationSchemaType } from 'models/notificationModel';
 import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
 

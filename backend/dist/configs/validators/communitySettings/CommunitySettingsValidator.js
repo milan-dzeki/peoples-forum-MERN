@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const communitySettings_1 = require("configs/communitySettings");
+const communitySettings_1 = require("configs/community/communitySettings");
 const appError_1 = __importDefault(require("utils/appError"));
 class CommunitySettingsValidator {
     static isCommunityAccessValueValid(value) {

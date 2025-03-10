@@ -13,13 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateAllNonMemberPermissions = exports.updateSingleNonMembersPermission = exports.updateMembersCanViewOtherMembersSetting = exports.updateMembersAllChatsSettings = exports.updateMembersSingleChatsSetting = exports.updateMembersAllPostsSettings = exports.updateMembersSinglePostsSetting = exports.updateModeratorPermissions = exports.updateChangesByModeratorRequireCreatorApproval = exports.updateNotifyModeratorsForSettingChangesSetting = exports.updateCommunityAccess = exports.getCommunitySettings = void 0;
-const community_1 = require("configs/community");
-const communitySettings_1 = require("configs/communitySettings");
+const community_1 = require("configs/community/community");
+const communitySettings_1 = require("configs/community/communitySettings");
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const appError_1 = __importDefault(require("utils/appError"));
 const communitySettingsService_1 = __importDefault(require("services/communitySettingsService"));
-const CommunitySettingsValidator_1 = __importDefault(require("configs/validators/communitySettings/CommunitySettingsValidator"));
-const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
+const communitySettingsValidator_1 = __importDefault(require("configs/validators/communitySettings/communitySettingsValidator"));
+const communityActivityLogsModel_1 = __importDefault(require("models/communityActivityLogsModel"));
 exports.getCommunitySettings = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const communitySettings = req.communitySettings;
     const communityWithVirtuals = communitySettings.toJSON({ virtuals: true });
@@ -30,7 +30,7 @@ exports.getCommunitySettings = (0, catchAsync_1.default)((req, res, _) => __awai
 }));
 exports.updateCommunityAccess = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const { access } = req.body;
-    CommunitySettingsValidator_1.default.isCommunityAccessValueValid(access);
+    communitySettingsValidator_1.default.isCommunityAccessValueValid(access);
     const communitySettings = req.communitySettings;
     communitySettings.access.value = access;
     yield communitySettings.save();
@@ -75,7 +75,7 @@ exports.updateChangesByModeratorRequireCreatorApproval = (0, catchAsync_1.defaul
     const communitySettings = req.communitySettings;
     communitySettings.moderators_settings.changesByModeratorRequireApproval.value = data;
     yield communitySettings.save();
-    yield communityActivityLogs_1.default.create({
+    yield communityActivityLogsModel_1.default.create({
         community: communitySettings.community,
         user: req.userId,
         logType: 'changedSettings',
@@ -151,10 +151,10 @@ exports.updateModeratorPermissions = (0, catchAsync_1.default)((req, res, next) 
 }));
 exports.updateMembersSinglePostsSetting = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { settingName, settingValue } = req.body;
-    CommunitySettingsValidator_1.default.isSingleSettingReqDataValid(settingName, settingValue, communitySettings_1.ALLOWED_JOINED_MEMBERS_POST_SETTINGS_NAMES);
+    communitySettingsValidator_1.default.isSingleSettingReqDataValid(settingName, settingValue, communitySettings_1.ALLOWED_JOINED_MEMBERS_POST_SETTINGS_NAMES);
     const communitySettings = req.communitySettings;
     if (settingName === 'postsDataAllowed') {
-        CommunitySettingsValidator_1.default.isAllowedPostsDataSettingValueValid(settingValue);
+        communitySettingsValidator_1.default.isAllowedPostsDataSettingValueValid(settingValue);
         communitySettings.joined_members_permissions.posts_settings.postsDataAllowed.value = settingValue;
     }
     else {
@@ -187,7 +187,7 @@ exports.updateMembersSinglePostsSetting = (0, catchAsync_1.default)((req, res, n
 }));
 exports.updateMembersAllPostsSettings = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { updatedSettings } = req.body;
-    CommunitySettingsValidator_1.default.areAllSettingsReqDataValid(updatedSettings, communitySettings_1.ALLOWED_JOINED_MEMBERS_POST_SETTINGS_NAMES, 'posts');
+    communitySettingsValidator_1.default.areAllSettingsReqDataValid(updatedSettings, communitySettings_1.ALLOWED_JOINED_MEMBERS_POST_SETTINGS_NAMES, 'posts');
     const allValuesBoolean = Object.keys(updatedSettings)
         .filter((setting) => setting !== 'postsDataAllowed')
         .every((setting) => typeof updatedSettings[setting] === 'boolean');
@@ -195,7 +195,7 @@ exports.updateMembersAllPostsSettings = (0, catchAsync_1.default)((req, res, nex
         next(new appError_1.default(422, 'Invalid data: all setting values except for "posts data allowed" must be true or false'));
         return;
     }
-    CommunitySettingsValidator_1.default.isAllowedPostsDataSettingValueValid(updatedSettings.postsDataAllowed);
+    communitySettingsValidator_1.default.isAllowedPostsDataSettingValueValid(updatedSettings.postsDataAllowed);
     const communitySettings = req.communitySettings;
     const filterSettings = Object.assign({}, updatedSettings);
     if (updatedSettings.allowPostComments === false) {
@@ -222,7 +222,7 @@ exports.updateMembersAllPostsSettings = (0, catchAsync_1.default)((req, res, nex
 }));
 exports.updateMembersSingleChatsSetting = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { settingName, settingValue } = req.body;
-    CommunitySettingsValidator_1.default.isSingleSettingReqDataValid(settingName, settingValue, communitySettings_1.ALLOWED_JOINED_MEMBERS_CHATS_SETTINGS_NAMES, true);
+    communitySettingsValidator_1.default.isSingleSettingReqDataValid(settingName, settingValue, communitySettings_1.ALLOWED_JOINED_MEMBERS_CHATS_SETTINGS_NAMES, true);
     const communitySettings = req.communitySettings;
     if (settingName !== 'allowChats' &&
         settingValue === true &&
@@ -254,7 +254,7 @@ exports.updateMembersSingleChatsSetting = (0, catchAsync_1.default)((req, res, n
 }));
 exports.updateMembersAllChatsSettings = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const { updatedSettings } = req.body;
-    CommunitySettingsValidator_1.default.areAllSettingsReqDataValid(updatedSettings, communitySettings_1.ALLOWED_JOINED_MEMBERS_CHATS_SETTINGS_NAMES, 'chats', true);
+    communitySettingsValidator_1.default.areAllSettingsReqDataValid(updatedSettings, communitySettings_1.ALLOWED_JOINED_MEMBERS_CHATS_SETTINGS_NAMES, 'chats', true);
     const communitySettings = req.communitySettings;
     if (updatedSettings.allowChats === false) {
         communitySettingsService_1.default.setAllChatSettingsToFalseIfChatsAreNotAllowed(communitySettings);
@@ -299,7 +299,7 @@ exports.updateMembersCanViewOtherMembersSetting = (0, catchAsync_1.default)((req
 }));
 exports.updateSingleNonMembersPermission = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { settingName, settingValue } = req.body;
-    CommunitySettingsValidator_1.default.isSingleSettingReqDataValid(settingName, settingValue, communitySettings_1.ALLOWED_NON_MEMBERS_PERMISSION_NAMES, true);
+    communitySettingsValidator_1.default.isSingleSettingReqDataValid(settingName, settingValue, communitySettings_1.ALLOWED_NON_MEMBERS_PERMISSION_NAMES, true);
     const communitySettings = req.communitySettings;
     // disable all other settings if canViewPosts === false
     // reason: everyhing in these settings are post /comment relates
@@ -342,7 +342,7 @@ exports.updateSingleNonMembersPermission = (0, catchAsync_1.default)((req, res, 
 }));
 exports.updateAllNonMemberPermissions = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const { updatedSettings } = req.body;
-    CommunitySettingsValidator_1.default.areAllSettingsReqDataValid(updatedSettings, communitySettings_1.ALLOWED_NON_MEMBERS_PERMISSION_NAMES, 'non members', true);
+    communitySettingsValidator_1.default.areAllSettingsReqDataValid(updatedSettings, communitySettings_1.ALLOWED_NON_MEMBERS_PERMISSION_NAMES, 'non members', true);
     const communitySettings = req.communitySettings;
     const filterSettings = Object.assign({}, updatedSettings);
     // if posts cannot be viewed, all other post / comment related settings are

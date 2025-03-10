@@ -1,5 +1,5 @@
 import { Schema, models, model, InferSchemaType } from 'mongoose';
-import { COMMUNITY_PERMISSION_NAMES } from 'configs/community';
+import { COMMUNITY_PERMISSION_NAMES } from 'configs/community/community';
 import { HydratedDocument } from 'mongoose';
 
 const communitySettingsSchema = new Schema({

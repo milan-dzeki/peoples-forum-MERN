@@ -5,7 +5,7 @@ import {
   isUserCommunityCreator
 } from 'middleware/communityMiddlewares';
 import { isModeratorRequestValid, shouldNotifyModerator } from 'middleware/comunityModeratorChangeRequestsMiddlewares';
-import { acceptModeratorRequest, declineModeratorRequest } from 'controllers/community/communityModeratorChangeRequestsController';
+import { acceptModeratorRequest, declineModeratorRequest } from 'controllers/communityModeratorChangeRequestsController';
 
 const router = Router();
 

@@ -12,13 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const communityActivityLogs_1 = __importDefault(require("models/communityActivityLogs"));
+const communityActivityLogsModel_1 = __importDefault(require("models/communityActivityLogsModel"));
 class CommunityActivityLogsService {
     static createNewCommunityActivityLog(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const { communityId = null, logType, moderator = null, text, moderatorRequest = null, photoUrl = null } = parameters;
-                yield communityActivityLogs_1.default.create({
+                yield communityActivityLogsModel_1.default.create({
                     community: communityId,
                     logType,
                     moderator,

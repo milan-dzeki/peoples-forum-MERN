@@ -1,4 +1,4 @@
-import CommunityActivityLog from "models/communityActivityLogs";
+import CommunityActivityLog from "models/communityActivityLogsModel";
 import { CreateNewCommunityActivityLogParemetersType } from "types/controllers/communityActivityLogs";
 
 class CommunityActivityLogsService {

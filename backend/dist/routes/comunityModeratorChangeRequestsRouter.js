@@ -7,7 +7,7 @@ const express_1 = require("express");
 const isAuthMiddleware_1 = __importDefault(require("middleware/isAuthMiddleware"));
 const communityMiddlewares_1 = require("middleware/communityMiddlewares");
 const comunityModeratorChangeRequestsMiddlewares_1 = require("middleware/comunityModeratorChangeRequestsMiddlewares");
-const communityModeratorChangeRequestsController_1 = require("controllers/community/communityModeratorChangeRequestsController");
+const communityModeratorChangeRequestsController_1 = require("controllers/communityModeratorChangeRequestsController");
 const router = (0, express_1.Router)();
 router.use(isAuthMiddleware_1.default);
 // router.use(isUserCommunityCreator, isModeratorRequestValid, shouldNotifyModerator);

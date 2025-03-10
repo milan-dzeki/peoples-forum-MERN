@@ -6,8 +6,8 @@ import { NOTIFICATION_TYPES } from 'configs/notifications';
 import CommunityModeratorChangeRequestService from 'services/communityModeratorChangeRequestsSerivce';
 import Notification from 'models/notificationModel';
 import { CommunityModeratorRequestResponseType } from 'types/controllers/communityModeratorRequests';
-import CommunityActivityLog from 'models/communityActivityLogs';
-import { COMMUNITY_LOG_TYPE } from 'configs/communityActivityLogs';
+import CommunityActivityLog from 'models/communityActivityLogsModel';
+import { COMMUNITY_LOG_TYPE } from 'configs/community/communityActivityLogs';
 
 export const declineModeratorRequest = catchAsync (async (
   req: RequestWithModeratorRequestType,

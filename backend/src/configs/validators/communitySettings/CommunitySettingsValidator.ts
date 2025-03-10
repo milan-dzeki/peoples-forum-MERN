@@ -1,4 +1,4 @@
-import { ALLOWED_POST_DATA_TYPES } from 'configs/communitySettings';
+import { ALLOWED_POST_DATA_TYPES } from 'configs/community/communitySettings';
 import AppError from 'utils/appError';
 
 class CommunitySettingsValidator {
