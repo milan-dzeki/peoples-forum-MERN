@@ -43,13 +43,14 @@ class HandleSendModeratorRequestResponseActionBuilder {
         return __awaiter(this, void 0, void 0, function* () {
             const { commons, moderatorRequestData } = this.parameters;
             const { communityId, moderator } = commons;
-            const { requestType, communityCreator, requestText, updateValues } = moderatorRequestData;
+            const { requestType, communityCreator, requestText, forUser, updateValues } = moderatorRequestData;
             return yield communityModeratorChangeRequestsSerivce_1.default.createNewModeratorRequest({
                 requestType,
                 communityId,
                 communityCreator,
                 moderator,
                 requestText,
+                forUser,
                 updateValues: updateValues || {},
             });
         });
@@ -58,7 +59,7 @@ class HandleSendModeratorRequestResponseActionBuilder {
         return __awaiter(this, void 0, void 0, function* () {
             const { commons, communityActivityLogData } = this.parameters;
             const { communityId, moderator } = commons;
-            const { logType, text, photoUrl } = communityActivityLogData;
+            const { logType, text, photoUrl, user } = communityActivityLogData;
             return yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
                 communityId,
                 logType,
@@ -66,6 +67,7 @@ class HandleSendModeratorRequestResponseActionBuilder {
                 text,
                 moderatorRequest: moderatorRequestId,
                 photoUrl: photoUrl || undefined,
+                user
             });
         });
     }

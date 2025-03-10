@@ -16,7 +16,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const chatModel_1 = __importDefault(require("models/chatModel"));
 const communityModel_1 = __importDefault(require("models/communityModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
-const userModel_1 = __importDefault(require("models/userModel"));
 const appError_1 = __importDefault(require("utils/appError"));
 const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 const cloudinary_1 = __importDefault(require("configs/cloudinary"));
@@ -90,25 +89,6 @@ class CommunityService {
             console.log(community[list]);
             community[list].pull({ user: userId });
         }
-    }
-    static createInviteUserNotification(targetUserId, invitatorId, communityId, communityName, notificationType) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const invitator = yield userModel_1.default.findById(invitatorId).select('fullName profilePhotoUrl');
-                const inviteUserNotification = yield notificationModel_1.default.create({
-                    receiver: targetUserId,
-                    sender: invitatorId,
-                    notificationType: notificationType,
-                    text: `<sender>${invitator.fullName}</sender> have invited you to join "${communityName}" community ${notificationType === 'becomeCommunityModeratorRequest' ? 'as moderator' : ''}.`,
-                    community: communityId
-                });
-                const populatedInviteNotification = yield inviteUserNotification.populate({ path: 'sender', select: 'fullName profilePhotoUrl' });
-                return populatedInviteNotification;
-            }
-            catch (error) {
-                throw error;
-            }
-        });
     }
     static extractCreatorAndModeratorIds(moderators, communityCreatorId, doNotIncludeIds) {
         let ids = [...moderators.map((moderator) => moderator.user), communityCreatorId];

@@ -10,7 +10,8 @@ class CommunityActivityLogsService {
         moderator = null,
         text,
         moderatorRequest = null,
-        photoUrl = null
+        photoUrl = null,
+        user
       } = parameters;
 
       await CommunityActivityLog.create({
@@ -19,7 +20,8 @@ class CommunityActivityLogsService {
         moderator,
         text,
         moderatorRequest,
-        photoUrl
+        photoUrl,
+        user
       });
     } catch (error: unknown) {
       throw error;

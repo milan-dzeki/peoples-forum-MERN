@@ -40,7 +40,7 @@ class HandleSendModeratorRequestResponseActionBuilder {
   private async createModeratorRequest() {
     const { commons, moderatorRequestData } = this.parameters;
     const { communityId, moderator } = commons;
-    const { requestType, communityCreator, requestText, updateValues } = moderatorRequestData;
+    const { requestType, communityCreator, requestText, forUser, updateValues } = moderatorRequestData;
 
     return await CommunityModeratorChangeRequestService.createNewModeratorRequest({
       requestType,
@@ -48,6 +48,7 @@ class HandleSendModeratorRequestResponseActionBuilder {
       communityCreator,
       moderator,
       requestText,
+      forUser,
       updateValues: updateValues || {},
     });
   }
@@ -55,7 +56,7 @@ class HandleSendModeratorRequestResponseActionBuilder {
   private async createActivityLog(moderatorRequestId: Types.ObjectId | string) {
     const { commons, communityActivityLogData } = this.parameters;
     const { communityId, moderator } = commons;
-    const { logType, text, photoUrl } = communityActivityLogData;
+    const { logType, text, photoUrl, user } = communityActivityLogData;
 
     return await CommunityActivityLogsService.createNewCommunityActivityLog({
       communityId,
@@ -64,6 +65,7 @@ class HandleSendModeratorRequestResponseActionBuilder {
       text,
       moderatorRequest: moderatorRequestId,
       photoUrl: photoUrl || undefined,
+      user
     });
   }
 

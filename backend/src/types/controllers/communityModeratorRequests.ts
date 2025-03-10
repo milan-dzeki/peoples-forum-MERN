@@ -19,6 +19,7 @@ export interface CreateModeratorRequestParameteresType {
   communityCreator: Types.ObjectId | string;
   moderator: Types.ObjectId | string;
   requestText: string;
+  forUser?: Types.ObjectId | string;
   updateValues?: {
     newDescriptionValue?: string;
     photo?: { secure_url: string, public_id: string };
@@ -37,6 +38,7 @@ export interface PrepareNewModeratorRequestType {
   communityCreator: Types.ObjectId | string;
   moderator: Types.ObjectId | string;
   requestText: string;
+  forUser?: Types.ObjectId | string;
   newDescriptionValue?: string;
   photo?: {
     secure_url: string;

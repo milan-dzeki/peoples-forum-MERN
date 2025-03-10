@@ -3,10 +3,12 @@ import { Types } from 'mongoose';
 import type { RequestWithCommunityType } from 'types/lib';
 import type { UserExistInListsType } from 'types/controllers/community';
 import catchAsync from 'utils/catchAsync';
-import Notification from 'models/notificationModel';
 import { CommunitySchemaType } from 'models/communityModel';
 import CommunityUserManagerBuilder from 'utils/builders/community/communityUserManagerBuilder';
 import { NOTIFICATION_TYPES } from 'configs/notifications';
+import HandleSendModeratorRequestResponseActionBuilder from 'utils/builders/community/handleSendModeratorRequestResponseAction';
+import { COMMUNITY_LOG_TYPE } from 'configs/community/communityActivityLogs';
+import { COMMUNITY_MODERATOR_REQUEST_TYPES } from 'configs/community/communityModeratorChangeRequests';
 
 export const banUserFromCommunity = catchAsync (async (
   req: RequestWithCommunityType,
@@ -21,6 +23,30 @@ export const banUserFromCommunity = catchAsync (async (
 
   const { targetUserId, shouldNotifyUser = false } = req.body;
   const targetUserIdString: string = targetUserId.toString();
+
+  if (!isCreator && settings.moderators_settings!.changesByModeratorRequireApproval!.value) {
+    const prepareModeratorResponse = new HandleSendModeratorRequestResponseActionBuilder()
+      .setCommons({ communityId: community._id, moderator: req.userId! })
+      .setModeratorRequestData({
+        requestType: COMMUNITY_MODERATOR_REQUEST_TYPES.BAN_USER,
+        communityCreator: community.creator,
+        requestText: `*moderator* (moderator) requested to ban *user* from "${community.name}" commnuity`,
+        forUser: targetUserIdString
+      })
+      .setCommunityActivityLogData({
+        logType: COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+        text: '*moderator* (moderator) made request to ban *user*',
+        user: targetUserIdString
+      })
+      .setResJson({
+        res,
+        message: 'Your request to ban user form community is sent to admin'
+      });
+
+    const moderatorResponse = await prepareModeratorResponse.execute();
+
+    return moderatorResponse;
+  }
 
   const manageAction = new CommunityUserManagerBuilder(
     community, 

@@ -366,32 +366,6 @@ class CommunityService {
     }
   }
 
-  static async createInviteUserNotification (
-    targetUserId: string,
-    invitatorId: string,
-    communityId: string,
-    communityName: string,
-    notificationType: typeof NOTIFICATION_TYPES.BECOME_COMMUNITY_MEMBER_INVITATION | typeof NOTIFICATION_TYPES.BECOME_COMMUNITY_MODERATOR_INVITATION
-  ) {
-    try {
-      const invitator = await User.findById(invitatorId).select('fullName profilePhotoUrl');
-
-      const inviteUserNotification = await Notification.create({
-        receiver: targetUserId,
-        sender: invitatorId,
-        notificationType: notificationType,
-        text: `<sender>${invitator.fullName}</sender> have invited you to join "${communityName}" community ${notificationType === 'becomeCommunityModeratorRequest' ? 'as moderator' : ''}.`,
-        community: communityId
-      });
-
-      const populatedInviteNotification = await inviteUserNotification.populate({ path: 'sender', select: 'fullName profilePhotoUrl' });
-
-      return populatedInviteNotification;
-    } catch (error: unknown) {
-      throw error;
-    }
-  }
-
   static extractCreatorAndModeratorIds (
     moderators: CommunitySchemaType['moderators'],
     communityCreatorId: Types.ObjectId | string,

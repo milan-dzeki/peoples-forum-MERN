@@ -34,13 +34,14 @@ class CommunityModeratorChangeRequestService {
     static createNewModeratorRequest(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { requestType, communityId, communityCreator, moderator, requestText, updateValues } = parameters;
+                const { requestType, communityId, communityCreator, moderator, requestText, updateValues, forUser } = parameters;
                 const prepareModeratorRequest = {
                     requestType,
                     community: communityId,
                     communityCreator,
                     moderator,
-                    requestText
+                    requestText,
+                    forUser
                 };
                 if (updateValues) {
                     for (const value in updateValues) {

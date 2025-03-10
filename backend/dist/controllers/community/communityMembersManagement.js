@@ -17,6 +17,9 @@ const mongoose_1 = require("mongoose");
 const catchAsync_1 = __importDefault(require("utils/catchAsync"));
 const communityUserManagerBuilder_1 = __importDefault(require("utils/builders/community/communityUserManagerBuilder"));
 const notifications_1 = require("configs/notifications");
+const handleSendModeratorRequestResponseAction_1 = __importDefault(require("utils/builders/community/handleSendModeratorRequestResponseAction"));
+const communityActivityLogs_1 = require("configs/community/communityActivityLogs");
+const communityModeratorChangeRequests_1 = require("configs/community/communityModeratorChangeRequests");
 exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, _) => __awaiter(void 0, void 0, void 0, function* () {
     const existInLists = req.existInLists;
     const settings = req.communitySettings;
@@ -24,6 +27,27 @@ exports.banUserFromCommunity = (0, catchAsync_1.default)((req, res, _) => __awai
     const isCreator = req.isCreator;
     const { targetUserId, shouldNotifyUser = false } = req.body;
     const targetUserIdString = targetUserId.toString();
+    if (!isCreator && settings.moderators_settings.changesByModeratorRequireApproval.value) {
+        const prepareModeratorResponse = new handleSendModeratorRequestResponseAction_1.default()
+            .setCommons({ communityId: community._id, moderator: req.userId })
+            .setModeratorRequestData({
+            requestType: communityModeratorChangeRequests_1.COMMUNITY_MODERATOR_REQUEST_TYPES.BAN_USER,
+            communityCreator: community.creator,
+            requestText: `*moderator* (moderator) requested to ban *user* from "${community.name}" commnuity`,
+            forUser: targetUserIdString
+        })
+            .setCommunityActivityLogData({
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.MODERATOR_MADE_REQUESTS,
+            text: '*moderator* (moderator) made request to ban *user*',
+            user: targetUserIdString
+        })
+            .setResJson({
+            res,
+            message: 'Your request to ban user form community is sent to admin'
+        });
+        const moderatorResponse = yield prepareModeratorResponse.execute();
+        return moderatorResponse;
+    }
     const manageAction = new communityUserManagerBuilder_1.default(community, targetUserIdString, req.userId, existInLists);
     let communityUpdated = yield manageAction
         .throwErrorIfNotInAnyList('User you are trying to ban is not a member of community, nor is he / she in pending lists. Maybe he / she already left')

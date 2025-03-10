@@ -17,14 +17,15 @@ class CommunityActivityLogsService {
     static createNewCommunityActivityLog(parameters) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { communityId = null, logType, moderator = null, text, moderatorRequest = null, photoUrl = null } = parameters;
+                const { communityId = null, logType, moderator = null, text, moderatorRequest = null, photoUrl = null, user } = parameters;
                 yield communityActivityLogsModel_1.default.create({
                     community: communityId,
                     logType,
                     moderator,
                     text,
                     moderatorRequest,
-                    photoUrl
+                    photoUrl,
+                    user
                 });
             }
             catch (error) {

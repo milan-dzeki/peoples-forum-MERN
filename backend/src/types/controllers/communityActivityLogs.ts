@@ -10,4 +10,5 @@ export interface CreateNewCommunityActivityLogParemetersType {
   text: string;
   moderatorRequest?: Types.ObjectId | string;
   photoUrl?: string;
+  user?: Types.ObjectId | string;
 }

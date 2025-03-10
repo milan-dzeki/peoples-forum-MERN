@@ -89,6 +89,7 @@ export interface HandleSendModeratorRequestResponseActionParameters {
     requestType: ModeratorRequestType;
     communityCreator: Types.ObjectId | string;
     requestText: string;
+    forUser?: Types.ObjectId | string;
     updateValues?: {
       newDescriptionValue?: string;
       photo?: { secure_url: string, public_id: string };
@@ -103,6 +104,7 @@ export interface HandleSendModeratorRequestResponseActionParameters {
   communityActivityLogData: {
     logType: CommunityActivityLogType;
     text: string;
+    user?: Types.ObjectId | string;
     photoUrl?: string;
   };
   resJson: {

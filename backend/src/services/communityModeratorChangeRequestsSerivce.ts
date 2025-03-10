@@ -516,7 +516,8 @@ class CommunityModeratorChangeRequestService {
         communityCreator,
         moderator,
         requestText,
-        updateValues
+        updateValues,
+        forUser
       } = parameters;
 
       const prepareModeratorRequest: PrepareNewModeratorRequestType = {
@@ -524,7 +525,8 @@ class CommunityModeratorChangeRequestService {
         community: communityId,
         communityCreator,
         moderator,
-        requestText
+        requestText,
+        forUser 
       };
 
       if (updateValues) {
