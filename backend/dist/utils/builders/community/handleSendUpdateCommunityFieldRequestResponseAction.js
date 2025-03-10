@@ -13,11 +13,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const communityActivityLogsService_1 = __importDefault(require("services/communityActivityLogsService"));
+const notificationModel_1 = __importDefault(require("models/notificationModel"));
 const notifications_1 = require("configs/notifications");
 const communityService_1 = __importDefault(require("services/communityService"));
 class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
     constructor() {
         this.parameters = {
+            responseField: null,
             fieldUpdateHandler: () => __awaiter(this, void 0, void 0, function* () { }),
             communityId: '',
             communityActivityLogData: {
@@ -40,6 +42,10 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
             },
             approvedRequestModeratorNotification: undefined,
         };
+    }
+    setResponseField(responseField) {
+        this.parameters.responseField = responseField;
+        return this;
     }
     setFieldUpdateHandler(fieldUpdateHandler) {
         this.parameters.fieldUpdateHandler = fieldUpdateHandler;
@@ -68,8 +74,8 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
     execute() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { fieldUpdateHandler, communityId, communityActivityLogData, moderatorsNotificationsData, resJson, approvedRequestModeratorNotification, } = this.parameters;
-                const newDescription = yield fieldUpdateHandler();
+                const { responseField, fieldUpdateHandler, communityId, communityActivityLogData, moderatorsNotificationsData, resJson, approvedRequestModeratorNotification, } = this.parameters;
+                const newValue = yield fieldUpdateHandler();
                 yield communityActivityLogsService_1.default.createNewCommunityActivityLog({
                     communityId,
                     logType: communityActivityLogData.logType,
@@ -83,13 +89,25 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
                     sender: moderatorsNotificationsData.sender,
                     text: moderatorsNotificationsData.text,
                 }, moderatorsNotificationsData.doNotIncludeIds);
-                return communityService_1.default.createUpdateFieldRequestResponse({
+                let moderatorApprovedNotification = null;
+                if (approvedRequestModeratorNotification) {
+                    moderatorApprovedNotification = yield notificationModel_1.default.create({
+                        receiver: approvedRequestModeratorNotification.receiver,
+                        notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
+                        text: approvedRequestModeratorNotification.text,
+                        community: communityId
+                    });
+                }
+                const responseJson = {
                     res: resJson.res,
                     message: resJson.message,
                     moderatorNotifications,
-                    approvedRequestModeratorNotification,
-                    newDescription,
-                });
+                    approvedRequestModeratorNotification: moderatorApprovedNotification
+                };
+                if (responseField && newValue) {
+                    responseJson[responseField] = newValue;
+                }
+                return communityService_1.default.createUpdateFieldRequestResponse(responseJson);
             }
             catch (error) {
                 throw error;

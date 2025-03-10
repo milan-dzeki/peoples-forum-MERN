@@ -71,7 +71,7 @@ class CommunityValidator extends ParentValidator {
     return null;
   }
 
-  static areRulesValid (rules: CommunityRuleType[]): CommunityRulesErrorsType[] | null {
+  static areRulesValid (rules: CommunityRuleType[], shouldThrowError?: boolean): CommunityRulesErrorsType[] | null {
     if (!rules || (rules && rules.length === 0)) {
       return null;
     }
@@ -161,6 +161,9 @@ class CommunityValidator extends ParentValidator {
       some may have null value - if there are 2 rules, 1st is valid and second is invalid, error value of first will be null;
       but error value of second will be adequeate error object
     */
+    if (shouldThrowError && sentErrors) {
+      throw new AppError(422, 'Rule data invalid', { rule: sentErrors });
+    }
     return sentErrors;
   }
 

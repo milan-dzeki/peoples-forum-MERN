@@ -2,7 +2,7 @@ import { Response } from "express";
 import { Types } from "mongoose";
 import CommunityActivityLogsService from "services/communityActivityLogsService";
 import Notification, { NotificationSchemaType } from "models/notificationModel";
-import { HandleSendUpdateCommunityFieldRequestResponseActionType } from "types/controllers/community";
+import { HandleSendUpdateCommunityFieldRequestResponseActionType, SendUpdateFieldRequestResponseType, UpdateFieldResponseJsonType } from "types/controllers/community";
 import { CommunitySchemaType } from "models/communityModel";
 import { CommunityModeratorChangeRequestSchemaType } from "models/communityModeratorChangeRequestModel";
 import { NOTIFICATION_TYPES } from "configs/notifications";
@@ -13,6 +13,7 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
 
   constructor () {
     this.parameters = {
+      responseField: null,
       fieldUpdateHandler: async () => {},
       communityId: '',
       communityActivityLogData: {
@@ -37,7 +38,12 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
     };
   }
 
-  setFieldUpdateHandler(fieldUpdateHandler: () => Promise<any>): this {
+  setResponseField (responseField: string | null) {
+    this.parameters.responseField = responseField;
+    return this;
+  }
+
+  setFieldUpdateHandler(fieldUpdateHandler: HandleSendUpdateCommunityFieldRequestResponseActionType['fieldUpdateHandler']): this {
     this.parameters.fieldUpdateHandler = fieldUpdateHandler;
     return this;
   }
@@ -68,7 +74,9 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
     return this;
   }
 
-  setApprovedRequestModeratorNotification(notification: NotificationSchemaType): this {
+  setApprovedRequestModeratorNotification(
+    notification: HandleSendUpdateCommunityFieldRequestResponseActionType['approvedRequestModeratorNotification']
+  ): this {
     this.parameters.approvedRequestModeratorNotification = notification;
     return this;
   }
@@ -76,6 +84,7 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
   async execute() {
     try {
       const {
+        responseField,
         fieldUpdateHandler,
         communityId,
         communityActivityLogData,
@@ -84,7 +93,7 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
         approvedRequestModeratorNotification,
       } = this.parameters;
 
-      const newDescription = await fieldUpdateHandler();
+      const newValue = await fieldUpdateHandler();
 
       await CommunityActivityLogsService.createNewCommunityActivityLog({
         communityId,
@@ -106,13 +115,29 @@ class HandleSendUpdateCommunityFieldRequestResponseActionBuilder {
         moderatorsNotificationsData.doNotIncludeIds
       );
 
-      return CommunityService.createUpdateFieldRequestResponse({
+      let moderatorApprovedNotification: NotificationSchemaType | null = null;
+
+      if (approvedRequestModeratorNotification) {
+        moderatorApprovedNotification = await Notification.create({
+          receiver: approvedRequestModeratorNotification.receiver,
+          notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
+          text: approvedRequestModeratorNotification.text,
+          community: communityId
+        });
+      }
+
+      const responseJson: SendUpdateFieldRequestResponseType = {
         res: resJson.res,
         message: resJson.message,
         moderatorNotifications,
-        approvedRequestModeratorNotification,
-        newDescription,
-      });
+        approvedRequestModeratorNotification: moderatorApprovedNotification
+      };
+
+      if (responseField && newValue) {
+        responseJson[responseField as keyof typeof responseJson] = newValue;
+      }
+
+      return CommunityService.createUpdateFieldRequestResponse(responseJson);
     } catch (error: unknown) {
       throw error;
     }

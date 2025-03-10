@@ -67,6 +67,7 @@ export const acceptModeratorRequest = catchAsync (async (
   res: Response,
   next: NextFunction
 ) => {
+  console.log('accept start');
   const community = req.community!;
   const moderatorRequest = req.moderatorRequest!;
   if (moderatorRequest.status === 'declined') {
@@ -78,6 +79,8 @@ export const acceptModeratorRequest = catchAsync (async (
     next(new AppError(400, 'You have already approved this request in the past. If you wnat to revert changes doen tby it, do it manually.'));
     return;
   }
+
+  console.log('mod req', moderatorRequest);
   
   const response = await CommunityModeratorChangeRequestService
     .acceptUpdateCommunityField[

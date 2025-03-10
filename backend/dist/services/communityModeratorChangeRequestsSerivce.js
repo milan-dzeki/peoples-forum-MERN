@@ -17,7 +17,6 @@ const cloudinary_1 = __importDefault(require("configs/cloudinary"));
 const communityActivityLogs_1 = require("configs/communityActivityLogs");
 const communityModeratorChangeRequests_1 = require("configs/communityModeratorChangeRequests");
 const notifications_1 = require("configs/notifications");
-const communityValidator_1 = __importDefault(require("configs/validators/community/communityValidator"));
 const communityActivityLogs_2 = __importDefault(require("models/communityActivityLogs"));
 const communityModeratorChangeRequestModel_1 = __importDefault(require("models/communityModeratorChangeRequestModel"));
 const notificationModel_1 = __importDefault(require("models/notificationModel"));
@@ -155,21 +154,19 @@ CommunityModeratorChangeRequestService.acceptUpdateCommunityField = {
     update_description: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const updatedDescription = moderatorRequest.newDescriptionValue;
-            const approvedRequestModeratorNotification = yield notificationModel_1.default.create({
-                receiver: moderatorRequest.moderator,
-                notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-                text: `Your request to ${moderatorRequest.requestType} to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`,
-                community: community._id
-            });
             const prepareResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+                .setResponseField('newDescription')
                 .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleUpdateDescription.bind(null, community, updatedDescription, true, moderatorRequest))
                 .setCommunityId(community._id)
                 .setCommunityActivityLogData({
                 moderator: moderatorRequest.moderator,
                 logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
                 text: `accepted *user* request to update community description to "${updatedDescription}"`,
-            }).
-                setApprovedRequestModeratorNotification(approvedRequestModeratorNotification)
+            })
+                .setApprovedRequestModeratorNotification({
+                receiver: moderatorRequest.moderator,
+                text: `Your request to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`
+            })
                 .setModeratorsNotificationsData({
                 moderators: community.moderators,
                 communityCreator: community.creator,
@@ -189,237 +186,298 @@ CommunityModeratorChangeRequestService.acceptUpdateCommunityField = {
             throw error;
         }
     }),
-    update_profile_photo: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        const moderatorNotification = yield _a.updateCommunityPhoto(community, moderatorRequest, 'profile', shouldNotifyModerator);
-        return moderatorNotification;
+    update_profile_photo: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const moderatorRequestPhoto = moderatorRequest.photo;
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setResponseField('newProfilePhoto')
+            .setCommunityId(community._id)
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleUpdateProfilePhoto.bind(null, community, moderatorRequestPhoto, moderatorRequest, true))
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to update community profile photo'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            text: `"${community.name}" community profile photo was changed`,
+            sender: community.creator,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'Community profile photo updated successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    remove_profile_photo: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        const moderatorNotification = _a.removeCommunityPhoto(community, moderatorRequest, 'profile', shouldNotifyModerator);
-        return moderatorNotification;
+    remove_profile_photo: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setCommunityId(community._id)
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleRemoveProfilePhoto.bind(null, community, moderatorRequest, true))
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to remove community profile photo'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            text: `"${community.name}" community profile photo was removed`,
+            sender: community.creator,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'Community profile photo removed successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    update_banner_photo: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        const moderatorNotification = yield _a.updateCommunityPhoto(community, moderatorRequest, 'banner', shouldNotifyModerator);
-        return moderatorNotification;
+    update_banner_photo: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const moderatorRequestPhoto = moderatorRequest.photo;
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setResponseField('newBannerPhoto')
+            .setCommunityId(community._id)
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleUpdateBannerPhoto.bind(null, community, moderatorRequestPhoto, moderatorRequest, true))
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to update community banner photo'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            text: `"${community.name}" community banner photo was changed`,
+            sender: community.creator,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'Community banner photo updated successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    remove_banner_photo: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        const moderatorNotification = _a.removeCommunityPhoto(community, moderatorRequest, 'banner', shouldNotifyModerator);
-        return moderatorNotification;
+    remove_banner_photo: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setCommunityId(community._id)
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleRemoveBannerPhoto.bind(null, community, moderatorRequest, true))
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to remove community banner photo'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            text: `"${community.name}" community banner photo was removed`,
+            sender: community.creator,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'Community banner photo removed successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    add_rule: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            if (!moderatorRequest.newRules ||
-                (moderatorRequest.newRules && moderatorRequest.newRules.length !== 1)) {
-                throw new appError_1.default(400, 'Invalid rule found. Operation failed');
-            }
-            const newRule = moderatorRequest.newRules[0];
-            if (!newRule || (newRule && !newRule.title)) {
-                throw new appError_1.default(400, 'Rule to add not provided');
-            }
-            const ruleInvalidError = communityValidator_1.default.areRulesValid([newRule]);
-            if (ruleInvalidError) {
-                throw new appError_1.default(422, 'Rule data invalid', { rule: ruleInvalidError });
-            }
-            community.rules.push(newRule);
-            yield community.save();
-            moderatorRequest.status = 'approved';
-            yield moderatorRequest.save();
-            yield communityActivityLogs_2.default.create({
-                community: community._id,
-                logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-                moderator: moderatorRequest.moderator,
-                text: `approved request to add community rule by moderator`,
-                moderatorRequest: moderatorRequest._id
-            });
-            if (shouldNotifyModerator) {
-                const moderatorNotification = yield notificationModel_1.default.create({
-                    receiver: moderatorRequest.moderator,
-                    notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-                    text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-                    community: community._id
-                });
-                return moderatorNotification;
-            }
-            return null;
-        }
-        catch (error) {
-            throw error;
-        }
+    add_rule: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const newRule = moderatorRequest.newRules[0];
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setResponseField('newRule')
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleAddRule.bind(null, community, newRule, moderatorRequest, true))
+            .setCommunityId(community._id)
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to add new community rule'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            sender: community.creator,
+            text: `"${community.name}" community has new rule added`,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'New community rule added successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    update_single_rule: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            if (!moderatorRequest.newRules ||
-                (moderatorRequest.newRules && moderatorRequest.newRules.length !== 1)) {
-                throw new appError_1.default(400, 'Invalid rule found. Operation failed');
-            }
-            const newRule = moderatorRequest.newRules[0];
-            console.log(newRule);
-            if (!newRule || (newRule && !newRule.title)) {
-                throw new appError_1.default(400, 'Rule to add not provided');
-            }
-            const ruleInvalidError = communityValidator_1.default.areRulesValid([newRule]);
-            if (ruleInvalidError) {
-                throw new appError_1.default(422, 'Rule data invalid', { rule: ruleInvalidError });
-            }
-            const targetRuleIndex = community.rules.findIndex((rule) => rule._id.toString() === newRule._id.toString());
-            if (targetRuleIndex === -1) {
-                throw (new appError_1.default(400, 'Rule at provided position is not found'));
-            }
-            const updatedRule = community.rules[targetRuleIndex];
-            updatedRule.title = newRule.title;
-            updatedRule.description = newRule.description;
-            yield community.save();
-            moderatorRequest.status = 'approved';
-            yield moderatorRequest.save();
-            yield communityActivityLogs_2.default.create({
-                community: community._id,
-                logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-                moderator: moderatorRequest.moderator,
-                text: `approved request to update community rule by moderator`,
-                moderatorRequest: moderatorRequest._id
-            });
-            if (shouldNotifyModerator) {
-                const moderatorNotification = yield notificationModel_1.default.create({
-                    receiver: moderatorRequest.moderator,
-                    notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-                    text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-                    community: community._id
-                });
-                return moderatorNotification;
-            }
-            return null;
-        }
-        catch (error) {
-            throw error;
-        }
+    update_single_rule: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const updatedRule = moderatorRequest.newRules[0];
+        const targetRuleIndex = communityService_1.default.getUpdateRuleIndex(community.rules, updatedRule);
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setResponseField('updatedRule')
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleUpdateSingleRule.bind(null, community, updatedRule, targetRuleIndex, moderatorRequest, true))
+            .setCommunityId(community._id)
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to add update community rule'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            sender: community.creator,
+            text: `"${community.name}" community has 1 rule updated`,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'Community rule updated successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    update_rules: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            if (!moderatorRequest.newRules ||
-                (moderatorRequest.newRules && moderatorRequest.newRules.length === 0)) {
-                throw new appError_1.default(400, 'Invalid rules found. Operation failed');
-            }
-            const ruleInvalidError = communityValidator_1.default.areRulesValid(moderatorRequest.newRules);
-            if (ruleInvalidError) {
-                throw new appError_1.default(422, 'Rules data invalid', { rule: ruleInvalidError });
-            }
-            community.rules = moderatorRequest.newRules;
-            yield community.save();
-            moderatorRequest.status = 'approved';
-            yield moderatorRequest.save();
-            yield communityActivityLogs_2.default.create({
-                community: community._id,
-                logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-                moderator: moderatorRequest.moderator,
-                text: `approved request to update community rules by moderator`,
-                moderatorRequest: moderatorRequest._id
-            });
-            if (shouldNotifyModerator) {
-                const moderatorNotification = yield notificationModel_1.default.create({
-                    receiver: moderatorRequest.moderator,
-                    notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-                    text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-                    community: community._id
-                });
-                return moderatorNotification;
-            }
-            return null;
-        }
-        catch (error) {
-            throw error;
-        }
+    update_rules: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setResponseField('updatedRules')
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleUpdateCommunityRules.bind(null, community, moderatorRequest.newRules, moderatorRequest, true))
+            .setCommunityId(community._id)
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to update community rules'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            sender: community.creator,
+            text: `"${community.name}" community rules have been updated`,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'Community rules updated successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    delete_single_rule: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            if (!moderatorRequest.deleteRuleIds ||
-                (moderatorRequest.deleteRuleIds && moderatorRequest.deleteRuleIds.length === 0)) {
-                throw new appError_1.default(400, 'No rules provided for deletion');
-            }
-            const ruleToDelete = moderatorRequest.deleteRuleIds[0];
-            community.rules = community.rules.filter((rule) => rule._id.toString() !== ruleToDelete.toString());
-            yield community.save();
-            moderatorRequest.status = 'approved';
-            yield moderatorRequest.save();
-            yield communityActivityLogs_2.default.create({
-                community: community._id,
-                logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-                moderator: moderatorRequest.moderator,
-                text: `approved request to delete community rule by moderator`,
-                moderatorRequest: moderatorRequest._id
-            });
-            if (shouldNotifyModerator) {
-                const moderatorNotification = yield notificationModel_1.default.create({
-                    receiver: moderatorRequest.moderator,
-                    notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-                    text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-                    community: community._id
-                });
-                return moderatorNotification;
-            }
-            return null;
-        }
-        catch (error) {
-            throw error;
-        }
+    delete_single_rule: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const ruleId = moderatorRequest === null || moderatorRequest === void 0 ? void 0 : moderatorRequest.deleteRuleIds[0];
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setResponseField('updatedRules')
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleDeleteSingleRule.bind(null, community, ruleId, moderatorRequest, true))
+            .setCommunityId(community._id)
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to delete 1 community rule'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            sender: community.creator,
+            text: `"${community.name}" community rule have been deleted`,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'Community rule deleted successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    delete_multiple_rules: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            if (!moderatorRequest.deleteRuleIds ||
-                (moderatorRequest.deleteRuleIds && moderatorRequest.deleteRuleIds.length === 0)) {
-                throw new appError_1.default(400, 'No rules provided for deletion');
-            }
-            community.rules = community.rules.filter((rule) => !moderatorRequest.deleteRuleIds.includes(rule._id.toString()));
-            yield community.save();
-            moderatorRequest.status = 'approved';
-            yield moderatorRequest.save();
-            yield communityActivityLogs_2.default.create({
-                community: community._id,
-                logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-                moderator: moderatorRequest.moderator,
-                text: `approved request to delete multiple community rule by moderator`,
-                moderatorRequest: moderatorRequest._id
-            });
-            if (shouldNotifyModerator) {
-                const moderatorNotification = yield notificationModel_1.default.create({
-                    receiver: moderatorRequest.moderator,
-                    notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-                    text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-                    community: community._id
-                });
-                return moderatorNotification;
-            }
-            return null;
-        }
-        catch (error) {
-            throw error;
-        }
+    delete_multiple_rules: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const ruleIds = moderatorRequest === null || moderatorRequest === void 0 ? void 0 : moderatorRequest.deleteRuleIds;
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleDeleteMultipleRules.bind(null, community, ruleIds, moderatorRequest, true))
+            .setCommunityId(community._id)
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to delete multiple community rules'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            sender: community.creator,
+            text: `"${community.name}" community rules have been updated`,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'Community rules deleted successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     }),
-    delete_all_rules: (community, moderatorRequest, shouldNotifyModerator) => __awaiter(void 0, void 0, void 0, function* () {
-        try {
-            community.set('rules', []);
-            yield community.save();
-            moderatorRequest.status = 'approved';
-            yield moderatorRequest.save();
-            yield communityActivityLogs_2.default.create({
-                community: community._id,
-                logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
-                moderator: moderatorRequest.moderator,
-                text: `approved request to delete all community rule by moderator`,
-                moderatorRequest: moderatorRequest._id
-            });
-            if (shouldNotifyModerator) {
-                const moderatorNotification = yield notificationModel_1.default.create({
-                    receiver: moderatorRequest.moderator,
-                    notificationType: notifications_1.NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-                    text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-                    community: community._id
-                });
-                return moderatorNotification;
-            }
-            return null;
-        }
-        catch (error) {
-            throw error;
-        }
+    delete_all_rules: (community, moderatorRequest, res) => __awaiter(void 0, void 0, void 0, function* () {
+        const prepareUpdateResponse = new handleSendUpdateCommunityFieldRequestResponseAction_1.default()
+            .setFieldUpdateHandler(communityService_1.default.updateFieldHandlers.handleDeleteAllRules.bind(null, community))
+            .setCommunityId(community._id)
+            .setCommunityActivityLogData({
+            moderator: moderatorRequest.moderator,
+            logType: communityActivityLogs_1.COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+            text: 'accepted *user* request to delete all community rules'
+        })
+            .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+            .setModeratorsNotificationsData({
+            moderators: community.moderators,
+            communityCreator: community.creator,
+            notificationType: notifications_1.NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+            sender: community.creator,
+            text: `"${community.name}" community rules have been deleted`,
+            doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+            .setResJson({
+            res,
+            message: 'All community rules deleted successfully'
+        });
+        const updateResponse = yield prepareUpdateResponse.execute();
+        return updateResponse;
     })
 };
 exports.default = CommunityModeratorChangeRequestService;

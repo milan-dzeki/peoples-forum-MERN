@@ -44,7 +44,7 @@ class CommunityValidator extends parentValidator_1.default {
         }
         return null;
     }
-    static areRulesValid(rules) {
+    static areRulesValid(rules, shouldThrowError) {
         if (!rules || (rules && rules.length === 0)) {
             return null;
         }
@@ -110,6 +110,9 @@ class CommunityValidator extends parentValidator_1.default {
           some may have null value - if there are 2 rules, 1st is valid and second is invalid, error value of first will be null;
           but error value of second will be adequeate error object
         */
+        if (shouldThrowError && sentErrors) {
+            throw new appError_1.default(422, 'Rule data invalid', { rule: sentErrors });
+        }
         return sentErrors;
     }
     static areChatNamesValid(chatNames) {

@@ -5,6 +5,8 @@ import Notification from 'models/notificationModel';
 import User from 'models/userModel';
 import { 
   CommunityListType, 
+  CommunityRuleType, 
+  CommunityUpdateRuleType, 
   HandleSendModeratorRequestResponseActionParameters, 
   HandleSendUpdateCommunityFieldRequestResponseActionType, 
   ModeratorNotificationType, 
@@ -17,6 +19,7 @@ import CommunityActivityLogsService from './communityActivityLogsService';
 import { PreparedNotificationType } from 'types/models/notificationModelTypes';
 import CommunityValidator from 'configs/validators/community/communityValidator';
 import { CommunityModeratorChangeRequestSchemaType } from 'models/communityModeratorChangeRequestModel';
+import cloudinary from 'configs/cloudinary';
 
 class CommunityService {
   static updateFieldHandlers = {
@@ -26,25 +29,277 @@ class CommunityService {
       shouldValidate?: boolean,
       moderatorRequest?: CommunityModeratorChangeRequestSchemaType
     ) => {
-      try {
-        if (shouldValidate) {
-          CommunityValidator.validateStringValues(newDescription, 'description', true);
-        }
-
-        community.description = newDescription;
-        await community.save();
-
-        if (moderatorRequest) {
-          moderatorRequest.status = 'approved';
-          await moderatorRequest.save();
-        }
-
-        return community.description;
-      } catch (error: unknown) {
-        throw error;
+      if (shouldValidate) {
+        CommunityValidator.validateStringValues(newDescription, 'description', true);
       }
+
+      community.description = newDescription;
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return community.description;
+    },
+    handleUpdateProfilePhoto: async (
+      community: CommunitySchemaType, 
+      photo: { secure_url: string, public_id: string }, 
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType,
+      shouldValidate?: boolean
+    ) => {
+      if (shouldValidate) {
+        if (!photo || (photo && (!photo.secure_url || !photo.public_id))) {
+          throw new AppError(404, 'Valid update photo is not found. operation failed');
+        }
+      }
+      const imageToDelete = community.profileImagePublicId;
+      if (imageToDelete) {
+        await cloudinary.uploader.destroy(imageToDelete);
+      }
+      community.profileImageUrl = photo.secure_url;
+      community.profileImagePublicId = photo.public_id;
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return community.profileImageUrl;
+    },
+    handleUpdateBannerPhoto: async (
+      community: CommunitySchemaType, 
+      photo: { secure_url: string, public_id: string }, 
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType,
+      shouldValidate?: boolean
+    ) => {
+      if (shouldValidate) {
+        if (!photo || (photo && (!photo.secure_url || !photo.public_id))) {
+          throw new AppError(404, 'Valid update photo is not found. operation failed');
+        }
+      }
+      const imageToDelete = community.bannerImagePublicId;
+      if (imageToDelete) {
+        await cloudinary.uploader.destroy(imageToDelete);
+      }
+      community.bannerImageUrl = photo.secure_url;
+      community.bannerImagePublicId = photo.public_id;
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return community.bannerImageUrl;
+    },
+    handleRemoveProfilePhoto: async (
+      community: CommunitySchemaType, 
+      moderatorRequest: CommunityModeratorChangeRequestSchemaType | null = null, 
+      shouldValidate?: boolean
+    ) => {
+      if (shouldValidate) {
+        if (!community.profileImagePublicId) {
+          throw new AppError(404, 'Community doesnt have profile image, so there is nothing to remove');
+        }
+      }
+
+      await cloudinary.uploader.destroy(community.profileImagePublicId as string);
+
+      community.profileImageUrl = null;
+      community.profileImagePublicId = null;
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return null;
+    },
+    handleRemoveBannerPhoto: async (
+      community: CommunitySchemaType, 
+      moderatorRequest: CommunityModeratorChangeRequestSchemaType | null = null, 
+      shouldValidate?: boolean
+    ) => {
+      if (shouldValidate) {
+        if (!community.bannerImagePublicId) {
+          throw new AppError(404, 'Community doesnt have profile image, so there is nothing to remove');
+        }
+      }
+
+      await cloudinary.uploader.destroy(community.bannerImagePublicId as string);
+
+      community.bannerImageUrl = null;
+      community.bannerImagePublicId = null;
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return null;
+    },
+    handleAddRule: async (
+      community: CommunitySchemaType, 
+      newRule: CommunityRuleType,
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType, 
+      shouldValidate?: boolean
+    ) => {
+      if (shouldValidate) {
+        if (!newRule || (newRule && !newRule.title)) {
+          throw new AppError(400, 'Invalid rule provided. Must have title.');
+        }
+
+        CommunityValidator.areRulesValid([newRule], true);
+      }
+
+      community.rules.push(newRule);
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return newRule;
+    },
+    handleUpdateSingleRule: async (
+      community: CommunitySchemaType,
+      rule: CommunityUpdateRuleType,
+      ruleIndex: number,
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType, 
+      shouldValidate?: boolean
+    ) => {
+      if (shouldValidate) {
+        if (!rule || (rule && (!rule._id || !rule.title))) {
+          throw new AppError(422, 'Invalid rule data provided');
+        }
+
+        if (ruleIndex === -1) {
+          throw new AppError(400, 'Rule at provided position is not found');
+        }
+      }
+
+      community.rules[ruleIndex].title = rule.title;
+      community.rules[ruleIndex].description = rule.description || '';
+
+      await community.save();
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return rule;
+    },
+    handleUpdateCommunityRules: async (
+      community: CommunitySchemaType,
+      rules: (CommunityRuleType | CommunityUpdateRuleType)[],
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType, 
+      shouldValidate?: boolean
+    ) => {
+      if (shouldValidate) {
+        if (!rules || (rules && rules.length === 0)) {
+          throw new AppError(422, 'No rules have been provided');
+        }
+        CommunityValidator.areRulesValid(rules, true);
+      }
+
+      community.set('rules', rules);
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return community.rules;
+    },
+    handleDeleteSingleRule: async (
+      community: CommunitySchemaType,
+      ruleId: string,
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType, 
+      shouldValidate?: boolean
+    ) => {
+      if(shouldValidate) {
+        CommunityService.doesRuleExist(community.rules, ruleId);
+      }
+
+      community.rules = community.rules.filter((rule) => rule._id.toString() !== ruleId.toString()) as typeof community.rules;
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return null;
+    },
+    handleDeleteMultipleRules: async (
+      community: CommunitySchemaType,
+      ruleIds: string[],
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType, 
+      shouldValidate?: boolean
+    ) => {
+      if (shouldValidate) {
+        if (!ruleIds || (ruleIds && ruleIds.length === 0)) {
+          throw new AppError(422, 'No rule ids are provided');
+        }
+      }
+
+      community.rules = community.rules.filter((rule) => !ruleIds.includes(rule._id.toString())) as typeof community.rules;
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return null;
+    },
+    handleDeleteAllRules: async (
+      community: CommunitySchemaType,
+      moderatorRequest?: CommunityModeratorChangeRequestSchemaType, 
+    ) => {
+      community.set('rules', []);
+      await community.save();
+
+      if (moderatorRequest) {
+        moderatorRequest.status = 'approved';
+        await moderatorRequest.save();
+      }
+
+      return null;
     }
-  };
+  }
+
+  static getUpdateRuleIndex (
+    communityRules: CommunitySchemaType['rules'],
+    rule: CommunityUpdateRuleType
+  ) {
+    const targetRuleIndex = communityRules.findIndex((oldRule) => oldRule._id.toString() === rule._id.toString());
+    if (targetRuleIndex === -1) {
+      throw new AppError(400, 'Rule at provided position is not found');
+    }
+
+    return targetRuleIndex;
+  }
+
+  static doesRuleExist (communityRules: CommunitySchemaType['rules'], ruleId: string) {
+    if (!ruleId) {
+      throw new AppError(400, 'Rule id not provided');
+      return;
+    }
+
+    const ruleExist = communityRules.find((rule) => rule._id.toString() === ruleId.toString());
+    if (!ruleExist) {
+      throw new AppError(404, 'Rule for provided id is not found');
+    }
+  }
+
   static async createCommunityChatsUponCommunityCreation (
     creatorId: string, 
     communityId: string, 
@@ -192,7 +447,12 @@ class CommunityService {
       message,
       moderatorNotifications,
       approvedRequestModeratorNotification,
-      newDescription
+      newDescription,
+      newProfilePhoto,
+      newBannerPhoto,
+      newRule,
+      updatedRule,
+      updatedRules
     } = parameters;
 
     const responseJson: UpdateFieldResponseJsonType = {
@@ -209,119 +469,27 @@ class CommunityService {
       responseJson.newDescription = newDescription;
     }
 
+    if (newProfilePhoto) {
+      responseJson.newProfilePhoto = newProfilePhoto;
+    }
+
+    if (newBannerPhoto) {
+      responseJson.newBannerPhoto = newBannerPhoto;
+    }
+
+    if (newRule) {
+      responseJson.newRule = newRule;
+    }
+
+    if (updatedRule) {
+      responseJson.updatedRule = updatedRule;
+    }
+
+    if (updatedRules) {
+      responseJson.updatedRules = updatedRules;
+    }
+
     return res.status(200).json(responseJson);
-  }
-
-  static async handleSendModeratorRequestResponseAction (parameters: HandleSendModeratorRequestResponseActionParameters) {
-    try {
-      const {
-        commons: {
-          communityId,
-          moderator
-        },
-        moderatorRequestData: {
-          requestType,
-          communityCreator,
-          requestText,
-          updateValues
-        },
-        communityActivityLogData: {
-          logType,
-          text,
-          photoUrl
-        },
-        resJson: {
-          res, 
-          message
-        }
-      } = parameters;
-
-      const moderatorRequest = await CommunityModeratorChangeRequestService.createNewModeratorRequest({
-        requestType,
-        communityId,
-        communityCreator,
-        moderator,
-        requestText,
-        updateValues: updateValues || {}
-      });
-
-      await CommunityActivityLogsService.createNewCommunityActivityLog({
-        communityId,
-        logType,
-        moderator,
-        text,
-        moderatorRequest: moderatorRequest._id,
-        photoUrl: photoUrl || undefined
-      });
-
-      return CommunityModeratorChangeRequestService.sendModeratorRequestResponse({
-        res,
-        message,
-        moderatorRequest
-      });
-    } catch (error: unknown) {
-      throw error;
-    }
-  }
-
-  static async handleSendUpdateCommunityFieldRequestResponseAction (parameters: HandleSendUpdateCommunityFieldRequestResponseActionType) {
-    try {
-      const {
-        fieldUpdateHandler,
-        communityId,
-        communityActivityLogData: {
-          logType,
-          moderator,
-          text: notificationText,
-          photoUrl
-        },
-        approvedRequestModeratorNotification,
-        moderatorsNotificationsData: {
-          moderators,
-          communityCreator,
-          notificationType,
-          text,
-          sender,
-          doNotIncludeIds
-        },
-        resJson: {
-          res,
-          message
-        }
-      } = parameters;
-
-      const newDescription =  await fieldUpdateHandler();
-
-      await CommunityActivityLogsService.createNewCommunityActivityLog({
-        communityId,
-        logType,
-        text: notificationText,
-        moderator,
-        photoUrl: photoUrl || undefined
-      });
-
-      const moderatorNotifications = await this.createCreatorAndModeratorNotifications(
-        moderators,
-        communityCreator,
-        {
-          communityId,
-          notificationType,
-          sender,
-          text
-        },
-        doNotIncludeIds
-      );
-
-      return this.createUpdateFieldRequestResponse({
-        res,
-        message,
-        moderatorNotifications,
-        approvedRequestModeratorNotification,
-        newDescription
-      });
-    } catch (error: unknown) {
-      throw error;
-    }
   }
 }
 

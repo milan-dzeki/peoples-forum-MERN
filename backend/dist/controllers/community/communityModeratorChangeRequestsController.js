@@ -59,6 +59,7 @@ exports.declineModeratorRequest = (0, catchAsync_1.default)((req, res, next) => 
     return res.status(200).json(responseJson);
 }));
 exports.acceptModeratorRequest = (0, catchAsync_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('accept start');
     const community = req.community;
     const moderatorRequest = req.moderatorRequest;
     if (moderatorRequest.status === 'declined') {
@@ -69,6 +70,7 @@ exports.acceptModeratorRequest = (0, catchAsync_1.default)((req, res, next) => _
         next(new appError_1.default(400, 'You have already approved this request in the past. If you wnat to revert changes doen tby it, do it manually.'));
         return;
     }
+    console.log('mod req', moderatorRequest);
     const response = yield communityModeratorChangeRequestsSerivce_1.default
         .acceptUpdateCommunityField[moderatorRequest.requestType](community, moderatorRequest, res);
     return response;

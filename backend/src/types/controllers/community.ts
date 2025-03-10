@@ -12,6 +12,12 @@ export interface CommunityRuleType {
   description: string;
 }
 
+export interface CommunityUpdateRuleType {
+  _id: Types.ObjectId | string;
+  title: string;
+  description: string;
+}
+
 export interface PrepareCommunityForCreateType {
   creator: string;
   pendingInvitedModerators: string[];
@@ -67,14 +73,24 @@ export interface UpdateFieldResponseJsonType {
   moderatorNotifications: NotificationSchemaType[];
   approvedRequestModeratorNotification?: NotificationSchemaType;
   newDescription?: string;
+  newProfilePhoto?: string;
+  newBannerPhoto?: string;
+  newRule?: CommunityRuleType;
+  updatedRule?: CommunityUpdateRuleType;
+  updatedRules?: CommunityUpdateRuleType;
 }
 
 export interface SendUpdateFieldRequestResponseType {
   res: Response;
   message: string;
   moderatorNotifications: NotificationSchemaType[];
-  approvedRequestModeratorNotification?: NotificationSchemaType;
+  approvedRequestModeratorNotification?: NotificationSchemaType | null;
   newDescription?: string;
+  newProfilePhoto?: string;
+  newBannerPhoto?: string;
+  newRule?: CommunityRuleType;
+  updatedRule?: CommunityUpdateRuleType;
+  updatedRules?: CommunityUpdateRuleType;
 }
 
 export interface HandleSendModeratorRequestResponseActionParameters {
@@ -109,6 +125,7 @@ export interface HandleSendModeratorRequestResponseActionParameters {
 }
 
 export interface HandleSendUpdateCommunityFieldRequestResponseActionType {
+  responseField: string | null;
   fieldUpdateHandler: () => Promise<any>;
   communityId: Types.ObjectId | string;
   communityActivityLogData: {
@@ -125,9 +142,14 @@ export interface HandleSendUpdateCommunityFieldRequestResponseActionType {
     sender: Types.ObjectId | string;
     doNotIncludeIds?:( Types.ObjectId | string)[];
   };
-  approvedRequestModeratorNotification?: NotificationSchemaType;
+  approvedRequestModeratorNotification?: {
+    receiver: Types.ObjectId | string;
+    text: string;
+  };
   resJson: {
     res: Response;
     message: string;
+    newDescription?: string;
+    newProfilePhoto?: string;
   }
 }

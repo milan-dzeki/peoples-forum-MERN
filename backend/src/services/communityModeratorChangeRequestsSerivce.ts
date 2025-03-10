@@ -13,6 +13,7 @@ import { CreateModeratorRequestParameteresType, PrepareNewModeratorRequestType, 
 import AppError from 'utils/appError';
 import CommunityService from './communityService';
 import HandleSendUpdateCommunityFieldRequestResponseActionBuilder from 'utils/builders/community/handleSendUpdateCommunityFieldRequestResponseAction';
+import { CommunityRuleType, CommunityUpdateRuleType } from 'types/controllers/community';
 
 class CommunityModeratorChangeRequestService {
   static acceptUpdateCommunityField = {
@@ -24,14 +25,8 @@ class CommunityModeratorChangeRequestService {
       try {
         const updatedDescription = moderatorRequest.newDescriptionValue as any;
 
-        const approvedRequestModeratorNotification = await Notification.create({
-          receiver: moderatorRequest.moderator,
-          notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-          text: `Your request to ${moderatorRequest.requestType} to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`,
-          community: community._id
-        });
-
         const prepareResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+          .setResponseField('newDescription')
           .setFieldUpdateHandler(
             CommunityService.updateFieldHandlers.handleUpdateDescription.bind(
               null,
@@ -46,8 +41,11 @@ class CommunityModeratorChangeRequestService {
             moderator: moderatorRequest.moderator,
             logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
             text: `accepted *user* request to update community description to "${updatedDescription}"`,
-          }).
-          setApprovedRequestModeratorNotification(approvedRequestModeratorNotification)
+          })
+          .setApprovedRequestModeratorNotification({
+            receiver: moderatorRequest.moderator,
+            text: `Your request to "${moderatorRequest.requestType}" for "${community.name}" community has been approved`
+          })
           .setModeratorsNotificationsData({
             moderators: community.moderators,
             communityCreator: community.creator,
@@ -71,344 +69,435 @@ class CommunityModeratorChangeRequestService {
     update_profile_photo: async(
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      const moderatorNotification = await this.updateCommunityPhoto(
-        community,
-        moderatorRequest,
-        'profile',
-        shouldNotifyModerator
-      );
+      const moderatorRequestPhoto = moderatorRequest.photo;
 
-      return moderatorNotification;
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setResponseField('newProfilePhoto')
+        .setCommunityId(community._id)
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleUpdateProfilePhoto.bind(
+            null,
+            community,
+            moderatorRequestPhoto as { secure_url: string, public_id: string },
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityActivityLogData({
+          moderator: moderatorRequest.moderator,
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to update community profile photo'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          text: `"${community.name}" community profile photo was changed`,
+          sender: community.creator,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'Community profile photo updated successfully'
+        });
+    
+      const updateResponse = await prepareUpdateResponse.execute();
+    
+      return updateResponse;
     },
     remove_profile_photo: async(
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      const moderatorNotification = this.removeCommunityPhoto(
-        community,
-        moderatorRequest,
-        'profile',
-        shouldNotifyModerator
-      );
-
-      return moderatorNotification;
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setCommunityId(community._id)
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleRemoveProfilePhoto.bind(
+            null,
+            community,
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityActivityLogData({
+          moderator: moderatorRequest.moderator,
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to remove community profile photo'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          text: `"${community.name}" community profile photo was removed`,
+          sender: community.creator,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'Community profile photo removed successfully'
+        });
+    
+      const updateResponse = await prepareUpdateResponse.execute();
+    
+      return updateResponse;
     },
     update_banner_photo: async (
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      const moderatorNotification = await this.updateCommunityPhoto(
-        community,
-        moderatorRequest,
-        'banner',
-        shouldNotifyModerator
-      );
+      const moderatorRequestPhoto = moderatorRequest.photo;
 
-      return moderatorNotification;
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setResponseField('newBannerPhoto')
+        .setCommunityId(community._id)
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleUpdateBannerPhoto.bind(
+            null,
+            community,
+            moderatorRequestPhoto as { secure_url: string, public_id: string },
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityActivityLogData({
+          moderator: moderatorRequest.moderator,
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to update community banner photo'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          text: `"${community.name}" community banner photo was changed`,
+          sender: community.creator,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'Community banner photo updated successfully'
+        });
+    
+      const updateResponse = await prepareUpdateResponse.execute();
+    
+      return updateResponse;
     },
     remove_banner_photo: async(
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      const moderatorNotification = this.removeCommunityPhoto(
-        community,
-        moderatorRequest,
-        'banner',
-        shouldNotifyModerator
-      );
-
-      return moderatorNotification;
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setCommunityId(community._id)
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleRemoveBannerPhoto.bind(
+            null,
+            community,
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityActivityLogData({
+          moderator: moderatorRequest.moderator,
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to remove community banner photo'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          text: `"${community.name}" community banner photo was removed`,
+          sender: community.creator,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'Community banner photo removed successfully'
+        });
+    
+      const updateResponse = await prepareUpdateResponse.execute();
+    
+      return updateResponse;
     },
     add_rule: async (
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      try {
-        if (
-          !moderatorRequest.newRules ||
-          (moderatorRequest.newRules && moderatorRequest.newRules.length !== 1) 
-        ) {
-          throw new AppError(400, 'Invalid rule found. Operation failed');
-        }
-        const newRule = moderatorRequest.newRules[0];
+      const newRule = moderatorRequest.newRules[0] as CommunityRuleType;
 
-        if (!newRule || (newRule && !newRule.title)) {
-          throw new AppError(400, 'Rule to add not provided');
-        }
-
-        const ruleInvalidError = CommunityValidator.areRulesValid([newRule] as Array<{ title: string, description: string }>);
-        if (ruleInvalidError) {
-          throw new AppError(422, 'Rule data invalid', { rule: ruleInvalidError });
-        }
-
-        community.rules.push(newRule);
-        await community.save();
-
-        moderatorRequest.status = 'approved';
-        await moderatorRequest.save();
-
-        await CommunityActivityLog.create({
-          community: community._id,
-          logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setResponseField('newRule')
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleAddRule.bind(
+            null,
+            community,
+            newRule,
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityId(community._id)
+        .setCommunityActivityLogData({
           moderator: moderatorRequest.moderator,
-          text: `approved request to add community rule by moderator`,
-          moderatorRequest: moderatorRequest._id
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to add new community rule'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          sender: community.creator,
+          text: `"${community.name}" community has new rule added`,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'New community rule added successfully'
         });
 
-        if (shouldNotifyModerator) {
-          const moderatorNotification = await Notification.create({
-            receiver: moderatorRequest.moderator,
-            notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-            community: community._id
-          });
+      const updateResponse = await prepareUpdateResponse.execute();
 
-          return moderatorNotification;
-        }
-
-        return null;
-      } catch (error: unknown) {
-        throw error;
-      }
+      return updateResponse;
     },
     update_single_rule: async (
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      try {
-        if (
-          !moderatorRequest.newRules ||
-          (moderatorRequest.newRules && moderatorRequest.newRules.length !== 1) 
-        ) {
-          throw new AppError(400, 'Invalid rule found. Operation failed');
-        }
-        const newRule = moderatorRequest.newRules[0];
-        console.log(newRule)
+      const updatedRule = moderatorRequest.newRules[0] as CommunityUpdateRuleType;
+      const targetRuleIndex = CommunityService.getUpdateRuleIndex(community.rules, updatedRule);
 
-        if (!newRule || (newRule && !newRule.title)) {
-          throw new AppError(400, 'Rule to add not provided');
-        }
-
-        const ruleInvalidError = CommunityValidator.areRulesValid([newRule] as Array<{ id: string, title: string, description: string }>);
-        if (ruleInvalidError) {
-          throw new AppError(422, 'Rule data invalid', { rule: ruleInvalidError });
-        }
-
-        const targetRuleIndex = community.rules.findIndex((rule) => rule._id.toString() === newRule!._id!.toString());
-        if (targetRuleIndex === -1) {
-          throw (new AppError(400, 'Rule at provided position is not found'));
-        }
-      
-        const updatedRule = community.rules[targetRuleIndex];
-        updatedRule.title = newRule.title;
-        updatedRule.description = newRule.description;
-      
-        await community.save();
-
-        moderatorRequest.status = 'approved';
-        await moderatorRequest.save();
-
-        await CommunityActivityLog.create({
-          community: community._id,
-          logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setResponseField('updatedRule')
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleUpdateSingleRule.bind(
+            null,
+            community,
+            updatedRule,
+            targetRuleIndex,
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityId(community._id)
+        .setCommunityActivityLogData({
           moderator: moderatorRequest.moderator,
-          text: `approved request to update community rule by moderator`,
-          moderatorRequest: moderatorRequest._id
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to add update community rule'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          sender: community.creator,
+          text: `"${community.name}" community has 1 rule updated`,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'Community rule updated successfully'
         });
 
-        if (shouldNotifyModerator) {
-          const moderatorNotification = await Notification.create({
-            receiver: moderatorRequest.moderator,
-            notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-            community: community._id
-          });
+      const updateResponse = await prepareUpdateResponse.execute();
 
-          return moderatorNotification;
-        }
-
-        return null;
-      } catch (error) {
-        throw error;
-      }
+      return updateResponse;
     },
     update_rules: async (
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      try {
-        if (
-          !moderatorRequest.newRules ||
-          (moderatorRequest.newRules && moderatorRequest.newRules.length === 0) 
-        ) {
-          throw new AppError(400, 'Invalid rules found. Operation failed');
-        }
-
-        const ruleInvalidError = CommunityValidator.areRulesValid(moderatorRequest.newRules as Array<{ _id: Types.ObjectId, title: string, description: string }>);
-        if (ruleInvalidError) {
-          throw new AppError(422, 'Rules data invalid', { rule: ruleInvalidError });
-        }
-      
-        community.rules = moderatorRequest.newRules as typeof community.rules;
-        await community.save();
-
-        moderatorRequest.status = 'approved';
-        await moderatorRequest.save();
-
-        await CommunityActivityLog.create({
-          community: community._id,
-          logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setResponseField('updatedRules')
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleUpdateCommunityRules.bind(
+            null,
+            community,
+            moderatorRequest.newRules as (CommunityRuleType | CommunityUpdateRuleType)[],
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityId(community._id)
+        .setCommunityActivityLogData({
           moderator: moderatorRequest.moderator,
-          text: `approved request to update community rules by moderator`,
-          moderatorRequest: moderatorRequest._id
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to update community rules'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          sender: community.creator,
+          text: `"${community.name}" community rules have been updated`,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'Community rules updated successfully'
         });
 
-        if (shouldNotifyModerator) {
-          const moderatorNotification = await Notification.create({
-            receiver: moderatorRequest.moderator,
-            notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-            community: community._id
-          });
+      const updateResponse = await prepareUpdateResponse.execute();
 
-          return moderatorNotification;
-        }
-
-        return null;
-      } catch (error) {
-        throw error;
-      }
+      return updateResponse;
     },
     delete_single_rule: async (
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      try {
-        if (
-          !moderatorRequest.deleteRuleIds ||
-          (moderatorRequest.deleteRuleIds && moderatorRequest.deleteRuleIds.length === 0) 
-        ) {
-          throw new AppError(400, 'No rules provided for deletion');
-        }
-
-        const ruleToDelete = moderatorRequest.deleteRuleIds[0];
-        community.rules = community.rules.filter((rule) => rule._id.toString() !== ruleToDelete.toString()) as typeof community.rules;
-        await community.save();
-
-        moderatorRequest.status = 'approved';
-        await moderatorRequest.save();
-
-        await CommunityActivityLog.create({
-          community: community._id,
-          logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+      const ruleId = moderatorRequest?.deleteRuleIds[0];
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setResponseField('updatedRules')
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleDeleteSingleRule.bind(
+            null,
+            community,
+            ruleId,
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityId(community._id)
+        .setCommunityActivityLogData({
           moderator: moderatorRequest.moderator,
-          text: `approved request to delete community rule by moderator`,
-          moderatorRequest: moderatorRequest._id
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to delete 1 community rule'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          sender: community.creator,
+          text: `"${community.name}" community rule have been deleted`,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'Community rule deleted successfully'
         });
 
-        if (shouldNotifyModerator) {
-          const moderatorNotification = await Notification.create({
-            receiver: moderatorRequest.moderator,
-            notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-            community: community._id
-          });
+      const updateResponse = await prepareUpdateResponse.execute();
 
-          return moderatorNotification;
-        }
-
-        return null;
-      } catch (error) {
-        throw error;
-      }
+      return updateResponse;
     },
     delete_multiple_rules: async (
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      try {
-        if (
-          !moderatorRequest.deleteRuleIds ||
-          (moderatorRequest.deleteRuleIds && moderatorRequest.deleteRuleIds.length === 0) 
-        ) {
-          throw new AppError(400, 'No rules provided for deletion');
-        }
-
-        community.rules = community.rules.filter((rule) => !moderatorRequest.deleteRuleIds.includes(rule._id.toString())) as typeof community.rules;
-        await community.save();
-
-        moderatorRequest.status = 'approved';
-        await moderatorRequest.save();
-
-        await CommunityActivityLog.create({
-          community: community._id,
-          logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+      const ruleIds = moderatorRequest?.deleteRuleIds;
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleDeleteMultipleRules.bind(
+            null,
+            community,
+            ruleIds,
+            moderatorRequest,
+            true
+          )
+        )
+        .setCommunityId(community._id)
+        .setCommunityActivityLogData({
           moderator: moderatorRequest.moderator,
-          text: `approved request to delete multiple community rule by moderator`,
-          moderatorRequest: moderatorRequest._id
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to delete multiple community rules'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          sender: community.creator,
+          text: `"${community.name}" community rules have been updated`,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'Community rules deleted successfully'
         });
 
-        if (shouldNotifyModerator) {
-          const moderatorNotification = await Notification.create({
-            receiver: moderatorRequest.moderator,
-            notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-            community: community._id
-          });
+      const updateResponse = await prepareUpdateResponse.execute();
 
-          return moderatorNotification;
-        }
-
-        return null;
-      } catch (error) {
-        throw error;
-      }
+      return updateResponse;
     },
     delete_all_rules: async (
       community: CommunitySchemaType,
       moderatorRequest: CommunityModeratorChangeRequestSchemaType,
-      shouldNotifyModerator?: boolean
+      res: Response
     ) => {
-      try {
-        community.set('rules', []);
-        await community.save();
-
-        moderatorRequest.status = 'approved';
-        await moderatorRequest.save();
-
-        await CommunityActivityLog.create({
-          community: community._id,
-          logType: COMMUNITY_LOG_TYPE.COMMUNITY_INFO_UPDATED,
+      const prepareUpdateResponse = new HandleSendUpdateCommunityFieldRequestResponseActionBuilder()
+        .setFieldUpdateHandler(
+          CommunityService.updateFieldHandlers.handleDeleteAllRules.bind(
+            null,
+            community
+          )
+        )
+        .setCommunityId(community._id)
+        .setCommunityActivityLogData({
           moderator: moderatorRequest.moderator,
-          text: `approved request to delete all community rule by moderator`,
-          moderatorRequest: moderatorRequest._id
+          logType: COMMUNITY_LOG_TYPE.HANDLE_MODERATOR_REQUESTS,
+          text: 'accepted *user* request to delete all community rules'
+        })
+        .setApprovedRequestModeratorNotification({
+          receiver: moderatorRequest.moderator,
+          text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`
+        })
+        .setModeratorsNotificationsData({
+          moderators: community.moderators,
+          communityCreator: community.creator,
+          notificationType: NOTIFICATION_TYPES.COMMUNITY_INFO_UPDATED,
+          sender: community.creator,
+          text: `"${community.name}" community rules have been deleted`,
+          doNotIncludeIds: [community.creator, moderatorRequest.moderator]
+        })
+        .setResJson({
+          res,
+          message: 'All community rules deleted successfully'
         });
 
-        if (shouldNotifyModerator) {
-          const moderatorNotification = await Notification.create({
-            receiver: moderatorRequest.moderator,
-            notificationType: NOTIFICATION_TYPES.MODERATOR_CHANGE_REQUEST_APPROVED,
-            text: `Your request to ${moderatorRequest.requestType} for "${community.name}" community has been approved`,
-            community: community._id
-          });
+      const updateResponse = await prepareUpdateResponse.execute();
 
-          return moderatorNotification;
-        }
-
-        return null;
-      } catch (error) {
-        throw error;
-      }
+      return updateResponse;
     }
   }
 
